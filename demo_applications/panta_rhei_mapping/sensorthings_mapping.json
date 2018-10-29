@@ -1,0 +1,11 @@
+{
+  "Things": {
+    "demo_thing": {"id": 0}
+  },
+  "Sensors": {
+    "demo_sensor": {"id": 0}
+  },
+  "Datastreams": {
+    "demo_stream": {"id": 0}
+  }
+}

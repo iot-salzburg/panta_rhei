@@ -1,0 +1,86 @@
+version: "3.4"
+
+services:
+
+  gost-db:
+    image: 127.0.0.1:5001/gost-db
+#    image: geodan/gost-db
+    build: gost-db/
+    volumes:
+        - ${PANTARHEI_PATH}/gost-db/data/:/var/lib/postgresql/data
+#      - postgis:/var/lib/postgresql/data
+    environment:
+        POSTGRES_DB: gost
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+    networks:
+      - pantarhei
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 4G
+      replicas: 1
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+
+  gost:
+    image: geodan/gost
+    volumes:
+        - gost_conf:/gostserver/config
+    depends_on:
+        - gost-db
+    environment:
+        GOST_DB_HOST: gost-db
+        GOST_SERVER_EXTERNAL_URI: http://${SENSORTHINGS_SERVER}:${SENSORTHINGS_PORT}
+        GOST_SERVER_MAX_ENTITIES: 200
+        # GOST_MQTT_HOST: mosquitto
+    networks:
+      - pantarhei
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 4G
+      replicas: 1
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+
+  dashboard:
+    image: geodan/gost-dashboard
+    ports:  # use port 8080 for internal requests
+      - ${SENSORTHINGS_PORT}:8080
+    depends_on:
+      - gost
+    networks:
+      - pantarhei
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 4G
+      replicas: 1
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+
+volumes:
+  postgis: {}
+  nodered: {}
+  gost_conf: {}
+  mosquitto_data: {}
+  mosquitto_conf: {}
+
+networks:
+  pantarhei:

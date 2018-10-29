@@ -1,0 +1,18 @@
+// TODO write web interface to define this structure
+{
+  "Things": {
+    "demo_thing": [
+      {
+        "Sensors": {
+          "demo_sensor": [{
+            "Datastreams": [
+              "demo_quantity0",
+              "demo_quantity1"
+            ]
+          }
+          ]
+        }
+      }
+    ]
+  }
+}
