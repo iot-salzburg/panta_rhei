@@ -2,8 +2,9 @@
 import os
 import time
 import random
+import sys
 
-from client.panta_rhei_client import PantaRheiClient
+from demo_applications.client.panta_rhei_client import PantaRheiClient
 
 PANTA_RHEI_STRUCTURE = "panta_rhei_mapping/structure.json"
 PANTA_RHEI_INSTANCES = "panta_rhei_mapping/instances.json"
@@ -11,9 +12,11 @@ PANTA_RHEI_SUBSCRIPTIONS = "panta_rhei_mapping/subscriptions.json"
 
 client = PantaRheiClient()
 client.register(structure=PANTA_RHEI_STRUCTURE, instances=PANTA_RHEI_INSTANCES)
-client.subscribe(PANTA_RHEI_SUBSCRIPTIONS)
+#client.subscribe(PANTA_RHEI_SUBSCRIPTIONS)
 
-while True:
+
+
+while False:
     demo_quantity0 = random.normalvariate(mu=0, sigma=1)
     demo_quantity1 = random.gammavariate(alpha=2, beta=2)
 

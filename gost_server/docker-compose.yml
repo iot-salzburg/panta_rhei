@@ -32,8 +32,6 @@ services:
             GOST_DB_HOST: gost-db
             GOST_SERVER_EXTERNAL_URI: http://192.168.48.81:8082
             GOST_SERVER_MAX_ENTITIES: 200
-        environment:
-            gost_db_host: gost-db
         deploy:
             placement:
                 constraints:

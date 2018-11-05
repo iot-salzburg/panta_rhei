@@ -1,0 +1,17 @@
+{
+  "_comment": "General Configs",
+  "PORT":6789,
+  "_comment": "Kafka Config",
+  "LIBRDKAFKA_VERSION": "0.11.1",
+  "CONFLUENT_KAFKA_VERSION": "0.9.4",
+
+  "KAFKA_TOPIC_METRIC": "dtz.sensorthings",
+  "KAFKA_TOPIC_LOGS": "dtz.logging",
+  "BOOTSTRAP_SERVERS": "192.168.48.81:9092,192.168.48.82:9092,192.168.48.83:9092",
+  "KAFKA_GROUP_ID": "calling_app",
+
+  "_comment": "SensorThings Config",
+  "GOST_SERVER": "192.168.48.81",
+  "GOST_PORT": "8082",
+  "GOST_VERSION": "0.5"
+}
