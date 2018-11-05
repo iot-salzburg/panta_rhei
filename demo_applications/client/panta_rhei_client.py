@@ -41,30 +41,29 @@ class PantaRheiClient:
             self.logger.error("Error, couldn't connect to GOST server: {}, status code: {}, result: {}".format(
                 gost_url, res.status_code, res.json()))
 
-        #TODO uncomment
-        # # Init Kafka, test for KAFKA_TOPICS_LOGS with an unique group.id
-        #     self.logger.info("Checking Kafka connection")
-        # # conf = {'bootstrap.servers': self.config["BOOTSTRAP_SERVERS"], 'group.id': self.config["KAFKA_GROUP_ID"]}
-        # # consumer = confluent_kafka.Consumer(**conf)
-        # # TODO Check if that is valid and also return for the first adapter a valid solution.
-        # check_group_id = str(hash(self.config["KAFKA_GROUP_ID"] + "_" + str(time.time())))[-3:]  # Use a 3 digit hash
-        # conf = {'bootstrap.servers': self.config["BOOTSTRAP_SERVERS"],
-        #         'session.timeout.ms': 6000,
-        #         'group.id': check_group_id}
+        # Init Kafka, test for KAFKA_TOPICS_LOGS with an unique group.id
+            self.logger.info("Checking Kafka connection")
+        # conf = {'bootstrap.servers': self.config["BOOTSTRAP_SERVERS"], 'group.id': self.config["KAFKA_GROUP_ID"]}
         # consumer = confluent_kafka.Consumer(**conf)
-        # consumer.subscribe([self.config["KAFKA_TOPIC_LOGS"]])
-        # msg = consumer.poll()  # Waits up to 'session.timeout.ms' for a message
-        # if msg is not None:
-        #     # print(msg.value().decode('utf-8'))
-        #     self.logger.info("Successfully connected to the Kafka Broker: {}".format(self.config["BOOTSTRAP_SERVERS"]))
-        # else:
-        #     self.logger.warning("Error, couldn't connect to Kafka Broker: {}".format(self.config["BOOTSTRAP_SERVERS"]))
-        # consumer.close()
+        # TODO Check if that is valid and also return for the first adapter a valid solution.
+        check_group_id = str(hash(self.config["KAFKA_GROUP_ID"] + "_" + str(time.time())))[-3:]  # Use a 3 digit hash
+        conf = {'bootstrap.servers': self.config["BOOTSTRAP_SERVERS"],
+                'session.timeout.ms': 6000,
+                'group.id': check_group_id}
+        consumer = confluent_kafka.Consumer(**conf)
+        consumer.subscribe([self.config["KAFKA_TOPIC_LOGS"]])
+        msg = consumer.poll()  # Waits up to 'session.timeout.ms' for a message
+        if msg is not None:
+            # print(msg.value().decode('utf-8'))
+            self.logger.info("Successfully connected to the Kafka Broker: {}".format(self.config["BOOTSTRAP_SERVERS"]))
+        else:
+            self.logger.warning("Error, couldn't connect to Kafka Broker: {}".format(self.config["BOOTSTRAP_SERVERS"]))
+        consumer.close()
 
         self.instances = dict()
 
 
-    def register(self, structure_file, instance_file):
+    def register(self, instance_file):
         """
         Opens structure and instances.
         create requests
@@ -76,8 +75,8 @@ class PantaRheiClient:
         make posts
 
         return ids into structure
-        :param file:
-        :return: nothing
+        :param instance_file, it also holds the structure
+        :return:
         """
         self.logger.info("Loading instances")
         # Things: ['demo_thing']
