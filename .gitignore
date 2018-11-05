@@ -106,3 +106,4 @@ venv.bak/
 .idea/
 .archive/
 archive/
+gost_server/samba-mount
