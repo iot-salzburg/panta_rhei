@@ -11,7 +11,7 @@ PANTA_RHEI_INSTANCES = "panta_rhei_mapping/instances.json"
 PANTA_RHEI_SUBSCRIPTIONS = "panta_rhei_mapping/subscriptions.json"
 
 client = PantaRheiClient()
-client.register(structure=PANTA_RHEI_STRUCTURE, instances=PANTA_RHEI_INSTANCES)
+client.register(structure_file=PANTA_RHEI_STRUCTURE, instance_file=PANTA_RHEI_INSTANCES)
 #client.subscribe(PANTA_RHEI_SUBSCRIPTIONS)
 
 

@@ -1,0 +1,66 @@
+{
+  "Things": {
+    "demo_thing": {
+      "name": "Demo Thing",
+      "description": "3D Printer Prusa i3 MK3 in the Iot Lab Salzburg on the central desk",
+      "properties": {
+        "kafka": {
+          "hosts": [
+            "il081:9093",
+            "il082:9094",
+            "il083:9095"
+          ],
+          "topics": {
+            "logs": "dtz-logging",
+            "metrics": "dtz-sensorthings"
+          }
+        },
+        "specification": "https://www.prusa3d.com/downloads/manual/prusa3d_manual_175_en.pdf"
+      }
+    }
+  },
+  "Sensors": {
+    "demo_sensor": {
+      "name": "Random Variable Generator",
+      "description": "This sensor publishes the pseudo-random variable that is produced",
+      "encodingType": "application/pdf",
+      "metadata": "https://github.com/iot-salzburg/dtz_operator-dashboard"
+    }
+  },
+  "Datastreams": {
+    "demo_quantity0": {
+      "name": "NormalVariate",
+      "description": "This is a random variable which is normally distributed with expected value 0 and standard deviation 1.",
+      "observationType": "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Observation",
+      "unitOfMeasurement": {
+        "name": "filament",
+        "symbol": "srfg.prusa3d.filament",
+        "definition": "string"
+      },
+      "ObservedProperty": {
+        "name": "Prusa i3 Filament Change",
+        "description": "The Filament color and type of the Prusa i3 3D printer",
+        "definition": "http://il081:6789/edit_filaments"
+      },
+      "Thing": "demo_thing",
+      "Sensor": "demo_sensor"
+    },
+    "demo_quantity1": {
+      "name": "GammaVariate",
+      "description": "This is a random variable which is gamma distributed with alpha of 2 and beta of 2.",
+      "observationType": "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Observation",
+      "unitOfMeasurement": {
+        "name": "filament",
+        "symbol": "srfg.prusa3d.filament",
+        "definition": "string"
+      },
+      "ObservedProperty": {
+        "name": "Prusa i3 Filament Change",
+        "description": "The Filament color and type of the Prusa i3 3D printer",
+        "definition": "http://il081:6789/edit_filaments"
+      },
+      "Thing": "demo_thing",
+      "Sensor": "demo_sensor"
+    }
+  }
+}
