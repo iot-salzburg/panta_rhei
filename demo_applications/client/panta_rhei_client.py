@@ -4,6 +4,8 @@ import time
 import logging
 import requests
 import sys
+import pytz
+from datetime import datetime
 
 # confluent_kafka is based on librdkafka, details in requirements.txt
 #from confluent_kafka import Producer, Consumer, KafkaError
@@ -28,8 +30,14 @@ class PantaRheiClient:
         config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
         with open(config_file) as f:
             self.config = json.loads(f.read())
-            self.config.pop("_comment")
+            self.config.pop("_comment", None)
             self.logger.info("Successfully loaded configs.")
+
+        type_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "type_mappings.json")
+        with open(type_file) as f:
+            self.type_mapping = json.loads(f.read())
+            self.type_mapping.pop("_comment", None)
+            self.logger.info("Successfully loaded type mappings.")
 
         # Check Sensorthings connection
             self.logger.info("Checking Sensorthings connection")
@@ -41,26 +49,27 @@ class PantaRheiClient:
             self.logger.error("Error, couldn't connect to GOST server: {}, status code: {}, result: {}".format(
                 gost_url, res.status_code, res.json()))
 
-        # Init Kafka, test for KAFKA_TOPICS_LOGS with an unique group.id
-            self.logger.info("Checking Kafka connection")
-        # conf = {'bootstrap.servers': self.config["BOOTSTRAP_SERVERS"], 'group.id': self.config["KAFKA_GROUP_ID"]}
+        # # Init Kafka, test for KAFKA_TOPICS_LOGS with an unique group.id
+        #     self.logger.info("Checking Kafka connection")
+        # # conf = {'bootstrap.servers': self.config["BOOTSTRAP_SERVERS"], 'group.id': self.config["KAFKA_GROUP_ID"]}
+        # # consumer = confluent_kafka.Consumer(**conf)
+        # # TODO Check if that is valid and also return for the first adapter a valid solution.
+        # check_group_id = str(hash(self.config["KAFKA_GROUP_ID"] + "_" + str(time.time())))[-3:]  # Use a 3 digit hash
+        # conf = {'bootstrap.servers': self.config["BOOTSTRAP_SERVERS"],
+        #         'session.timeout.ms': 6000,
+        #         'group.id': check_group_id}
         # consumer = confluent_kafka.Consumer(**conf)
-        # TODO Check if that is valid and also return for the first adapter a valid solution.
-        check_group_id = str(hash(self.config["KAFKA_GROUP_ID"] + "_" + str(time.time())))[-3:]  # Use a 3 digit hash
-        conf = {'bootstrap.servers': self.config["BOOTSTRAP_SERVERS"],
-                'session.timeout.ms': 6000,
-                'group.id': check_group_id}
-        consumer = confluent_kafka.Consumer(**conf)
-        consumer.subscribe([self.config["KAFKA_TOPIC_LOGS"]])
-        msg = consumer.poll()  # Waits up to 'session.timeout.ms' for a message
-        if msg is not None:
-            # print(msg.value().decode('utf-8'))
-            self.logger.info("Successfully connected to the Kafka Broker: {}".format(self.config["BOOTSTRAP_SERVERS"]))
-        else:
-            self.logger.warning("Error, couldn't connect to Kafka Broker: {}".format(self.config["BOOTSTRAP_SERVERS"]))
-        consumer.close()
+        # consumer.subscribe([self.config["KAFKA_TOPIC_LOGS"]])
+        # msg = consumer.poll()  # Waits up to 'session.timeout.ms' for a message
+        # if msg is not None:
+        #     # print(msg.value().decode('utf-8'))
+        #     self.logger.info("Successfully connected to the Kafka Broker: {}".format(self.config["BOOTSTRAP_SERVERS"]))
+        # else:
+        #     self.logger.warning("Error, couldn't connect to Kafka Broker: {}".format(self.config["BOOTSTRAP_SERVERS"]))
+        # consumer.close()
 
         self.instances = dict()
+        self.mapping = dict()
 
 
     def register(self, instance_file):
@@ -155,6 +164,7 @@ class PantaRheiClient:
                     "Problems to upsert Sensors on instance: {}, with URI: {}, status code: {}, payload: {}".format(
                         name, uri, status_max, json.dumps(res.json(), indent=2)))
 
+        # TODO Register Oberservation property extra
 
         # Register Datastreams with observation. Patch or post
         gost_datastreams = requests.get(gost_url + "/v1.0/Datastreams").json()
@@ -205,8 +215,74 @@ class PantaRheiClient:
             items = [{"name": key, "@iot.id": value["@iot.id"]} for key, value in list(self.instances[key].items())]
             self.logger.info(items)
 
-    def send(self, result):
-        pass
+        for key, value in self.instances["Datastreams"].items():
+            self.mapping[key] = {"name": value["name"],
+                                 "@iot.id": value["@iot.id"],
+                                 "type": self.type_mapping[value["observationType"]]}
+        self.logger.info("Successfully loaded mapping")
+        # print(self.mapping)
+
+        # Create Kafka Producer
+        self.producer = confluent_kafka.Producer({'bootstrap.servers': self.config["BOOTSTRAP_SERVERS"]})
+        self.logger.info("Successfully created Kafka Producer")
+
+    def send(self, quantity, result, timestamp=None):
+        data_type = self.mapping[quantity]["type"]
+        # TODO differentiate better, create more topics. View desktop file
+        if data_type in ["boolean", "integer", "double", "string", "object"]:
+            kafka_topic = self.config["KAFKA_TOPIC_METRIC"]
+        elif data_type == "logging":
+            kafka_topic = self.config["KAFKA_TOPIC_LOGGING"]
+        else:
+            kafka_topic = self.config["KAFKA_TOPIC_LOGGING"]
+
+        timestamp = self.get_iso8601_time(timestamp)
+
+        data = dict({"phenomenonTime": timestamp,
+                     "resultTime": datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat(),
+                     "result": result,
+                     "Datastream": {"@iot.id": self.mapping[quantity]["@iot.id"]}})
+
+        # Trigger any available delivery report callbacks from previous produce() calls
+        self.producer.poll(0)
+        # Asynchronously produce a message, the delivery report callback
+        # will be triggered from poll() above, or flush() below, when the message has
+        # been successfully delivered or failed permanently.
+        self.producer.produce(kafka_topic, json.dumps(data).encode('utf-8'), callback=self.delivery_report)
+        # Wait for any outstanding messages to be delivered and delivery report
+        # callbacks to be triggered.
+        self.producer.flush()
+
+    def get_iso8601_time(self, timestamp):
+        if timestamp is None:
+            return datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat()
+        if isinstance(timestamp, str):
+            if timestamp.endswith("Z"):  # Expects the timestamp in the form of 2018-11-06T13:57:55.088294Z
+                return datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%S.%fZ').replace(tzinfo=pytz.UTC).isoformat()
+            else:  # Expects the timestamp in the form of  2018-11-06T13:57:55.088294+00:00
+                return datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%S.%f+00:00').replace(tzinfo=pytz.UTC).isoformat()
+
+        if isinstance(timestamp, float):  # Expects the timestamp in the form of 1541514377.497349 (s)
+            return datetime.utcfromtimestamp(timestamp).replace(tzinfo=pytz.UTC).isoformat()
+
+        if isinstance(timestamp, int):
+            if timestamp < 1e12:  # Expects the timestamp in the form of 1541514377 (s)
+                return datetime.utcfromtimestamp(timestamp).replace(tzinfo=pytz.UTC).isoformat()
+            elif timestamp < 1e15:  # Expects the timestamp in the form of 1541514377497 (ms)
+                return datetime.utcfromtimestamp(timestamp / 1e3).replace(tzinfo=pytz.UTC).isoformat()
+            elif timestamp < 1e15:  # Expects the timestamp in the form of 1541514377497 (us)
+                return datetime.utcfromtimestamp(timestamp / 1e6).replace(tzinfo=pytz.UTC).isoformat()
+            else:  # Expects the timestamp in the form of 1541514377497349 (ns)
+                return datetime.utcfromtimestamp(timestamp / 1e9).replace(tzinfo=pytz.UTC).isoformat()
+
+    def delivery_report(self, err, msg):
+        """ Called once for each message produced to indicate delivery result.
+            Triggered by poll() or flush(). """
+        if err is not None:
+            self.logger.warning('Message delivery failed: {}'.format(err))
+        else:
+            self.logger.info('Message delivered to {} [{}]'.format(msg.topic(), msg.partition()))
+
 
     def subscribe(self):
         pass

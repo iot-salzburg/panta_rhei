@@ -31,7 +31,7 @@
     "demo_quantity0": {
       "name": "NormalVariate",
       "description": "This is a random variable which is normally distributed with expected value 0 and standard deviation 1.",
-      "observationType": "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Observation",
+      "observationType": "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Measurement",
       "unitOfMeasurement": {
         "name": "filament",
         "symbol": "srfg.prusa3d.filament",
@@ -48,7 +48,7 @@
     "demo_quantity1": {
       "name": "GammaVariate",
       "description": "This is a random variable which is gamma distributed with alpha of 2 and beta of 2.",
-      "observationType": "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Observation",
+      "observationType": "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Measurement",
       "unitOfMeasurement": {
         "name": "filament",
         "symbol": "srfg.prusa3d.filament",

@@ -1,0 +1,8 @@
+{
+  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_TruthObservation": "boolean",
+  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_CountObservation": "integer",
+  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Measurement": "double",
+  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_CategoryObservation": "string",
+  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Observation": "object",
+  "Logging": "logging"
+}
