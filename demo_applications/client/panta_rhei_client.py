@@ -8,7 +8,6 @@ import pytz
 from datetime import datetime
 
 # confluent_kafka is based on librdkafka, details in requirements.txt
-#from confluent_kafka import Producer, Consumer, KafkaError
 import confluent_kafka
 
 
@@ -70,7 +69,6 @@ class PantaRheiClient:
 
         self.instances = dict()
         self.mapping = dict()
-
 
     def register(self, instance_file):
         """
@@ -283,12 +281,42 @@ class PantaRheiClient:
         else:
             self.logger.info('Message delivered to {} [{}]'.format(msg.topic(), msg.partition()))
 
+    def subscribe(self, subscription_file):
+        self.logger.info("Loading instances")
+        # subscripted_ds: ['ds0', 'ds1']
+        with open(subscription_file) as f:
+            subscriptions = json.loads(f.read())
+        # Make structure pretty
+        with open(subscription_file, "w") as f:
+            f.write(json.dumps(subscriptions, indent=2))
 
-    def subscribe(self):
-        pass
+        self.logger.info("Subscribed to datastreams: {}".format(subscriptions["subscripted_ds"]))
 
-    def poll(self):
-        pass
+        conf = {'bootstrap.servers': self.config["BOOTSTRAP_SERVERS"],
+                'session.timeout.ms': 6000,
+                'group.id': self.config["KAFKA_GROUP_ID"]}
+
+        self.consumer = confluent_kafka.Consumer(**conf)
+        self.consumer.subscribe([self.config["KAFKA_TOPIC_METRIC"], self.config["KAFKA_TOPIC_LOGGING"]])
+
+        gost_url = "http://" + self.config["GOST_SERVER"] + ":" + self.config["GOST_PORT"]
+        gost_datastreams = requests.get(gost_url + "/v1.0/Datastreams").json()["value"]
+        self.subscribed_datastream_ids = [ds["@iot.id"] for ds in gost_datastreams if ds["name"] in subscriptions["subscripted_ds"]]
+        print(self.subscribed_datastream_ids)
+
+    def poll(self, datastream, timeout=0.1):
+        msg = self.consumer.poll(timeout)  # Waits up to 'session.timeout.ms' for a message
+
+        if msg is None:
+            pass
+        elif not msg.error():
+            return msg.value().decode('utf-8')
+        else:
+            if msg.error().code() == confluent_kafka.KafkaError._PARTITION_EOF:
+                self.logger.info("confluent_kafka.KafkaError._PARTITION_EOF")
+            else:
+                self.logger.error(msg.error())
 
     def disconnect(self):
-        pass
+        self.producer.flush()
+        self.consumer.close()
