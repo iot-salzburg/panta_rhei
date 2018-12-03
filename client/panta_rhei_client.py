@@ -12,13 +12,14 @@ import confluent_kafka
 
 
 class PantaRheiClient:
-    def __init__(self):
+    def __init__(self, client_name):
         """
         Inits logger and configs
         Checks gost server connection
         Checks and tests kafka broker connection
         """
         # Init logging
+        self.client_name = client_name  # is used as group_id
         self.logger = logging.getLogger("PR Client Logger")
         self.logger.setLevel(logging.INFO)
         logging.basicConfig(level='WARNING')
@@ -50,10 +51,10 @@ class PantaRheiClient:
 
         # # Init Kafka, test for KAFKA_TOPICS_LOGS with an unique group.id
         #     self.logger.info("Checking Kafka connection")
-        # # conf = {'bootstrap.servers': self.config["BOOTSTRAP_SERVERS"], 'group.id': self.config["KAFKA_GROUP_ID"]}
+        # # conf = {'bootstrap.servers': self.config["BOOTSTRAP_SERVERS"], 'group.id': self.client_name}
         # # consumer = confluent_kafka.Consumer(**conf)
         # # TODO Check if that is valid and also return for the first adapter a valid solution.
-        # check_group_id = str(hash(self.config["KAFKA_GROUP_ID"] + "_" + str(time.time())))[-3:]  # Use a 3 digit hash
+        # check_group_id = str(hash(self.client_name + "_" + str(time.time())))[-3:]  # Use a 3 digit hash
         # conf = {'bootstrap.servers': self.config["BOOTSTRAP_SERVERS"],
         #         'session.timeout.ms': 6000,
         #         'group.id': check_group_id}
@@ -225,7 +226,12 @@ class PantaRheiClient:
         self.logger.info("Successfully created Kafka Producer")
 
     def send(self, quantity, result, timestamp=None):
-        data_type = self.mapping[quantity]["type"]
+        try:
+            data_type = self.mapping[quantity]["type"]
+        except KeyError:
+            self.logger.error("Quantity is not registered: {}".format(quantity))
+            sys.exit(1)
+
         # TODO differentiate better, create more topics. View desktop file
         if data_type in ["boolean", "integer", "double", "string", "object"]:
             kafka_topic = self.config["KAFKA_TOPIC_METRIC"]
@@ -246,7 +252,8 @@ class PantaRheiClient:
         # Asynchronously produce a message, the delivery report callback
         # will be triggered from poll() above, or flush() below, when the message has
         # been successfully delivered or failed permanently.
-        self.producer.produce(kafka_topic, json.dumps(data).encode('utf-8'), callback=self.delivery_report)
+        self.producer.produce(kafka_topic, json.dumps(data).encode('utf-8'), key=self.client_name,
+                              callback=self.delivery_report)
         # Wait for any outstanding messages to be delivered and delivery report
         # callbacks to be triggered.
         self.producer.flush()
@@ -294,7 +301,7 @@ class PantaRheiClient:
 
         conf = {'bootstrap.servers': self.config["BOOTSTRAP_SERVERS"],
                 'session.timeout.ms': 6000,
-                'group.id': self.config["KAFKA_GROUP_ID"]}
+                'group.id': self.client_name}
 
         self.consumer = confluent_kafka.Consumer(**conf)
         self.consumer.subscribe([self.config["KAFKA_TOPIC_METRIC"], self.config["KAFKA_TOPIC_LOGGING"]])
@@ -304,19 +311,25 @@ class PantaRheiClient:
         self.subscribed_datastream_ids = [ds["@iot.id"] for ds in gost_datastreams if ds["name"] in subscriptions["subscripted_ds"]]
         print(self.subscribed_datastream_ids)
 
-    def poll(self, datastream, timeout=0.1):
+    def poll(self, timeout=0.1):
         msg = self.consumer.poll(timeout)  # Waits up to 'session.timeout.ms' for a message
 
         if msg is None:
             pass
         elif not msg.error():
-            return msg.value().decode('utf-8')
+            return json.loads(msg.value().decode('utf-8'))
         else:
             if msg.error().code() == confluent_kafka.KafkaError._PARTITION_EOF:
-                self.logger.info("confluent_kafka.KafkaError._PARTITION_EOF")
+                self.logger.warning("confluent_kafka.KafkaError._PARTITION_EOF exception")
             else:
                 self.logger.error(msg.error())
 
     def disconnect(self):
-        self.producer.flush()
-        self.consumer.close()
+        try:
+            self.producer.flush()
+        except AttributeError:
+            pass
+        try:
+            self.consumer.close()
+        except AttributeError:
+            pass

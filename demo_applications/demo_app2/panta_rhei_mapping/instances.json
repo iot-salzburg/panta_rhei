@@ -1,0 +1,38 @@
+{
+  "Things": {
+    "demo_machine": {
+      "name": "Demo Machine",
+      "description": "Machine to demonstrate the functionalities of the panta rhei messaging system",
+      "properties": {
+        "specification": "https://www.machine-url.com/downloads/demo-machine.pdf"
+      }
+    }
+  },
+  "Sensors": {
+    "demo_fan": {
+      "name": "CFM-7010",
+      "description": "CFM-7010-13 cooling fan",
+      "encodingType": "application/pdf",
+      "metadata": "https://www.cui.com/product/resource/cfm-70-series.pdf"
+    }
+  },
+  "Datastreams": {
+    "demo_fan-status": {
+      "name": "Fan Status",
+      "description": "This datastream describes the binary status of the fan: 0-off, 1-on",
+      "observationType": "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_TruthObservation",
+      "unitOfMeasurement": {
+        "name": "",
+        "symbol": "",
+        "definition": "boolean"
+      },
+      "ObservedProperty": {
+        "name": "Fan Status",
+        "description": "This datastream describes the binary status of the fan: 0-off, 1-on",
+        "definition": "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_TruthObservation"
+      },
+      "Thing": "demo_machine",
+      "Sensor": "demo_fan"
+    }
+  }
+}
