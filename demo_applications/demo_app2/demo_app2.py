@@ -29,15 +29,14 @@ try:
         if received_quantities is None:
             continue
 
-        print("Received new subscribed data: {}".format(received_quantities))
-        datastream_id = received_quantities.get("Datastream", None).get("@iot.id", None)
+        print("Received new data: {}".format(received_quantities))
 
-        if datastream_id == 4:
-            current_temperature = received_quantities["result"]
-            if current_temperature > 70:
-                fan_status = True
-            elif current_temperature < 60:
-                fan_status = False
+        # As we have only subscribed one datastream, we can be sure that this is the Temperature data
+        current_temperature = received_quantities["result"]
+        if current_temperature > 70:
+            fan_status = True
+        elif current_temperature < 60:
+            fan_status = False
 
             timestamp = time.time()  # epoch and ISO 8601 UTC are both valid
 

@@ -70,6 +70,7 @@ class PantaRheiClient:
 
         self.instances = dict()
         self.mapping = dict()
+        self.subscribed_datastreams = None
 
     def register(self, instance_file):
         """
@@ -259,6 +260,12 @@ class PantaRheiClient:
         self.producer.flush()
 
     def get_iso8601_time(self, timestamp):
+        """
+        This function converts multiple standard timestamps to ISO 8601 UTC datetime.
+        The output is strictly in the following style: 2018-12-03T15:55:39.054752+00:00
+        :param timestamp: either ISO 8601 or a 10,13,16 or 19 digit unix epoch format.
+        :return: ISO 8601 format. e.g. 2018-12-03T15:55:39.054752+00:00
+        """
         if timestamp is None:
             return datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat()
         if isinstance(timestamp, str):
@@ -282,14 +289,21 @@ class PantaRheiClient:
 
     def delivery_report(self, err, msg):
         """ Called once for each message produced to indicate delivery result.
-            Triggered by poll() or flush(). """
+            Triggered by poll() or flush()."""
         if err is not None:
-            self.logger.warning('Message delivery failed: {}'.format(err))
+            self.logger.warning('delivery_report: Message delivery failed: {}'.format(err))
         else:
-            self.logger.info('Message delivered to {} [{}]'.format(msg.topic(), msg.partition()))
+            self.logger.debug("delivery_report: Message delivered to topic: '{}', partitions: [{}]".format(msg.topic(), msg.partition()))
 
     def subscribe(self, subscription_file):
-        self.logger.info("Loading instances")
+        """
+        Create a Kafka consumer instance
+        Subscribe to datastream names which are stored in the subscription_file.
+        Load metadata for subscribed datastreams from the GOST server and store in attributes
+        :param subscription_file:
+        :return:
+        """
+        self.logger.info("subscribe: Subscribing on {}, loading instances".format(subscription_file))
         # subscripted_ds: ['ds0', 'ds1']
         with open(subscription_file) as f:
             subscriptions = json.loads(f.read())
@@ -297,34 +311,60 @@ class PantaRheiClient:
         with open(subscription_file, "w") as f:
             f.write(json.dumps(subscriptions, indent=2))
 
-        self.logger.info("Subscribed to datastreams: {}".format(subscriptions["subscripted_ds"]))
+        self.logger.info("subscribe: Subscribing to datastreams with names: {}".format(subscriptions["subscripted_ds"]))
 
+        # Create Kafka Consumer instance
         conf = {'bootstrap.servers': self.config["BOOTSTRAP_SERVERS"],
                 'session.timeout.ms': 6000,
                 'group.id': self.client_name}
-
         self.consumer = confluent_kafka.Consumer(**conf)
         self.consumer.subscribe([self.config["KAFKA_TOPIC_METRIC"], self.config["KAFKA_TOPIC_LOGGING"]])
 
+        # get subscribed datastreams of the form:
+        # {4: {'@iot.id': 4, 'name': 'Machine Temperature', '@iot.selfLink': 'http://...}, 5: {....}, ...}
         gost_url = "http://" + self.config["GOST_SERVER"] + ":" + self.config["GOST_PORT"]
         gost_datastreams = requests.get(gost_url + "/v1.0/Datastreams").json()["value"]
-        self.subscribed_datastream_ids = [ds["@iot.id"] for ds in gost_datastreams if ds["name"] in subscriptions["subscripted_ds"]]
-        print(self.subscribed_datastream_ids)
+        self.subscribed_datastreams = {ds["@iot.id"]: ds for ds in gost_datastreams if ds["name"]
+                                       in subscriptions["subscripted_ds"]}
+        # self.subscribed_datastreams_full = dict()
+        # TODO augment with Sensor and Thing data
+        for key, value in self.subscribed_datastreams.items():
+            self.logger.info("subscribe: Subscribed to datastream: id: {}, definition: {}".format(key, value))
+        if len(self.subscribed_datastreams.keys()) == 0:
+            self.logger.info("subscribe: No subscription matches an existing datastream.")
 
     def poll(self, timeout=0.1):
+        """
+        Receives data from the Kafka topics. On new data, it checks if it is valid, filters for subscribed datastreams
+        and returns the message augmented with datastream metadata.
+        :param timeout: duration how long to wait to reveive data
+        :return: either None or data in SensorThings format and augmented with metadata for each received and
+        subscribed datastream. e.g.
+        {'phenomenonTime': '2018-12-03T16:08:03.366855+00:00', 'resultTime': '2018-12-03T16:08:03.367045+00:00',
+        'result': 50.44982168968592, 'Datastream': {'@iot.id': 4, ...}
+        """
         msg = self.consumer.poll(timeout)  # Waits up to 'session.timeout.ms' for a message
 
         if msg is None:
             pass
         elif not msg.error():
-            return json.loads(msg.value().decode('utf-8'))
+            data = json.loads(msg.value().decode('utf-8'))
+            iot_id = data.get("Datastream", None).get("@iot.id", None)
+            if iot_id in self.subscribed_datastreams.keys():
+                data["Datastream"] = self.subscribed_datastreams[iot_id]
+                return data
         else:
             if msg.error().code() == confluent_kafka.KafkaError._PARTITION_EOF:
-                self.logger.warning("confluent_kafka.KafkaError._PARTITION_EOF exception")
+                # self.logger.warning("poll: confluent_kafka.KafkaError._PARTITION_EOF exception")
+                pass
             else:
-                self.logger.error(msg.error())
+                self.logger.error("poll: {}".format(msg.error()))
 
     def disconnect(self):
+        """
+        Disconnect and close Kafka Connections
+        :return:
+        """
         try:
             self.producer.flush()
         except AttributeError:
@@ -333,3 +373,4 @@ class PantaRheiClient:
             self.consumer.close()
         except AttributeError:
             pass
+        self.logger.info("disconnect: Panta Rhei Client successfully disconnected")
