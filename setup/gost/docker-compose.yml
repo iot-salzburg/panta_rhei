@@ -36,7 +36,7 @@ services:
     environment:
         GOST_DB_HOST: gost-db
 #        GOST_SERVER_EXTERNAL_URI: http://il081:8084
-        GOST_SERVER_EXTERNAL_URI: http://192.168.48.112:8084
+        GOST_SERVER_EXTERNAL_URI: http://localhost:8082
         GOST_SERVER_MAX_ENTITIES: 200
     deploy:
       placement:
@@ -58,7 +58,7 @@ services:
     image: geodan/gost-dashboard
     restart: always
     ports:  # use port 8080 for internal requests
-      - 8084:8080
+      - 8082:8080
     depends_on:
       - gost
     deploy:

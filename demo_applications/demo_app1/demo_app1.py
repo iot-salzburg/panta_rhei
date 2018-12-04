@@ -9,16 +9,26 @@ Example:
         Jupyter and Grafana helps to display the data.
 """
 
+import os
+import sys
+import inspect
+
 import time
 import pytz
 from datetime import datetime
 
+# Append path of client to pythonpath in order to import the client from cli
+sys.path.append(os.getcwd())
 from client.panta_rhei_client import PantaRheiClient
 from demo_applications.demo_app1.RandomisedTemp import RandomisedTemp
 
-PANTA_RHEI_INSTANCES = "panta_rhei_mapping/instances.json"
-PANTA_RHEI_SUBSCRIPTIONS = "panta_rhei_mapping/subscriptions.json"
+# Get dirname from inspect module
+filename = inspect.getframeinfo(inspect.currentframe()).filename
+dirname = os.path.dirname(os.path.abspath(filename))
+PANTA_RHEI_INSTANCES = os.path.join(dirname, "panta_rhei_mapping/instances.json")
+PANTA_RHEI_SUBSCRIPTIONS = os.path.join(dirname, "panta_rhei_mapping/subscriptions.json")
 
+# Init a new Panta Rhei Instance and register file structure
 client = PantaRheiClient("demo_app1")
 client.register(instance_file=PANTA_RHEI_INSTANCES)
 
@@ -33,6 +43,8 @@ try:
 
         # Send the demo temperature
         client.send(quantity="demo_temperature", result=demo_temp, timestamp=timestamp)
+
+        # Print the temperature with the corresponding timestamp in ISO format
         print("The temperature of the demo machine is {} °C at {}".format(
             demo_temp, datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat()))
 

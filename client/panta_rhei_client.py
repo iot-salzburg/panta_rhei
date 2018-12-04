@@ -40,7 +40,7 @@ class PantaRheiClient:
 
         # Check Sensorthings connection
         self.logger.info("init: Checking Sensorthings connection")
-        gost_url = "http://" + self.config["GOST_SERVER"] + ":" + self.config["GOST_PORT"]
+        gost_url = "http://" + self.config["GOST_SERVER"]
         res = requests.get(gost_url + "/v1.0/Things")
         if res.status_code in [200, 201, 202]:
             self.logger.info("init: Successfully connected to GOST server {}.".format(gost_url))
@@ -99,7 +99,7 @@ class PantaRheiClient:
         with open(instance_file, "w") as f:
             f.write(json.dumps(instances, indent=2))
 
-        gost_url = "http://" + self.config["GOST_SERVER"] + ":" + self.config["GOST_PORT"]
+        gost_url = "http://" + self.config["GOST_SERVER"]
 
         # Register Things. Patch or post
         self.logger.info("register: Register Things")
@@ -346,7 +346,7 @@ class PantaRheiClient:
 
         # get subscribed datastreams of the form:
         # {4: {'@iot.id': 4, 'name': 'Machine Temperature', '@iot.selfLink': 'http://...}, 5: {....}, ...}
-        gost_url = "http://" + self.config["GOST_SERVER"] + ":" + self.config["GOST_PORT"]
+        gost_url = "http://" + self.config["GOST_SERVER"]
         gost_datastreams = requests.get(gost_url + "/v1.0/Datastreams").json()["value"]
         self.subscribed_datastreams = {ds["@iot.id"]: ds for ds in gost_datastreams if ds["name"]
                                        in subscriptions["subscribed_ds"]}

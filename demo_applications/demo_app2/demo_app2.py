@@ -9,13 +9,22 @@ Example:
         Jupyter and Grafana helps to display the data.
 """
 
+import os
+import sys
+import inspect
 import time
 
+# Append path of client to pythonpath in order to import the client from cli
+sys.path.append(os.getcwd())
 from client.panta_rhei_client import PantaRheiClient
 
-PANTA_RHEI_INSTANCES = "panta_rhei_mapping/instances.json"
-PANTA_RHEI_SUBSCRIPTIONS = "panta_rhei_mapping/subscriptions.json"
+# Get dirname from inspect module
+filename = inspect.getframeinfo(inspect.currentframe()).filename
+dirname = os.path.dirname(os.path.abspath(filename))
+PANTA_RHEI_INSTANCES = os.path.join(dirname, "panta_rhei_mapping/instances.json")
+PANTA_RHEI_SUBSCRIPTIONS = os.path.join(dirname, "panta_rhei_mapping/subscriptions.json")
 
+# Init a new Panta Rhei Instance and register file structure
 client = PantaRheiClient("demo_app2")
 client.register(instance_file=PANTA_RHEI_INSTANCES)
 client.subscribe(subscription_file=PANTA_RHEI_SUBSCRIPTIONS)
