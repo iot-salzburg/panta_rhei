@@ -22,18 +22,19 @@ PANTA_RHEI_SUBSCRIPTIONS = "panta_rhei_mapping/subscriptions.json"
 client = PantaRheiClient("demo_app1")
 client.register(instance_file=PANTA_RHEI_INSTANCES)
 
-
 randomised_temp = RandomisedTemp()
 try:
     while True:
-        timestamp = time.time()  # epoch and ISO 8601 UTC are both valid
+        # epoch and ISO 8601 UTC are both valid
+        timestamp = time.time()
 
-        # Measure and send the demo temperature
+        # Measure the demo temperature
         demo_temp = randomised_temp.get_temp()
 
+        # Send the demo temperature
         client.send(quantity="demo_temperature", result=demo_temp, timestamp=timestamp)
-        print("The temperature of the demo machine is {} °C at {}".format(demo_temp,
-                                                        datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat()))
+        print("The temperature of the demo machine is {} °C at {}".format(
+            demo_temp, datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat()))
 
         time.sleep(1)
 

@@ -24,7 +24,6 @@ fan_status = False
 try:
     while True:
         # Receive all queued messages of 'demo_temperature'
-
         received_quantities = client.poll(timeout=1)
         if received_quantities is None:
             continue
