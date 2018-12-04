@@ -4,7 +4,7 @@
 This repository comprised 3 parts:
 * **Panta Rhei Messaging Layer** which unifies [Apache Kafka](https://kafka.apache.org/)
  with [SensorThings](http://developers.sensorup.com/docs/) 
-* **Panta Rhei Client** to easily access the Messaging Layer in only only 4 lines of code
+* **Panta Rhei Client** to easily access the Messaging Layer with only 4 lines of code
 * **Demo Application** to get started as fast as possible 
 
 
