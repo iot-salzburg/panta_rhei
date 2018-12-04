@@ -109,7 +109,3 @@ sudo sh -c 'echo "//192.168.48.60/samba-share/il08X/PantaRhei/gost-db /srv/panta
 sudo mkdir -p /srv/panta-rhei/gost_server/samba-mount
 sudo mount -a
 ```
-
-
-schreib a systemd service. des wird im gost-db eine kopiert und synchronisiert
-zwischen ./samba-data und/var/lib/postgres/data
