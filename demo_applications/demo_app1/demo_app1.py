@@ -19,7 +19,7 @@ from datetime import datetime
 
 # Append path of client to pythonpath in order to import the client from cli
 sys.path.append(os.getcwd())
-from client.panta_rhei_client import PantaRheiClient
+from client.digital_twin_client import DigitalTwinClient
 from demo_applications.demo_app1.RandomisedTemp import RandomisedTemp
 
 # Get dirname from inspect module
@@ -28,7 +28,7 @@ dirname = os.path.dirname(os.path.abspath(filename))
 PANTA_RHEI_INSTANCES = os.path.join(dirname, "panta_rhei_mapping/instances.json")
 
 # Init a new Panta Rhei Instance and register file structure
-client = PantaRheiClient("demo_app1")
+client = DigitalTwinClient("demo_app1")
 client.register(instance_file=PANTA_RHEI_INSTANCES)
 
 randomised_temp = RandomisedTemp()
