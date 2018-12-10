@@ -10,7 +10,7 @@ from datetime import datetime
 import confluent_kafka
 
 
-class PantaRheiClient:
+class DigitalTwinClient:
     def __init__(self, client_name):
         """
         Load config files
