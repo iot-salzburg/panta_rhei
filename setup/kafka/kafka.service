@@ -1,0 +1,13 @@
+[Unit]
+Description=Autostart Kafka Service
+After=network.target
+
+[Service]
+User=iotdev
+Group=iotdev
+WorkingDirectory=/kafka
+ExecStart=/kafka/bin/kafka-server-start.sh /kafka/config/il08[k].properties
+ExecReload=/kafka/bin/kafka-server-stop.sh
+
+[Install]
+WantedBy=multi-user.target

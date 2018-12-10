@@ -1,12 +1,12 @@
 import os
+import sys
 import json
 import logging
 import requests
-import sys
 import pytz
 from datetime import datetime
 
-# confluent_kafka is based on librdkafka, details in requirements.txt
+# confluent_kafka is based on librdkafka, details in install_kafka_requirements.sh
 import confluent_kafka
 
 
@@ -32,12 +32,6 @@ class PantaRheiClient:
             self.config.pop("_comment", None)
             self.logger.info("init: Successfully loaded configs.")
 
-        type_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "type_mappings.json")
-        with open(type_file) as f:
-            self.type_mapping = json.loads(f.read())
-            self.type_mapping.pop("_comment", None)
-            self.logger.info("init: Successfully loaded type mappings.")
-
         # Check Sensorthings connection
         self.logger.info("init: Checking Sensorthings connection")
         gost_url = "http://" + self.config["GOST_SERVER"]
@@ -49,27 +43,25 @@ class PantaRheiClient:
                 gost_url, res.status_code, res.json()))
             sys.exit(1)
 
-        # # Init Kafka, test for KAFKA_TOPICS_LOGS with an unique group.id
-        #     self.logger.info("Checking Kafka connection")
-        # # conf = {'bootstrap.servers': self.config["BOOTSTRAP_SERVERS"], 'group.id': self.client_name}
-        # # consumer = confluent_kafka.Consumer(**conf)
-        # # TODO Check if that is valid and also return for the first adapter a valid solution.
-        # check_group_id = str(hash(self.client_name + "_" + str(time.time())))[-3:]  # Use a 3 digit hash
-        # conf = {'bootstrap.servers': self.config["BOOTSTRAP_SERVERS"],
-        #         'session.timeout.ms': 6000,
-        #         'group.id': check_group_id}
-        # consumer = confluent_kafka.Consumer(**conf)
-        # consumer.subscribe([self.config["KAFKA_TOPIC_LOGS"]])
-        # msg = consumer.poll()  # Waits up to 'session.timeout.ms' for a message
-        # if msg is not None:
-        #     # print(msg.value().decode('utf-8'))
-        #     self.logger.info("init: Successfully connected to the Kafka Broker: {}".format(
-        #     self.config["BOOTSTRAP_SERVERS"]))
-        # else:
-        #     self.logger.warning(init: "Error, couldn't connect to Kafka Broker: {}".format(
-        #     self.config["BOOTSTRAP_SERVERS"]))
-        # consumer.close()
+        # Init Kafka, test for "panta-rhei/Logging" with an unique group.id
+        self.logger.info("init: Checking Kafka connection")
+        check_group_id = str(hash(self.client_name + "_" + str(os.getpid())))[-3:]  # Use a 3 digit hash
+        conf = {'bootstrap.servers': self.config["BOOTSTRAP_SERVERS"],
+                'session.timeout.ms': 6000,
+                'group.id': check_group_id}
+        consumer = confluent_kafka.Consumer(**conf)
+        consumer.subscribe([self.config["panta-rhei/Logging"]])
+        msg = consumer.poll()  # Waits up to 'session.timeout.ms' for a message
+        if msg is not None:
+            # print(msg.value().decode('utf-8'))
+            self.logger.info("init: Successfully connected to the Kafka Broker: {}".format(
+                self.config["BOOTSTRAP_SERVERS"]))
+        else:
+            self.logger.warning("init: Error, couldn't connect to Kafka Broker: {}".format(
+                self.config["BOOTSTRAP_SERVERS"]))
+        consumer.close()
 
+        # Init other objects used in later methods
         self.instances = dict()
         self.mapping = dict()
         self.subscribed_datastreams = None
@@ -172,7 +164,7 @@ class PantaRheiClient:
                     "register: Problems to upsert Sensors on instance: {}, with URI: {}, status code: {}, "
                     "payload: {}".format(name, uri, status_max, json.dumps(res.json(), indent=2)))
 
-        # TODO Register Observation property extra
+        # TODO Register Observation property extra, make an own class to register all instances
         # Register Datastreams with observation. Patch or post
         self.logger.info("register: Register Datastreams")
         gost_datastreams = requests.get(gost_url + "/v1.0/Datastreams").json()
@@ -225,15 +217,19 @@ class PantaRheiClient:
             self.logger.info("register: {}".format(items))
 
         # Create Mapping to send on the correct data type
+        self.mapping["logging"] = {"name": "logging", "kafka-topic": self.config["panta-rhei/Logging"], "@iot.id": -1}
         for key, value in self.instances["Datastreams"].items():
             self.mapping[key] = {"name": value["name"],
                                  "@iot.id": value["@iot.id"],
-                                 "type": self.type_mapping[value["observationType"]]}
-        self.logger.info("register: Successfully loaded mapping")
+                                 "kafka-topic": self.config[value["observationType"]]}
+        self.logger.info("register: Successfully loaded mapping: {}".format(self.mapping))
 
         # Create Kafka Producer
         self.producer = confluent_kafka.Producer({'bootstrap.servers': self.config["BOOTSTRAP_SERVERS"]})
-        self.logger.info("register: Successfully created Kafka Producer")
+        self.send("logging", "Started Panta Rhei Client with name: {} at: {} UTC".format(
+            self.client_name, datetime.utcnow()))
+        self.logger.info("register: Successfully created Panta Rhei Client with name: {} at: {} UTC".format(
+            self.client_name, datetime.utcnow()))
 
     def send(self, quantity, result, timestamp=None):
         """
@@ -245,18 +241,11 @@ class PantaRheiClient:
         :return:
         """
         try:
-            data_type = self.mapping[quantity]["type"]
+            kafka_topic = self.mapping[quantity]["kafka-topic"]
+            # self.logger.info("Sending to kafka topic: {}".format(kafka_topic))
         except KeyError:
             self.logger.error("send: Quantity is not registered: {}".format(quantity))
             sys.exit(1)
-
-        # TODO differentiate better, create more topics. View desktop file
-        if data_type in ["boolean", "integer", "double", "string", "object"]:
-            kafka_topic = self.config["KAFKA_TOPIC_METRIC"]
-        elif data_type == "logging":
-            kafka_topic = self.config["KAFKA_TOPIC_LOGGING"]
-        else:
-            kafka_topic = self.config["KAFKA_TOPIC_LOGGING"]
 
         timestamp = self.get_iso8601_time(timestamp)
 
@@ -342,7 +331,12 @@ class PantaRheiClient:
                 'session.timeout.ms': 6000,
                 'group.id': self.client_name}
         self.consumer = confluent_kafka.Consumer(**conf)
-        self.consumer.subscribe([self.config["KAFKA_TOPIC_METRIC"], self.config["KAFKA_TOPIC_LOGGING"]])
+        self.consumer.subscribe(
+            [self.config["http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_TruthObservation"],
+             self.config["http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_CountObservation"],
+             self.config["http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Measurement"],
+             self.config["http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_CategoryObservation"],
+             self.config["http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Observation"]])
 
         # get subscribed datastreams of the form:
         # {4: {'@iot.id': 4, 'name': 'Machine Temperature', '@iot.selfLink': 'http://...}, 5: {....}, ...}

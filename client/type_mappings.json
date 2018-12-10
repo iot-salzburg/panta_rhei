@@ -1,8 +1,9 @@
 {
-  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_TruthObservation": "boolean",
-  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_CountObservation": "integer",
-  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Measurement": "double",
-  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_CategoryObservation": "string",
-  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Observation": "object",
-  "Logging": "logging"
+  "_comment": "These types must fit with the kafka topic postfixes in config.json of the client. TODO: this could be removed",
+  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_TruthObservation": "KAFKA_TOPIC_METRIC",
+  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_CountObservation": "KAFKA_TOPIC_METRIC",
+  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Measurement": "KAFKA_TOPIC_METRIC",
+  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_CategoryObservation": "KAFKA_TOPIC_STRING",
+  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Observation": "KAFKA_TOPIC_OBJECT",
+  "Logging": "KAFKA_TOPIC_LOGGING"
 }
