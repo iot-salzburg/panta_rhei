@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 apt-get update
+cd ~
 git clone https://github.com/edenhill/librdkafka
 cd librdkafka
 git checkout v0.11.1 && \

@@ -7,7 +7,14 @@ This repository comprised 3 parts:
 * **Panta Rhei Client** to easily access the Messaging Layer with only 4 lines of code
 * **Demo Application** to get started as fast as possible 
 
+Example on how to send data using the Panta Rhei Client
 
+```python
+from client.panta_rhei_client import PantaRheiClient
+client = PantaRheiClient("demo_app1")
+client.register(instance_file="panta_rhei_mapping/instances.json")
+client.send(quantity="demo_temperature", result=23.4)
+```
 
 ## Contents
 
@@ -33,10 +40,9 @@ Here, a demo scenario will be set up on a single node.
 Currently, we use Kafka **version 0.11.0.3** as it seems to be the most reliable on, 
 but it is planned to update to version 2.X in the future. 
 
-    cd setup/kafka
-    sudo sh install-kafka-0v11.sh
-    sudo sh install-kafka-libs-0v11.sh
-    cd ..
+    cd setup
+    sudo sh /kafka/install-kafka-0v11.sh
+    sudo sh /kafka/install-kafka-libs-0v11.sh
     sudo pip install -r requirements.txt
 
 Then, to test the installation:
