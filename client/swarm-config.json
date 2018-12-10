@@ -1,0 +1,18 @@
+{
+  "_comment": "Kafka Config",
+  "BOOTSTRAP_SERVERS": "192.168.48.81:9092,192.168.48.82:9092,192.168.48.83:9092",
+  "_BOOTSTRAP_SERVERS": "localhost:9092",
+
+  "_comment": "SensorThings Config: check in setup/gost/docker-compose.yml for the settings",
+  "GOST_SERVER": "192.168.48.81:8082",
+  "_GOST_SERVER": "localhost:8082",
+  "_GOST_VERSION": "0.5",
+
+  "_comment": "SensorThings Type Mapping: These types must fit with the kafka topic in config.json of the client.",
+  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_TruthObservation": "pr.dtz.metric",
+  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_CountObservation": "pr.dtz.metric",
+  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Measurement": "pr.dtz.metric",
+  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_CategoryObservation": "pr.dtz.string",
+  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Observation": "pr.dtz.object",
+  "panta-rhei/Logging": "pr.dtz.logging"
+}

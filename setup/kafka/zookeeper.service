@@ -1,0 +1,14 @@
+[Unit]
+Description=Autostart Zookeeper Service
+After=network.target
+
+[Service]
+User=iotdev
+Group=iotdev
+WorkingDirectory=/kafka
+ExecStart=/kafka/bin/zookeeper-server-start.sh /kafka/config/zookeeper.properties
+ExecReload=/kafka/bin/zookeeper-server-stop.sh
+
+[Install]
+WantedBy=multi-user.target
+

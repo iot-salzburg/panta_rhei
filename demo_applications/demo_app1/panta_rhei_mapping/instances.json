@@ -1,0 +1,38 @@
+{
+  "Things": {
+    "demo_machine": {
+      "name": "Demo Machine",
+      "description": "Machine to demonstrate the functionalities of the panta rhei messaging system",
+      "properties": {
+        "specification": "https://www.machine-url.com/downloads/demo-machine.pdf"
+      }
+    }
+  },
+  "Sensors": {
+    "demo_temp-sensor": {
+      "name": "DHT11",
+      "description": "DHT11 temperature sensor",
+      "encodingType": "application/pdf",
+      "metadata": "https://cdn-shop.adafruit.com/datasheets/DHT22.pdf"
+    }
+  },
+  "Datastreams": {
+    "demo_temperature": {
+      "name": "Machine Temperature",
+      "description": "Machine Temperature measured on the outer case",
+      "observationType": "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Measurement",
+      "unitOfMeasurement": {
+        "name": "Degree Celsius",
+        "symbol": "degC",
+        "definition": "http://www.qudt.org/qudt/owl/1.0.0/unit/Instances.html#DegreeCelsius"
+      },
+      "ObservedProperty": {
+        "name": "Machine Temperature",
+        "description": "Temperature of the machine's case on the outer side",
+        "definition": "http://www.qudt.org/qudt/owl/1.0.0/quantity/Instances.html#AreaTemperature"
+      },
+      "Thing": "demo_machine",
+      "Sensor": "demo_temp-sensor"
+    }
+  }
+}

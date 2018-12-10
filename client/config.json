@@ -1,0 +1,27 @@
+{
+  "_comment": "General Configs",
+  "_PORT":1810,
+
+  "_comment": "Kafka Config",
+
+  "_for all KAFKA_TOPICS": "pr.dtz.type, these keys are used for SensorThings type_mappings, TODO: remove unused entries",
+  "_KAFKA_TOPIC_METRIC": "pr.demo-system.metric",
+  "_KAFKA_TOPIC_STRING": "pr.demo-system.string",
+  "_KAFKA_TOPIC_OBJECT": "pr.demo-system.object",
+  "_KAFKA_TOPIC_LOGGING": "pr.demo-system.logging",
+  "_BOOTSTRAP_SERVERS": "192.168.48.81:9092,192.168.48.82:9092,192.168.48.83:9092",
+  "BOOTSTRAP_SERVERS": "localhost:9092",
+
+  "_comment": "SensorThings Config: check in setup/gost/docker-compose.yml for the settings",
+  "_GOST_SERVER": "192.168.48.81:8082",
+  "GOST_SERVER": "localhost:8082",
+  "GOST_VERSION": "0.5",
+
+  "_comment": "SensorThings Type Mapping: These types must fit with the kafka topic in config.json of the client.",
+  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_TruthObservation": "pr.demo-system.metric",
+  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_CountObservation": "pr.demo-system.metric",
+  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Measurement": "pr.demo-system.metric",
+  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_CategoryObservation": "pr.demo-system.string",
+  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Observation": "pr.demo-system.object",
+  "panta-rhei/Logging": "pr.demo-system.logging"
+}
