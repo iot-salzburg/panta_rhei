@@ -1,4 +1,4 @@
-# Salzburg Research Digital Twin Stack
+# Digital Twin Stack
 ### A scalable and high-performance streaming platform with inherent semantic data mapping to enable a digital twin.
 
 This repository comprised 3 parts:
