@@ -41,9 +41,9 @@ Currently, we use Kafka **version 0.11.0.3** as it seems to be the most reliable
 but it is planned to update to version 2.X in the future. 
 
     cd setup
-    sudo sh /kafka/install-kafka-0v11.sh
-    sudo sh /kafka/install-kafka-libs-0v11.sh
-    sudo pip install -r requirements.txt
+    sudo sh kafka/install-kafka-0v11.sh
+    sudo sh kafka/install-kafka-libs-0v11.sh
+    sudo pip3 install -r requirements.txt
 
 Then, to test the installation:
 
@@ -151,9 +151,34 @@ The deployment in cluster node needs the following steps:
 
 
 
-* Create Topics for your specific application system
-
+*   Create Topics for your specific application system, which should be configured in 
+    `client/config.json`:  (If not set, the topics in the config.json will be used, which 
+    use the default settings of replication-factor 1 and 1 partition). 
+    Here zookeeper is available on `192.168.48.81:2181` and there are in total 3 available brokers.
     
+        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --create --topic pr.dtz.metric --replication-factor 2 --partitions 3 --config cleanup.policy=compact --config retention.ms=3628800000 --config retention.bytes=-1
+        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --create --topic pr.dtz.string --replication-factor 2 --partitions 3 --config cleanup.policy=compact --config retention.ms=3628800000 --config retention.bytes=-1
+        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --create --topic pr.dtz.object --replication-factor 2 --partitions 3 --config cleanup.policy=compact --config retention.ms=3628800000 --config retention.bytes=-1
+        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --create --topic pr.dtz.logging --replication-factor 1 --partitions 1 --config cleanup.policy=compact --config retention.ms=3628800000 --config retention.bytes=-1
+     
+        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --list
+        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --describe --topic pr.dtz.metric
+        > Topic:pr.dtz.metric	PartitionCount:3	ReplicationFactor:2	Configs:retention.ms=3628800000,cleanup.policy=compact,retention.bytes=-1
+	    >     Topic: pr.dtz.metric	Partition: 0	Leader: 3	Replicas: 3,2	Isr: 3,2
+	    >     Topic: pr.dtz.metric	Partition: 1	Leader: 1	Replicas: 1,3	Isr: 1,3
+	    >     Topic: pr.dtz.metric	Partition: 2	Leader: 2	Replicas: 2,1	Isr: 2,1
+
+
+To delete topics, search for topics and then remove the desired directory:
+
+    /kafka/bin/zookeeper-shell.sh 192.168.48.81:2181 ls /brokers/topics
+    /kafka/bin/zookeeper-shell.sh 192.168.48.81:2181 rmr /brokers/topics/topicname
+
+To stop Kafka or Zookeeper:
+
+    /kafka/bin/kafka-server-stop.sh
+    /kafka/bin/zookeeper-server-stop.sh
+
 
 #### Setup of a Docker Swarm
 
@@ -164,40 +189,70 @@ line to `/etc/sysctl.conf` on each node and reboot.
 
     vm.max_map_count=262144
  
- 
-#### (optional) Deploy SensorThings 
-  In Cluster mode, but fixed on one node (in this case node il082, but everything can done
-  from any docker manager):
-
-Using `docker stack`:
-
-If not already done, add a registry instance to register the image
+ If not already done, add a registry instance to register the image
 ```bash
 docker service create --name registry --publish published=5001,target=5000 registry:2
 curl 127.0.0.1:5001/v2/
 ```
 This should output `{}`:
 
+ 
+#### Deploy SensorThings 
 
-If running with docker-coTrouble-shootingmpose works, push the image in
-order to make the customized image runnable in the stack and deploy it:
+In cluster mode, it is important that the data-backend of the service `gost-db` is never changed,
+as it is by default, whenever a service restarts on a different node.
+To handle this, there are 2 options: (note, that for each option, the used **docker compose file 
+may have to be changed**)
 
-```bash
-cd ../setup/gost
-./gost_start.sh
-```
+*   **Fixate** each service on the same node forever using `setup/gost/swarm_docker-compose.yml`.
+    To deploy, run:
+    
+        cd ../setup/gost
+        ./start-gost.sh
 
-Watch if everything worked well with:
+*   Use a **shared filesystem** suited for docker (note that docker only allows to mount a 
+    subdirectories by default).
+    In this example, we are using **GlusterFS**, find tutorials on how to set it up 
+    [here](https://www.howtoforge.com/tutorial/high-availability-storage-with-glusterfs-on-ubuntu-1804/) 
+    and [here](http://embaby.com/blog/using-glusterfs-docker-swarm-cluster/). 
+    To deploy with an existing shared GlusterFS in `/mnt/glusterfs for each node`, run the 
+    compose file with the name `swarm_docker-compose-with-glusterfs.yml` on the swarm manager with:
+    
+        cd ../setup/gost
+        ./start-gost-with-glusterfs.sh
 
-```bash
-./gost_show.sh
-```
-And stop the service with:
-    ./gost_stop.sh
+
+The services should be available on [http://hostname:8082](http://hostname:8082)
+To check if the deployment was successful and to stop the services stack:
+
+    ./show-gost.sh
+    ./stop-gost.sh
      
  
+ 
 #### Configure the client
-  Which is done in `client/config.json`
+  Which is done in `client/config.json`. An example of how this config can look like is
+  in `client/swarm-config.json`, where the lines are changed as shown here:
+  
+  ```json
+  {
+  "_comment": "Kafka Config",
+  "BOOTSTRAP_SERVERS": "192.168.48.81:9092,192.168.48.82:9092,192.168.48.83:9092",
+  
+  "_comment": "SensorThings Config: check in setup/gost/docker-compose.yml for the settings",
+  "GOST_SERVER": "192.168.48.81:8082",
+  
+  "_comment": "SensorThings Type Mapping: These types must fit with the kafka topic in config.json of the client.",
+  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_TruthObservation": "pr.dtz.metric",
+  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_CountObservation": "pr.dtz.metric",
+  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Measurement": "pr.dtz.metric",
+  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_CategoryObservation": "pr.dtz.string",
+  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Observation": "pr.dtz.object",
+  "panta-rhei/Logging": "pr.dtz.logging"
+}
+  ```
+  
+  
 
 
 #### Deploy your application in cluster mode
