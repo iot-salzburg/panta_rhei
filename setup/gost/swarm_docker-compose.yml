@@ -1,0 +1,83 @@
+version: "3.4"
+
+services:
+
+  gost-db:
+    image: geodan/gost-db
+    restart: always
+    volumes:
+      - postgis:/var/lib/postgresql/data
+#      - /mnt/glusterfs/dtz/gost/postgis:/var/lib/postgresql/data
+    environment:
+        POSTGRES_DB: gost
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+    deploy:
+# Each service must be constrained on a single node, otherwise the volume will be switched
+      placement:
+        constraints:
+          - node.labels.kafka==82
+      resources:
+        limits:
+          cpus: "1"
+          memory: 4G
+      replicas: 1
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+
+  gost:
+    image: geodan/gost
+    restart: always
+    volumes:
+        - gost_conf:/gostserver/config
+    depends_on:
+        - gost-db
+    environment:
+        GOST_DB_HOST: gost-db
+        GOST_SERVER_EXTERNAL_URI: http://192.168.48.81:8082
+#        GOST_SERVER_EXTERNAL_URI: http://localhost:8082
+        GOST_SERVER_MAX_ENTITIES: 200
+    deploy:
+      placement:
+        constraints:
+          - node.labels.kafka==82
+      resources:
+        limits:
+          cpus: "1"
+          memory: 4G
+      replicas: 1
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+
+
+  dashboard:  # service reachable from kafka stack with: wget  --method GET   --output-document   - 'http://dashboard:8080/v1.0/Things(3)'
+    image: geodan/gost-dashboard
+    restart: always
+    ports:  # use port 8080 for internal requests
+      - 8082:8080
+    depends_on:
+      - gost
+    deploy:
+      placement:
+        constraints:
+          - node.labels.kafka==82
+      resources:
+        limits:
+          cpus: "1"
+          memory: 4G
+      replicas: 1
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+
+volumes:
+  postgis: {}
+  gost_conf: {}

@@ -11,20 +11,6 @@ services:
         POSTGRES_DB: gost
         POSTGRES_USER: postgres
         POSTGRES_PASSWORD: postgres
-    deploy:
-      placement:
-        constraints:
-          - node.labels.kafka==82
-      resources:
-        limits:
-          cpus: "1"
-          memory: 4G
-      replicas: 1
-      update_config:
-        parallelism: 2
-        delay: 10s
-      restart_policy:
-        condition: on-failure
 
   gost:
     image: geodan/gost
@@ -35,24 +21,9 @@ services:
         - gost-db
     environment:
         GOST_DB_HOST: gost-db
-#        GOST_SERVER_EXTERNAL_URI: http://il081:8084
+#        GOST_SERVER_EXTERNAL_URI: http://192.168.48.81:8082
         GOST_SERVER_EXTERNAL_URI: http://localhost:8082
         GOST_SERVER_MAX_ENTITIES: 200
-    deploy:
-      placement:
-        constraints:
-          - node.labels.kafka==82
-      resources:
-        limits:
-          cpus: "1"
-          memory: 4G
-      replicas: 1
-      update_config:
-        parallelism: 2
-        delay: 10s
-      restart_policy:
-        condition: on-failure
-
 
   dashboard:  # service reachable from kafka stack with: wget  --method GET   --output-document   - 'http://dashboard:8080/v1.0/Things(3)'
     image: geodan/gost-dashboard
@@ -61,20 +32,6 @@ services:
       - 8082:8080
     depends_on:
       - gost
-    deploy:
-      placement:
-        constraints:
-          - node.labels.kafka==82
-      resources:
-        limits:
-          cpus: "1"
-          memory: 4G
-      replicas: 1
-      update_config:
-        parallelism: 2
-        delay: 10s
-      restart_policy:
-        condition: on-failure
 
 volumes:
   postgis: {}
