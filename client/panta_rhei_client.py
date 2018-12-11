@@ -43,15 +43,15 @@ class PantaRheiClient:
                 gost_url, res.status_code, res.json()))
             sys.exit(1)
 
-        # Init Kafka, test for "panta-rhei/Logging" with an unique group.id
+        # Init Kafka, test for "panta_rhei/Logging" with an unique group.id
         self.logger.info("init: Checking Kafka connection")
         check_group_id = str(hash(self.client_name + "_" + str(os.getpid())))[-3:]  # Use a 3 digit hash
         conf = {'bootstrap.servers': self.config["BOOTSTRAP_SERVERS"],
                 'session.timeout.ms': 6000,
                 'group.id': check_group_id}
         consumer = confluent_kafka.Consumer(**conf)
-        consumer.subscribe([self.config["panta-rhei/Logging"]])
-        msg = consumer.poll()  # Waits up to 'session.timeout.ms' for a message
+        consumer.subscribe([self.config["panta_rhei/Logging"]])
+        msg = consumer.poll(1)  # Waits up to 1 for a message
         if msg is not None:
             # print(msg.value().decode('utf-8'))
             self.logger.info("init: Successfully connected to the Kafka Broker: {}".format(
@@ -212,12 +212,13 @@ class PantaRheiClient:
 
         self.instances = instances
         self.logger.info("register: Successfully registered instances:")
-        for key in list(self.instances.keys()):
-            items = [{"name": key, "@iot.id": value["@iot.id"]} for key, value in list(self.instances[key].items())]
+        for category in list(self.instances.keys()):
+            items = [{"name": key, "@iot.id": value["@iot.id"]} for key, value
+                     in list(self.instances[category].items())]
             self.logger.info("register: {}".format(items))
 
         # Create Mapping to send on the correct data type
-        self.mapping["logging"] = {"name": "logging", "kafka-topic": self.config["panta-rhei/Logging"], "@iot.id": -1}
+        self.mapping["logging"] = {"name": "logging", "kafka-topic": self.config["panta_rhei/Logging"], "@iot.id": -1}
         for key, value in self.instances["Datastreams"].items():
             self.mapping[key] = {"name": value["name"],
                                  "@iot.id": value["@iot.id"],
