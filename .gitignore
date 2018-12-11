@@ -107,3 +107,5 @@ venv.bak/
 .archive/
 archive/
 gost_server/samba-mount
+client/config.json.save*
+setup/gost/swarm_docker-compose-with-glusterfs.yml.s*
