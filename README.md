@@ -211,7 +211,7 @@ may have to be changed**)
         ./start-gost.sh
 
 *   Use a **shared filesystem** suited for docker (note that docker only allows to mount a 
-    subdirectories by default).
+    subdirectories by default). This will **deploy each service with 2 replicas**.
     In this example, we are using **GlusterFS**, find tutorials on how to set it up 
     [here](https://www.howtoforge.com/tutorial/high-availability-storage-with-glusterfs-on-ubuntu-1804/) 
     and [here](http://embaby.com/blog/using-glusterfs-docker-swarm-cluster/). 
