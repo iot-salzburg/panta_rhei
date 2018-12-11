@@ -175,9 +175,11 @@ class PantaRheiClient:
 
             dedicated_thing = instances["Datastreams"][datastream]["Thing"]
             dedicated_sensor = instances["Datastreams"][datastream]["Sensor"]
-            body = instances["Datastreams"][datastream]
-            body["Thing"] = dict({"@iot.id": instances["Things"][dedicated_thing]["@iot.id"]})
-            body["Sensor"] = dict({"@iot.id": instances["Sensors"][dedicated_sensor]["@iot.id"]})
+
+            instances["Datastreams"][datastream]["Thing"] = dict({
+                "@iot.id": instances["Things"][dedicated_thing]["@iot.id"]})
+            instances["Datastreams"][datastream]["Sensor"] = dict({
+                "@iot.id": instances["Sensors"][dedicated_sensor]["@iot.id"]})
 
             # Deep patch is not supported, no Thing, Sensor or Observed property
             # PATCH thing
@@ -209,10 +211,12 @@ class PantaRheiClient:
                 self.logger.warning(
                     "register: Problems to upsert Datastreams on instance: {}, with URI: {}, status code: {}, "
                     "payload: {}".format(name, uri, res.status_code, json.dumps(res.json(), indent=2)))
+                print(json.dumps(instances["Datastreams"][datastream]))
 
         self.instances = instances
         self.logger.info("register: Successfully registered instances:")
         for category in list(self.instances.keys()):
+            print(self.instances[category].items())
             items = [{"name": key, "@iot.id": value["@iot.id"]} for key, value
                      in list(self.instances[category].items())]
             self.logger.info("register: {}".format(items))
