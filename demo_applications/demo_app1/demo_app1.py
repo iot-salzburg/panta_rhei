@@ -47,7 +47,7 @@ try:
         print("The temperature of the demo machine is {} °C at {}".format(
             demo_temp, datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat()))
 
-        time.sleep(1)
+        time.sleep(5)
 
 except KeyboardInterrupt:
     client.disconnect()
