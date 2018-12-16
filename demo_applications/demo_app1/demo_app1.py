@@ -25,7 +25,7 @@ from demo_applications.demo_app1.RandomisedTemp import RandomisedTemp
 # Get dirname from inspect module
 filename = inspect.getframeinfo(inspect.currentframe()).filename
 dirname = os.path.dirname(os.path.abspath(filename))
-PANTA_RHEI_INSTANCES = os.path.join(dirname, "panta_rhei_mapping/instances.json")
+PANTA_RHEI_INSTANCES = os.path.join(dirname, "digital_twin_mapping/instances.json")
 
 # Init a new Panta Rhei Instance and register file structure
 client = DigitalTwinClient("demo_app1")
