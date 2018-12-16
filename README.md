@@ -12,7 +12,7 @@ Example on how to send data using the Digital Twin Client
 ```python
 from client.digital_twin_client import DigitalTwinClient
 client = DigitalTwinClient("demo_app1")
-client.register(instance_file="panta_rhei_mapping/instances.json")
+client.register(instance_file="digital_twin_mapping/instances")
 client.send(quantity="demo_temperature", result=23.4)
 ```
 
@@ -76,7 +76,7 @@ The flag `-d` stands for `daemon` mode. To check if everything worked well, open
 
 #### Finally, we run the **demo applications** which can be used as starting point:
 
-Now, open new terminals to run the demo applications from the `panta_rhei` directory:
+Now, open new terminals to run the demo applications from the `client` directory:
 
     python3 demo_applications/demo_app1/demo_app1.py 
     > INFO:PR Client Logger:init: Initialising Digital Twin Client with name: demo_app1
