@@ -9,7 +9,7 @@ This repository comprised 3 parts:
 
 Example on how to send data using the Digital Twin Client
 
-```python
+```python3
 from client.digital_twin_client import DigitalTwinClient
 client = DigitalTwinClient("demo_app1")
 client.register(instance_file="digital_twin_mapping/instances")
@@ -20,30 +20,32 @@ client.send(quantity="demo_temperature", result=23.4)
 
 1. [Requirements](#requirements)
 2. [Quickstart](#quickstart)
-3. [Deploy on a Cluster](#deployment)
-4. [Trouble-Shooting](#trouble-shooting)
+3. [Deploy on a Cluster](#deploy-on-a-cluster)
 
 
 ## Requirements
 
 * Install [Docker](https://www.docker.com/community-edition#/download) version **1.10.0+**
 * Install [Docker Compose](https://docs.docker.com/compose/install/) version **1.6.0+**
-* Clone the Repository
+* Clone this Repository
+
 
 ## Quickstart
 
-Here, a demo scenario will be set up on a single node.
+This is an instruction on how to set up a demo scenario on your own hardware.
+Here, we use Ubuntu 18.04.
 
-  
-#### First, **Apache Kafka** has to be installed:
+ 
+#### Firstly, **Apache Kafka** and some requirements have to be installed:
 
-Currently, we use Kafka **version 0.11.0.3** as it seems to be the most reliable on, 
-but it is planned to update to version 2.X in the future. 
+Currently, we use Kafka **version 0.11.0.3** as it seems to be the most reliable version, 
+but it is planned to update to version 2.X in the future. All installations are stored in `/kafka`.
 
+    sudo apt-get update
     cd setup
-    sudo sh kafka/install-kafka-0v11.sh
+    sh kafka/install-kafka-0v11.sh
     sudo sh kafka/install-kafka-libs-0v11.sh
-    sudo pip3 install -r requirements.txt
+    pip3 install -r requirements.txt
 
 Then, to test the installation:
 
