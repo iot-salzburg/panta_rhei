@@ -1,18 +1,18 @@
-# Digital Twin Stack
-### A scalable and high-performance streaming platform with inherent semantic data mapping to enable a digital twin.
+# Panta Rhei
+### A scalable and high-performance streaming platform with inherent semantic data mapping to enable the digital twin.
 
 This repository comprised 3 parts:
-* **Digital Twin Messaging Layer** which unifies [Apache Kafka](https://kafka.apache.org/)
+* **Panta Rhei Messaging Layer** which unifies [Apache Kafka](https://kafka.apache.org/)
  with [SensorThings](http://developers.sensorup.com/docs/) 
-* **Digital Twin Client** to easily access the Messaging Layer with only 4 lines of code
+* **Panta Rhei Client** to easily access the Messaging Layer with only 4 lines of code
 * **Demo Application** to get started as fast as possible 
 
-Example on how to send data using the Digital Twin Client
+Example on how to send data using the Panta Rhei Client
 
 ```python3
-from client.digital_twin_client import DigitalTwinClient
-client = DigitalTwinClient("demo_app1")
-client.register(instance_file="digital_twin_mapping/instances")
+from client.panta_rhei_client import PantaRheiClient
+client = PantaRheiClient("demo_app1")
+client.register(instance_file="panta_rhei_mapping/instances.json")
 client.send(quantity="demo_temperature", result=23.4)
 ```
 
@@ -80,13 +80,13 @@ The flag `-d` stands for `daemon` mode. To check if everything worked well, open
 Now, open new terminals to run the demo applications from the `client` directory:
 
     python3 demo_applications/demo_app1/demo_app1.py 
-    > INFO:PR Client Logger:init: Initialising Digital Twin Client with name: demo_app1
+    > INFO:PR Client Logger:init: Initialising Panta Rhei Client with name: demo_app1
     ....
     > The temperature of the demo machine is 42.3 °C at 2018-12-04T14:18:10.375153+00:00
 
 
     python3 demo_applications/demo_app2/demo_app2.py 
-    > INFO:PR Client Logger:init: Initialising Digital Twin Client with name: demo_app2
+    > INFO:PR Client Logger:init: Initialising Panta Rhei Client with name: demo_app2
     ...
     > Received new data: {'phenomenonTime': ....}
     
