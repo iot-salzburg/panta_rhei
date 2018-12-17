@@ -69,7 +69,6 @@ Then, to test the installation:
     docker-compose up -d
 
 
-
 The flag `-d` stands for `daemon` mode. To check if everything worked well, open
 [http://localhost:8082/](http://localhost:8082/) or view the logs:
 
@@ -92,7 +91,7 @@ Now, open new terminals to run the demo applications from the `client` directory
     > Received new data: {'phenomenonTime': ....}
     
     
-#### Track what happens behind the szenes:
+#### Track what happens behind the scenes:
 
 Check the automatically created kafka topics:
 
@@ -101,37 +100,47 @@ Check the automatically created kafka topics:
     pr.demo-system.metric
     test-topic
 
-Track the traffic in real time via the Kafka-consumer-console:
+Two new topics were created automatically. 
+To track the traffic in real time, use the `kafka-consumer-console`: 
 
-    /kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic demo-system.metric --from-beginning
+    /kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic pr.demo-system.metric
     > {"phenomenonTime": "2018-12-04T14:18:11.376306+00:00", "resultTime": "2018-12-04T14:18:11.376503+00:00", "result": 50.05934369894213, "Datastream": {"@iot.id": 2}}
 
-After the tests, close the services with:
+You can use the flag `--from-beginning` to see the whole recordings of the persistence time which are
+two weeks by default.
+After the tests, stop the services with:
 
     /kafka/bin/kafka-server-stop.sh 
     /kafka/bin/zookeeper-server-stop.sh 
-    cd gost
+    cd setup/gost
     docker-compose down
 
-
-
+If you want to remove the instances from the GOST server, run `docker-compose down -v`.
 
 
 ## Deploy on a Cluster
 
-The deployment in cluster node needs the following steps:
+The deployment in cluster node requires the following steps:
 
 #### Set up Kafka Cluster
 
-* Install Kafka on each node with configured zookeeper property file
-
-    Exemplary for our test broker with leader ip 192.168.48.81:
+*   Install Kafka without client libraries on each node:
     
-    Make a config file  for each broker on  node [k] :
+        sudo apt-get update
+        cd setup
+        sh kafka/install-kafka-0v11.sh
+     
+*   Configure the Kafka Cluster on each node:
+
+    Exemplary, we are using the node with ip 192.168.48.81 as our Kafka leader, 
+    on which zookeeper will run:
+    
+    Copy and change the config file for each broker on  node `[k]`, e.g. k in {1,2,3} :
 
         cp /kafka/config/server.properties /kafka/config/il08[k].properties
+        nano /kafka/config/il08[k].properties
 
-    And change the following properties:
+    And set the following properties to:
 
         broker.id=[k]
         delete.topic.enable=true
@@ -143,20 +152,44 @@ The deployment in cluster node needs the following steps:
 
 * Create Systemd file and enable autostart
 
-    In order to handle the services properly, we create service in systemd.
+    As zookeeper will only run on the node with ip 192.68.48.81, we copy the file `zookeeper.service` 
+    from `setup/kafka` into `/etc/systemd/system/` and them adjust the *user* and *group*. 
+    (only on 192.68.48.81)
 
-        sudo nano /etc/systemd/system/kafka.service
+        cp setup/kafka/zookeeper.service /etc/systemd/system/
         sudo nano /etc/systemd/system/zookeeper.service
 
-    And create the files analog to `setup/kafka/kafka.service` and `setup/kafka/zookeeper.service` 
-    (Note that the appropriate hostname is in brackets)
+    Kafka will run on each node, so we copy the file `kafka.service` 
+    from `setup/kafka` into `/etc/systemd/system/` and them adjust the *user*, *group* and 
+    the node id *[k]* in *ExecStart*. Do that on each node.
 
+        cp setup/kafkakafka.service
+        sudo nano /etc/systemd/system/kafka.service
+    
+    After that, reload the services and enable autostart for each service:
+    
+        sudo systemctl daemon-reload
+        sudo service zookeeper restart  # only on node with ip 192.68.48.81
+        sudo service zookeeper status  # only on node with ip 192.68.48.81
+        sudo service kafka restart
+        sudo service kafka status
+        sudo systemctl enable kafka
+        sudo systemctl enable zookeeper  # only on node with ip 192.68.48.81
+
+    The status should show that the service run successful. If you are curious, run the 
+    tests [here](#firstly-apache-kafka-and-some-requirements-have-to-be-installed).
 
 
 *   Create Topics for your specific application system, which should be configured in 
-    `client/config.json`:  (If not set, the topics in the config.json will be used, which 
-    use the default settings of replication-factor 1 and 1 partition). 
-    Here zookeeper is available on `192.168.48.81:2181` and there are in total 3 available brokers.
+    `client/config.json`:  (If not set, the topics in the config.json will be created with
+     the default settings of replication-factor 1 and 1 partition). 
+    Here zookeeper is available on `192.168.48.81:2181` and there are in total 3 available brokers in
+    our Kafka Cluster.
+    
+    We use the following **topic convention**, which allows us to use the Cluster for different 
+    systems in parallel and maintain best performance for metric data even when big objects are sent. 
+    
+    Topic convention: **pr.[system-name].["metric"|"string"|"object"|"logging"]**
     
         /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --create --topic pr.dtz.metric --replication-factor 2 --partitions 3 --config cleanup.policy=compact --config retention.ms=3628800000 --config retention.bytes=-1
         /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --create --topic pr.dtz.string --replication-factor 2 --partitions 3 --config cleanup.policy=compact --config retention.ms=3628800000 --config retention.bytes=-1
@@ -170,23 +203,27 @@ The deployment in cluster node needs the following steps:
 	    >     Topic: pr.dtz.metric	Partition: 1	Leader: 1	Replicas: 1,3	Isr: 1,3
 	    >     Topic: pr.dtz.metric	Partition: 2	Leader: 2	Replicas: 2,1	Isr: 2,1
 
+    To track the traffic in real time, use the `kafka-consumer-console`: 
 
-To delete topics, search for topics and then remove the desired directory:
+        /kafka/bin/kafka-console-consumer.sh --bootstrap-server 192.168.48.81:9092 --topic pr.dtz.metric
+        > {"phenomenonTime": "2018-12-04T14:18:11.376306+00:00", "resultTime": "2018-12-04T14:18:11.376503+00:00", "result": 50.05934369894213, "Datastream": {"@iot.id": 2}}
 
-    /kafka/bin/zookeeper-shell.sh 192.168.48.81:2181 ls /brokers/topics
-    /kafka/bin/zookeeper-shell.sh 192.168.48.81:2181 rmr /brokers/topics/topicname
-
-To stop Kafka or Zookeeper:
-
-    /kafka/bin/kafka-server-stop.sh
-    /kafka/bin/zookeeper-server-stop.sh
+    To delete topics, search for topics and then remove the desired directory:
+    
+        /kafka/bin/zookeeper-shell.sh 192.168.48.81:2181 ls /brokers/topics
+        /kafka/bin/zookeeper-shell.sh 192.168.48.81:2181 rmr /brokers/topics/topicname
+    
+    To stop Kafka or Zookeeper:
+    
+        sudo service kafka stop
+        sudo service zookeeper stop
 
 
 #### Setup of a Docker Swarm
 
-A nice tutorial on how to set up a docker Swarm can be found [here](https://www.dataquest.io/blog/install-and-configure-docker-swarm-on-ubuntu/).
+A nice tutorial on how to set up a docker Swarm can be found on [dataques.io](https://www.dataquest.io/blog/install-and-configure-docker-swarm-on-ubuntu/).
 
-Additionaly, some docker images like need  increased virtual memory. Therefore add the following 
+Additionally, some docker images may need  increased virtual memory. Therefore add the following 
 line to `/etc/sysctl.conf` on each node and reboot.
 
     vm.max_map_count=262144
@@ -212,24 +249,24 @@ may have to be changed**)
         cd ../setup/gost
         ./start-gost.sh
 
-*   Use a **shared filesystem** suited for docker (note that docker only allows to mount a 
-    subdirectories by default). This will **deploy each service with 2 replicas**.
+*   Use a **shared filesystem** suited for docker (note that docker only allows to mount 
+    subdirectories by default).
     In this example, we are using **GlusterFS**, find tutorials on how to set it up 
     [here](https://www.howtoforge.com/tutorial/high-availability-storage-with-glusterfs-on-ubuntu-1804/) 
     and [here](http://embaby.com/blog/using-glusterfs-docker-swarm-cluster/). 
-    To deploy with an existing shared GlusterFS in `/mnt/glusterfs for each node`, run the 
-    compose file with the name `swarm_docker-compose-with-glusterfs.yml` on the swarm manager with:
+    To deploy with an existing shared GlusterFS in `/mnt/glusterfs for each node` and create the 
+    appropriate subdirectories, e.g. `/mnt/glusterfs/dtz/gost/postgis/`.
+    Then, run the compose file with the name `swarm_docker-compose-with-glusterfs.yml` on the 
+    swarm manager, which will **deploy each service with 2 replicas**.:
     
         cd ../setup/gost
         ./start-gost-with-glusterfs.sh
 
-
-The services should be available on [http://hostname:8082](http://hostname:8082)
-To check if the deployment was successful and to stop the services stack:
+In either case the services should be available on [http://hostname:8082](http://hostname:8082)
+To check for more details and to stop the services stack:
 
     ./show-gost.sh
     ./stop-gost.sh
-     
  
  
 #### Configure the client
