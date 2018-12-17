@@ -2,7 +2,7 @@
   "Things": {
     "demo_machine": {
       "name": "Demo Machine",
-      "description": "Machine to demonstrate the functionalities of the panta rhei messaging system",
+      "description": "Machine to demonstrate the functionalities of the Digital Twin Stack",
       "properties": {
         "specification": "https://www.machine-url.com/downloads/demo-machine.pdf"
       }

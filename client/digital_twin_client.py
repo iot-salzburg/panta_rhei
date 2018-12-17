@@ -1,9 +1,9 @@
 import os
 import sys
 import json
+import pytz
 import logging
 import requests
-import pytz
 from datetime import datetime
 
 # confluent_kafka is based on librdkafka, details in install_kafka_requirements.sh
@@ -23,7 +23,7 @@ class DigitalTwinClient:
         self.logger.setLevel(logging.INFO)
         logging.basicConfig(level='WARNING')
 
-        self.logger.info("init: Initialising Panta Rhei Client with name: {}".format(client_name))
+        self.logger.info("init: Initialising Digital Twin Client with name: {}".format(client_name))
 
         # Load config.json and drop comments
         config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
@@ -43,14 +43,14 @@ class DigitalTwinClient:
                 gost_url, res.status_code, res.json()))
             sys.exit(1)
 
-        # Init Kafka, test for "panta_rhei/Logging" with an unique group.id
+        # Init Kafka, test for "Logging" with an unique group.id
         self.logger.info("init: Checking Kafka connection")
         check_group_id = str(hash(self.client_name + "_" + str(os.getpid())))[-3:]  # Use a 3 digit hash
         conf = {'bootstrap.servers': self.config["BOOTSTRAP_SERVERS"],
                 'session.timeout.ms': 6000,
                 'group.id': check_group_id}
         consumer = confluent_kafka.Consumer(**conf)
-        consumer.subscribe([self.config["panta_rhei/Logging"]])
+        consumer.subscribe([self.config["Logging"]])
         msg = consumer.poll(1)  # Waits up to 1 for a message
         if msg is not None:
             # print(msg.value().decode('utf-8'))
@@ -222,7 +222,7 @@ class DigitalTwinClient:
             self.logger.info("register: {}".format(items))
 
         # Create Mapping to send on the correct data type
-        self.mapping["logging"] = {"name": "logging", "kafka-topic": self.config["panta_rhei/Logging"], "@iot.id": -1}
+        self.mapping["logging"] = {"name": "logging", "kafka-topic": self.config["Logging"], "@iot.id": -1}
         for key, value in self.instances["Datastreams"].items():
             self.mapping[key] = {"name": value["name"],
                                  "@iot.id": value["@iot.id"],
@@ -231,14 +231,14 @@ class DigitalTwinClient:
 
         # Create Kafka Producer
         self.producer = confluent_kafka.Producer({'bootstrap.servers': self.config["BOOTSTRAP_SERVERS"]})
-        self.send("logging", "Started Panta Rhei Client with name: {} at: {} UTC".format(
+        self.send("logging", "Started Digital Twin Client with name: {} at: {} UTC".format(
             self.client_name, datetime.utcnow()))
-        self.logger.info("register: Successfully created Panta Rhei Client with name: {} at: {} UTC".format(
+        self.logger.info("register: Successfully created Digital Twin Client with name: {} at: {} UTC".format(
             self.client_name, datetime.utcnow()))
 
     def send(self, quantity, result, timestamp=None):
         """
-        Function that sends data of registered datastreams semantically annotated to the Panta Rhei Messaging System
+        Function that sends data of registered datastreams semantically annotated to the Digital Twin Messaging System
         :param quantity: Quantity of the Data
         :param result: The actual value without units. Can be boolean, integer, float, category or an object
         :param timestamp: either ISO 8601 or a 10,13,16 or 19 digit unix epoch format. If not given, it will
@@ -396,4 +396,4 @@ class DigitalTwinClient:
             self.consumer.close()
         except AttributeError:
             pass
-        self.logger.info("disconnect: Panta Rhei Client successfully disconnected")
+        self.logger.info("disconnect: Digital Twin Client successfully disconnected")

@@ -11,5 +11,5 @@
   "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Measurement": "pr.dtz.metric",
   "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_CategoryObservation": "pr.dtz.string",
   "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Observation": "pr.dtz.object",
-  "panta_rhei/Logging": "pr.dtz.logging"
+  "Logging": "pr.dtz.logging"
 }
