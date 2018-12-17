@@ -12,7 +12,6 @@ Example:
 import os
 import sys
 import inspect
-
 import time
 import pytz
 from datetime import datetime
