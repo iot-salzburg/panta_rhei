@@ -1,9 +1,9 @@
 import os
 import sys
 import json
+import pytz
 import logging
 import requests
-import pytz
 from datetime import datetime
 
 # confluent_kafka is based on librdkafka, details in install_kafka_requirements.sh
