@@ -221,7 +221,7 @@ The deployment in cluster node requires the following steps:
 
 #### Setup of a Docker Swarm
 
-A nice tutorial on how to set up a docker Swarm can be found on [dataques.io](https://www.dataquest.io/blog/install-and-configure-docker-swarm-on-ubuntu/).
+A nice tutorial on how to set up a docker Swarm can be found on [dataquest.io](https://www.dataquest.io/blog/install-and-configure-docker-swarm-on-ubuntu/).
 
 Additionally, some docker images may need  increased virtual memory. Therefore add the following 
 line to `/etc/sysctl.conf` on each node and reboot.
