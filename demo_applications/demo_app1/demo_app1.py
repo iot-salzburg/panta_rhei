@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
 Example:
-    app1 measures the temperature of a machine and sends it into panta rhei
+    app1 measures the temperature of a machine and sends it into the Digital Twin Stack
     app2 is an application which regulates a fan. if the temperatur exceeds a limit,
         it turns on the fan until the temperature falls below a second limit.
-        It also sends the fan data into panta rhei
+        It also sends the fan data into the Digital Twin Stack
     datastack subscribes both variables and stores it in the elastic stack.
         Jupyter and Grafana helps to display the data.
 """
@@ -24,11 +24,11 @@ from demo_applications.demo_app1.RandomisedTemp import RandomisedTemp
 # Get dirname from inspect module
 filename = inspect.getframeinfo(inspect.currentframe()).filename
 dirname = os.path.dirname(os.path.abspath(filename))
-PANTA_RHEI_INSTANCES = os.path.join(dirname, "digital_twin_mapping/instances.json")
+INSTANCES = os.path.join(dirname, "digital_twin_mapping/instances.json")
 
-# Init a new Panta Rhei Instance and register file structure
+# Init a new Digital Twin Instance and register file structure
 client = DigitalTwinClient("demo_app1")
-client.register(instance_file=PANTA_RHEI_INSTANCES)
+client.register(instance_file=INSTANCES)
 
 randomised_temp = RandomisedTemp()
 try:
