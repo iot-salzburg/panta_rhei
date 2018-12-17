@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
 Example:
-    app1 measures the temperature of a machine and sends it into panta rhei
+    app1 measures the temperature of a machine and sends it into Digital Twin Stack
     app2 is an application which regulates a fan. if the temperatur exceeds a limit,
         it turns on the fan until the temperature falls below a second limit.
-        It also sends the fan data into panta rhei
+        It also sends the fan data into Digital Twin Stack
     datastack subscribes both variables and stores it in the elastic stack.
         Jupyter and Grafana helps to display the data.
 """
@@ -21,13 +21,14 @@ from client.panta_rhei_client import DigitalTwinClient
 # Get dirname from inspect module
 filename = inspect.getframeinfo(inspect.currentframe()).filename
 dirname = os.path.dirname(os.path.abspath(filename))
-PANTA_RHEI_INSTANCES = os.path.join(dirname, "panta_rhei_mapping/instances.json")
-PANTA_RHEI_SUBSCRIPTIONS = os.path.join(dirname, "panta_rhei_mapping/subscriptions.json")
 
-# Init a new Panta Rhei Instance and register file structure
+INSTANCES = os.path.join(dirname, "digital_twin_mapping/instances.json")
+SUBSCRIPTIONS = os.path.join(dirname, "digital_twin_mapping/subscriptions.json")
+
+# Init a new Digital Twin Instance and register file structure
 client = DigitalTwinClient("demo_app2")
-client.register(instance_file=PANTA_RHEI_INSTANCES)
-client.subscribe(subscription_file=PANTA_RHEI_SUBSCRIPTIONS)
+client.register(instance_file=INSTANCES)
+client.subscribe(subscription_file=SUBSCRIPTIONS)
 
 fan_status = False
 try:

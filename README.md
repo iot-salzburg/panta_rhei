@@ -287,7 +287,7 @@ To check for more details and to stop the services stack:
   "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Measurement": "pr.dtz.metric",
   "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_CategoryObservation": "pr.dtz.string",
   "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Observation": "pr.dtz.object",
-  "panta-rhei/Logging": "pr.dtz.logging"
+  "Logging": "pr.dtz.logging"
 }
   ```
   
