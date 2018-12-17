@@ -16,13 +16,13 @@ import time
 
 # Append path of client to pythonpath in order to import the client from cli
 sys.path.append(os.getcwd())
-from client.digital_twin_client import DigitalTwinClient
+from client.panta_rhei_client import DigitalTwinClient
 
 # Get dirname from inspect module
 filename = inspect.getframeinfo(inspect.currentframe()).filename
 dirname = os.path.dirname(os.path.abspath(filename))
-PANTA_RHEI_INSTANCES = os.path.join(dirname, "digital_twin_mapping/instances.json")
-PANTA_RHEI_SUBSCRIPTIONS = os.path.join(dirname, "digital_twin_mapping/subscriptions.json")
+PANTA_RHEI_INSTANCES = os.path.join(dirname, "panta_rhei_mapping/instances.json")
+PANTA_RHEI_SUBSCRIPTIONS = os.path.join(dirname, "panta_rhei_mapping/subscriptions.json")
 
 # Init a new Panta Rhei Instance and register file structure
 client = DigitalTwinClient("demo_app2")
