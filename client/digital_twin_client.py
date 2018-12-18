@@ -27,7 +27,7 @@ class DigitalTwinClient:
         self.config = {"client_name": client_name,
                        "system_name": system_name,
                        "kafka_bootstrap_servers": kafka_bootstrap_servers,
-                       "gost_servers": gost_servers}  # TODO use two bootstrap servers
+                       "gost_servers": gost_servers}
         type_mapping_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "type_mappings.json")
         with open(type_mapping_file) as f:
             self.type_mappings = json.loads(f.read())
