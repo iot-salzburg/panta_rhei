@@ -4,14 +4,16 @@
 This repository comprised 3 parts:
 * **Digital Twin Messaging Layer** which unifies [Apache Kafka](https://kafka.apache.org/)
  with [SensorThings](http://developers.sensorup.com/docs/) 
-* **Digital Twin Client** to easily access the Messaging Layer with only 4 lines of code
+* **Digital Twin Client** to easily access the Messaging Layer with only an hand full lines of code
 * **Demo Application** to get started as fast as possible 
 
 Example on how to send data using the Digital Twin Client
 
 ```python3
 from client.digital_twin_client import DigitalTwinClient
-client = DigitalTwinClient("demo_app1")
+config = {"client_name": "demo_app1", "system_name": "demo-system",
+          "kafka_bootstrap_servers": "localhost:9092", "gost_servers": "localhost:8082"}
+client = DigitalTwinClient(**config)
 client.register(instance_file="digital_twin_mapping/instances")
 client.send(quantity="demo_temperature", result=23.4)
 ```
@@ -96,14 +98,14 @@ Now, open new terminals to run the demo applications from the `client` directory
 Check the automatically created kafka topics:
 
     /kafka/bin/kafka-topics.sh --zookeeper localhost:2181 --list
-    pr.demo-system.logging
-    pr.demo-system.metric
+    eu.demo-system.logging
+    eu.demo-system.metric
     test-topic
 
 Two new topics were created automatically. 
 To track the traffic in real time, use the `kafka-consumer-console`: 
 
-    /kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic pr.demo-system.metric
+    /kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic eu.demo-system.metric
     > {"phenomenonTime": "2018-12-04T14:18:11.376306+00:00", "resultTime": "2018-12-04T14:18:11.376503+00:00", "result": 50.05934369894213, "Datastream": {"@iot.id": 2}}
 
 You can use the flag `--from-beginning` to see the whole recordings of the persistence time which are
@@ -189,23 +191,23 @@ The deployment in cluster node requires the following steps:
     We use the following **topic convention**, which allows us to use the Cluster for different 
     systems in parallel and maintain best performance for metric data even when big objects are sent. 
     
-    Topic convention: **pr.[system-name].["metric"|"string"|"object"|"logging"]**
+    Topic convention: **eu.[system-name].["metric"|"string"|"object"|"logging"]**
     
-        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --create --topic pr.dtz.metric --replication-factor 2 --partitions 3 --config cleanup.policy=compact --config retention.ms=3628800000 --config retention.bytes=-1
-        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --create --topic pr.dtz.string --replication-factor 2 --partitions 3 --config cleanup.policy=compact --config retention.ms=3628800000 --config retention.bytes=-1
-        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --create --topic pr.dtz.object --replication-factor 2 --partitions 3 --config cleanup.policy=compact --config retention.ms=3628800000 --config retention.bytes=-1
-        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --create --topic pr.dtz.logging --replication-factor 1 --partitions 1 --config cleanup.policy=compact --config retention.ms=3628800000 --config retention.bytes=-1
+        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --create --topic eu.dtz.metric --replication-factor 2 --partitions 3 --config cleanup.policy=compact --config retention.ms=3628800000 --config retention.bytes=-1
+        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --create --topic eu.dtz.string --replication-factor 2 --partitions 3 --config cleanup.policy=compact --config retention.ms=3628800000 --config retention.bytes=-1
+        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --create --topic eu.dtz.object --replication-factor 2 --partitions 3 --config cleanup.policy=compact --config retention.ms=3628800000 --config retention.bytes=-1
+        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --create --topic eu.dtz.logging --replication-factor 1 --partitions 1 --config cleanup.policy=compact --config retention.ms=3628800000 --config retention.bytes=-1
      
         /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --list
-        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --describe --topic pr.dtz.metric
-        > Topic:pr.dtz.metric	PartitionCount:3	ReplicationFactor:2	Configs:retention.ms=3628800000,cleanup.policy=compact,retention.bytes=-1
-	    >     Topic: pr.dtz.metric	Partition: 0	Leader: 3	Replicas: 3,2	Isr: 3,2
-	    >     Topic: pr.dtz.metric	Partition: 1	Leader: 1	Replicas: 1,3	Isr: 1,3
-	    >     Topic: pr.dtz.metric	Partition: 2	Leader: 2	Replicas: 2,1	Isr: 2,1
+        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --describe --topic eu.dtz.metric
+        > Topic:eu.dtz.metric	PartitionCount:3	ReplicationFactor:2	Configs:retention.ms=3628800000,cleanup.policy=compact,retention.bytes=-1
+	    >     Topic: eu.dtz.metric	Partition: 0	Leader: 3	Replicas: 3,2	Isr: 3,2
+	    >     Topic: eu.dtz.metric	Partition: 1	Leader: 1	Replicas: 1,3	Isr: 1,3
+	    >     Topic: eu.dtz.metric	Partition: 2	Leader: 2	Replicas: 2,1	Isr: 2,1
 
     To track the traffic in real time, use the `kafka-consumer-console`: 
 
-        /kafka/bin/kafka-console-consumer.sh --bootstrap-server 192.168.48.81:9092 --topic pr.dtz.metric
+        /kafka/bin/kafka-console-consumer.sh --bootstrap-server 192.168.48.81:9092 --topic eu.dtz.metric
         > {"phenomenonTime": "2018-12-04T14:18:11.376306+00:00", "resultTime": "2018-12-04T14:18:11.376503+00:00", "result": 50.05934369894213, "Datastream": {"@iot.id": 2}}
 
     To delete topics, search for topics and then remove the desired directory:
@@ -274,20 +276,11 @@ To check for more details and to stop the services stack:
   in `client/swarm-config.json`, where the lines are changed as shown here:
   
   ```json
-  {
-  "_comment": "Kafka Config",
-  "BOOTSTRAP_SERVERS": "192.168.48.81:9092,192.168.48.82:9092,192.168.48.83:9092",
-  
-  "_comment": "SensorThings Config: check in setup/gost/docker-compose.yml for the settings",
-  "GOST_SERVER": "192.168.48.81:8082",
-  
-  "_comment": "SensorThings Type Mapping: These types must fit with the kafka topic in config.json of the client.",
-  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_TruthObservation": "pr.dtz.metric",
-  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_CountObservation": "pr.dtz.metric",
-  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Measurement": "pr.dtz.metric",
-  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_CategoryObservation": "pr.dtz.string",
-  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Observation": "pr.dtz.object",
-  "Logging": "pr.dtz.logging"
+{
+      "client_name": "demo_app1",
+      "system_name": "demo-system",
+      "kafka_bootstrap_servers": "192.168.48.81:9092,192.168.48.82:9092,192.168.48.83:9092",
+      "gost_servers": "192.168.48.81:8082"
 }
   ```
   

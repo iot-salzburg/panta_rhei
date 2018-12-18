@@ -11,54 +11,57 @@ import confluent_kafka
 
 
 class DigitalTwinClient:
-    def __init__(self, client_name):
+    def __init__(self, client_name, system_name, kafka_bootstrap_servers, gost_servers):
         """
         Load config files
         Checks GOST server connection
         Checks and tests kafka broker connection
         """
         # Init logging
-        self.client_name = client_name  # is used as group_id
         self.logger = logging.getLogger("PR Client Logger")
         self.logger.setLevel(logging.INFO)
         logging.basicConfig(level='WARNING')
-
         self.logger.info("init: Initialising Digital Twin Client with name: {}".format(client_name))
 
-        # Load config.json and drop comments
-        config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
-        with open(config_file) as f:
-            self.config = json.loads(f.read())
-            self.config.pop("_comment", None)
-            self.logger.info("init: Successfully loaded configs.")
+        # Load config
+        self.config = {"client_name": client_name,
+                       "system_name": system_name,
+                       "kafka_bootstrap_servers": kafka_bootstrap_servers,
+                       "gost_servers": gost_servers}  # TODO use two bootstrap servers
+        type_mapping_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "type_mappings.json")
+        with open(type_mapping_file) as f:
+            self.type_mappings = json.loads(f.read())
+        with open(type_mapping_file, "w") as f:
+            f.write(json.dumps(self.type_mappings, indent=2))
+        self.logger.info("init: Successfully loaded configs: {}".format(self.config))
 
         # Check Sensorthings connection
         self.logger.info("init: Checking Sensorthings connection")
-        gost_url = "http://" + self.config["GOST_SERVER"]
+        gost_url = "http://" + self.config["gost_servers"]
         res = requests.get(gost_url + "/v1.0/Things")
         if res.status_code in [200, 201, 202]:
-            self.logger.info("init: Successfully connected to GOST server {}.".format(gost_url))
+            self.logger.info("init: Successfully connected to GOST server {}.".format(gost_servers))
         else:
             self.logger.error("init: Error, couldn't connect to GOST server: {}, status code: {}, result: {}".format(
-                gost_url, res.status_code, res.json()))
+                gost_servers, res.status_code, res.json()))
             sys.exit(1)
 
         # Init Kafka, test for "Logging" with an unique group.id
         self.logger.info("init: Checking Kafka connection")
-        check_group_id = str(hash(self.client_name + "_" + str(os.getpid())))[-3:]  # Use a 3 digit hash
-        conf = {'bootstrap.servers': self.config["BOOTSTRAP_SERVERS"],
+        check_group_id = str(hash(self.config["client_name"] + "_" + str(os.getpid())))[-3:]  # Use a 3 digit hash
+        conf = {'bootstrap.servers': self.config["kafka_bootstrap_servers"],
                 'session.timeout.ms': 6000,
                 'group.id': check_group_id}
         consumer = confluent_kafka.Consumer(**conf)
-        consumer.subscribe([self.config["Logging"]])
+        consumer.subscribe(["eu.{}.logging".format(self.config["system_name"])])
         msg = consumer.poll(1)  # Waits up to 1 for a message
         if msg is not None:
             # print(msg.value().decode('utf-8'))
             self.logger.info("init: Successfully connected to the Kafka Broker: {}".format(
-                self.config["BOOTSTRAP_SERVERS"]))
+                self.config["kafka_bootstrap_servers"]))
         else:
             self.logger.warning("init: Error, couldn't connect to Kafka Broker: {}".format(
-                self.config["BOOTSTRAP_SERVERS"]))
+                self.config["kafka_bootstrap_servers"]))
         consumer.close()
 
         # Init other objects used in later methods
@@ -91,7 +94,7 @@ class DigitalTwinClient:
         with open(instance_file, "w") as f:
             f.write(json.dumps(instances, indent=2))
 
-        gost_url = "http://" + self.config["GOST_SERVER"]
+        gost_url = "http://" + self.config["gost_servers"]
 
         # Register Things. Patch or post
         self.logger.info("register: Register Things")
@@ -222,19 +225,21 @@ class DigitalTwinClient:
             self.logger.info("register: {}".format(items))
 
         # Create Mapping to send on the correct data type
-        self.mapping["logging"] = {"name": "logging", "kafka-topic": self.config["Logging"], "@iot.id": -1}
+        self.mapping["logging"] = {"name": "logging", "kafka-topic": "eu.{}.logging".format(self.config["system_name"]),
+                                   "@iot.id": -1}
         for key, value in self.instances["Datastreams"].items():
             self.mapping[key] = {"name": value["name"],
                                  "@iot.id": value["@iot.id"],
-                                 "kafka-topic": self.config[value["observationType"]]}
+                                 "kafka-topic": "eu.{}.{}".format(self.config["system_name"],
+                                                                  self.type_mappings[value["observationType"]])}
         self.logger.info("register: Successfully loaded mapping: {}".format(self.mapping))
 
         # Create Kafka Producer
-        self.producer = confluent_kafka.Producer({'bootstrap.servers': self.config["BOOTSTRAP_SERVERS"]})
+        self.producer = confluent_kafka.Producer({'bootstrap.servers': self.config["kafka_bootstrap_servers"]})
         self.send("logging", "Started Digital Twin Client with name: {} at: {} UTC".format(
-            self.client_name, datetime.utcnow()))
+            self.config["client_name"], datetime.utcnow()))
         self.logger.info("register: Successfully created Digital Twin Client with name: {} at: {} UTC".format(
-            self.client_name, datetime.utcnow()))
+            self.config["client_name"], datetime.utcnow()))
 
     def send(self, quantity, result, timestamp=None):
         """
@@ -264,14 +269,13 @@ class DigitalTwinClient:
         # Asynchronously produce a message, the delivery report callback
         # will be triggered from poll() above, or flush() below, when the message has
         # been successfully delivered or failed permanently.
-        self.producer.produce(kafka_topic, json.dumps(data).encode('utf-8'), key=self.client_name,
+        self.producer.produce(kafka_topic, json.dumps(data).encode('utf-8'), key=self.config["client_name"],
                               callback=self.delivery_report)
         # Wait for any outstanding messages to be delivered and delivery report
         # callbacks to be triggered.
         self.producer.flush()
 
-    @staticmethod
-    def get_iso8601_time(timestamp):
+    def get_iso8601_time(self, timestamp):
         """
         This function converts multiple standard timestamps to ISO 8601 UTC datetime.
         The output is strictly in the following style: 2018-12-03T15:55:39.054752+00:00
@@ -332,20 +336,18 @@ class DigitalTwinClient:
         self.logger.info("subscribe: Subscribing to datastreams with names: {}".format(subscriptions["subscribed_ds"]))
 
         # Create Kafka Consumer instance
-        conf = {'bootstrap.servers': self.config["BOOTSTRAP_SERVERS"],
+        conf = {'bootstrap.servers': self.config["kafka_bootstrap_servers"],
                 'session.timeout.ms': 6000,
-                'group.id': self.client_name}
+                'group.id': self.config["client_name"]}
         self.consumer = confluent_kafka.Consumer(**conf)
         self.consumer.subscribe(
-            [self.config["http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_TruthObservation"],
-             self.config["http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_CountObservation"],
-             self.config["http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Measurement"],
-             self.config["http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_CategoryObservation"],
-             self.config["http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Observation"]])
+            ["eu.{}.metric".format(self.config["system_name"]),
+             "eu.{}.string".format(self.config["system_name"]),
+             "eu.{}.object".format(self.config["system_name"])])
 
         # get subscribed datastreams of the form:
         # {4: {'@iot.id': 4, 'name': 'Machine Temperature', '@iot.selfLink': 'http://...}, 5: {....}, ...}
-        gost_url = "http://" + self.config["GOST_SERVER"]
+        gost_url = "http://" + self.config["gost_servers"]
         gost_datastreams = requests.get(gost_url + "/v1.0/Datastreams").json()["value"]
         self.subscribed_datastreams = {ds["@iot.id"]: ds for ds in gost_datastreams if ds["name"]
                                        in subscriptions["subscribed_ds"]}
