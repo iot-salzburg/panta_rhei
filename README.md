@@ -182,9 +182,9 @@ The deployment in cluster node requires the following steps:
     tests [here](#firstly-apache-kafka-and-some-requirements-have-to-be-installed).
 
 
-*   Create Topics for your specific application system, which should be configured in 
-    `client/config.json`:  (If not set, the topics in the config.json will be created with
-     the default settings of replication-factor 1 and 1 partition). 
+*   Create Topics which uses the system-name, which is set in the Client config parameter:  
+    If the topics are not set before, the topics will be created with
+     the default settings with replication-factor 1 and 1 partition). 
     Here zookeeper is available on `192.168.48.81:2181` and there are in total 3 available brokers in
     our Kafka Cluster.
     
@@ -272,19 +272,17 @@ To check for more details and to stop the services stack:
  
  
 #### Configure the client
-  Which is done in `client/config.json`. An example of how this config can look like is
-  in `client/swarm-config.json`, where the lines are changed as shown here:
+  Which is done by creating a client instance. An example of how this config can look like 
+  for a distributed kafka system is shown here:
   
   ```json
 {
       "client_name": "demo_app1",
-      "system_name": "demo-system",
+      "system_name": "dtz",
       "kafka_bootstrap_servers": "192.168.48.81:9092,192.168.48.82:9092,192.168.48.83:9092",
       "gost_servers": "192.168.48.81:8082"
 }
   ```
-  
-  
 
 
 #### Deploy your application in cluster mode
