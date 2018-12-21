@@ -42,7 +42,7 @@ try:
         if received_quantity is None:
             continue
 
-        # The received data-points contain all metadata, although only 4 key-value pairs are sent.
+        # The resolves the all meta-data for an received data-point
         print("Received new data-point: Quantity: '{}' = {} {}."
               .format(received_quantity["Datastream"]["name"],
                       received_quantity["result"],
