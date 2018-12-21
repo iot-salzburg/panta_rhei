@@ -28,7 +28,7 @@
       },
       "ObservedProperty": {
         "name": "Machine Temperature",
-        "description": "Temperature of the machine's case on the outer side",
+        "description": "Temperature of the machine''s case on the outer side",
         "definition": "http://www.qudt.org/qudt/owl/1.0.0/quantity/Instances.html#AreaTemperature"
       },
       "Thing": "demo_machine",
