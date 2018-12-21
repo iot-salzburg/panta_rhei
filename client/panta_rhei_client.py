@@ -8,57 +8,61 @@ from datetime import datetime
 
 # confluent_kafka is based on librdkafka, details in install_kafka_requirements.sh
 import confluent_kafka
+from client.digital_twin_register import RegisterHelper
 
 
 class DigitalTwinClient:
-    def __init__(self, client_name):
+    def __init__(self, client_name, system_name, kafka_bootstrap_servers, gost_servers):
         """
         Load config files
         Checks GOST server connection
         Checks and tests kafka broker connection
         """
         # Init logging
-        self.client_name = client_name  # is used as group_id
         self.logger = logging.getLogger("PR Client Logger")
         self.logger.setLevel(logging.INFO)
         logging.basicConfig(level='WARNING')
-
         self.logger.info("init: Initialising Digital Twin Client with name: {}".format(client_name))
 
-        # Load config.json and drop comments
-        config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
-        with open(config_file) as f:
-            self.config = json.loads(f.read())
-            self.config.pop("_comment", None)
-            self.logger.info("init: Successfully loaded configs.")
+        # Load config
+        self.config = {"client_name": client_name,
+                       "system_name": system_name,
+                       "kafka_bootstrap_servers": kafka_bootstrap_servers,
+                       "gost_servers": gost_servers}
+        type_mapping_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "type_mappings.json")
+        with open(type_mapping_file) as f:
+            self.type_mappings = json.loads(f.read())
+        with open(type_mapping_file, "w") as f:
+            f.write(json.dumps(self.type_mappings, indent=2))
+        self.logger.info("init: Successfully loaded configs: {}".format(self.config))
 
         # Check Sensorthings connection
         self.logger.info("init: Checking Sensorthings connection")
-        gost_url = "http://" + self.config["GOST_SERVER"]
+        gost_url = "http://" + self.config["gost_servers"]
         res = requests.get(gost_url + "/v1.0/Things")
         if res.status_code in [200, 201, 202]:
-            self.logger.info("init: Successfully connected to GOST server {}.".format(gost_url))
+            self.logger.info("init: Successfully connected to GOST server {}.".format(gost_servers))
         else:
             self.logger.error("init: Error, couldn't connect to GOST server: {}, status code: {}, result: {}".format(
-                gost_url, res.status_code, res.json()))
+                gost_servers, res.status_code, res.json()))
             sys.exit(1)
 
         # Init Kafka, test for "Logging" with an unique group.id
         self.logger.info("init: Checking Kafka connection")
-        check_group_id = str(hash(self.client_name + "_" + str(os.getpid())))[-3:]  # Use a 3 digit hash
-        conf = {'bootstrap.servers': self.config["BOOTSTRAP_SERVERS"],
+        check_group_id = str(hash(self.config["client_name"] + "_" + str(os.getpid())))[-3:]  # Use a 3 digit hash
+        conf = {'bootstrap.servers': self.config["kafka_bootstrap_servers"],
                 'session.timeout.ms': 6000,
                 'group.id': check_group_id}
         consumer = confluent_kafka.Consumer(**conf)
-        consumer.subscribe([self.config["Logging"]])
+        consumer.subscribe(["eu.{}.logging".format(self.config["system_name"])])
         msg = consumer.poll(1)  # Waits up to 1 for a message
         if msg is not None:
             # print(msg.value().decode('utf-8'))
             self.logger.info("init: Successfully connected to the Kafka Broker: {}".format(
-                self.config["BOOTSTRAP_SERVERS"]))
+                self.config["kafka_bootstrap_servers"]))
         else:
             self.logger.warning("init: Error, couldn't connect to Kafka Broker: {}".format(
-                self.config["BOOTSTRAP_SERVERS"]))
+                self.config["kafka_bootstrap_servers"]))
         consumer.close()
 
         # Init other objects used in later methods
@@ -70,171 +74,38 @@ class DigitalTwinClient:
 
     def register(self, instance_file):
         """
-        Opens instance file with Things, Sensors and Datastreams+ObservedProperties
-        create requests
-        check if gost entries exists each for
-            Things
-            Sensors
-            Datastreams+Obs + Thing + Sensor
-        If they exist: make patches
-        Else: make posts and create the instance new
+        Post or path instances using the RegisterHanlder class.
+        Create mapping to use the correct kafka topic for each datastream type.
+        Create Kafka Producer instance.
         :param instance_file. Stores Things, Sensors and Datastreams+ObservedProperties, it also stores the structure
         :return:
         """
-        self.logger.info("register: Loading instances")
-        # Things: ['demo_thing']
-        # Sensors: ['demo_sensor']
-        # Datastreams: ['demo_quantity0', 'demo_quantity1']
-        with open(instance_file) as f:
-            instances = json.loads(f.read())
-        # Make structure pretty
-        with open(instance_file, "w") as f:
-            f.write(json.dumps(instances, indent=2))
-
-        gost_url = "http://" + self.config["GOST_SERVER"]
-
-        # Register Things. Patch or post
-        self.logger.info("register: Register Things")
-        gost_things = requests.get(gost_url + "/v1.0/Things").json()
-        gost_thing_list = [thing["name"] for thing in gost_things["value"]]
-        for thing in instances["Things"].keys():
-            name = instances["Things"][thing]["name"]
-            self.logger.info("register: Thing: {}, GOST name: {}".format(thing, name))
-            # PATCH thing
-            if name in gost_thing_list:
-                idx = [gost_thing for gost_thing in gost_things["value"] if name == gost_thing["name"]][0]["@iot.id"]
-                uri = gost_url + "/v1.0/Things({})".format(idx)
-                self.logger.debug("register: Make a patch of: {}".format(json.dumps(instances["Things"][thing]["name"],
-                                                                                    indent=2)))
-                res = requests.patch(uri, json=instances["Things"][thing])
-            # POST thing
-            else:
-                self.logger.debug("register: Make a post of: {}".format(json.dumps(instances["Things"][thing]["name"],
-                                                                                   indent=2)))
-                uri = gost_url + "/v1.0/Things"
-                res = requests.post(uri, json=instances["Things"][thing])
-
-            # Test if everything worked
-            if res.status_code in [200, 201, 202]:
-                self.logger.info(
-                    "register: Successfully upsert the Thing: {} with the URI: {} and status code: {}".format(
-                        name, uri, res.status_code))
-                instances["Things"][thing] = res.json()
-
-            else:
-                self.logger.warning(
-                    "register: Problems in upserting Things on instance: {}, with URI: {}, status code: {}, "
-                    "payload: {}".format(name, uri, res.status_code, json.dumps(res.json(), indent=2)))
-
-        # Register Sensors. Patch or post
-        self.logger.info("register: Register Sensors")
-        gost_sensors = requests.get(gost_url + "/v1.0/Sensors").json()
-        gost_sensor_list = [sensor["name"] for sensor in gost_sensors["value"]]
-        for sensor in instances["Sensors"].keys():
-            name = instances["Sensors"][sensor]["name"]
-            self.logger.info("register: Sensor: {}, GOST name: {}".format(sensor, name))
-            status_max = 0
-            res = None
-            # PATCH sensor
-            if name in gost_sensor_list:
-                idx = [gost_sensor for gost_sensor in gost_sensors["value"]
-                       if name == gost_sensor["name"]][0]["@iot.id"]
-                uri = gost_url + "/v1.0/Sensors({})".format(idx)
-                # Sensors can only be patched line by line
-                for arg in list(instances["Sensors"][sensor]):
-                    body = dict({arg: instances["Sensors"][sensor][arg]})
-                    res = requests.patch(uri, json=body)
-                    status_max = max(res.status_code, status_max)  # Show the maximal status
-
-            # POST sensor
-            else:
-                self.logger.debug("Make a post of: {}".format(json.dumps(instances["Sensors"][sensor]["name"],
-                                                                         indent=2)))
-                uri = gost_url + "/v1.0/Sensors"
-                res = requests.post(uri, json=instances["Sensors"][sensor])
-                status_max = max(res.status_code, status_max)
-            # Test if everything worked
-            if status_max in [200, 201, 202]:
-                self.logger.info(
-                    "register: Successfully upsert the Sensors: {} with the URI: {} and status code: {}".format(
-                        name, uri, status_max))
-                instances["Sensors"][sensor] = res.json()
-            else:
-                self.logger.warning(
-                    "register: Problems to upsert Sensors on instance: {}, with URI: {}, status code: {}, "
-                    "payload: {}".format(name, uri, status_max, json.dumps(res.json(), indent=2)))
-
-        # TODO Register Observation property extra, make an own class to register all instances
-        # Register Datastreams with observation. Patch or post
-        self.logger.info("register: Register Datastreams")
-        gost_datastreams = requests.get(gost_url + "/v1.0/Datastreams").json()
-        gost_datastream_list = [datastream["name"] for datastream in gost_datastreams["value"]]
-        for datastream in instances["Datastreams"].keys():
-            name = instances["Datastreams"][datastream]["name"]
-            self.logger.info("register: Datastream: {}, GOST name: {}".format(datastream, name))
-
-            dedicated_thing = instances["Datastreams"][datastream]["Thing"]
-            dedicated_sensor = instances["Datastreams"][datastream]["Sensor"]
-
-            instances["Datastreams"][datastream]["Thing"] = dict({
-                "@iot.id": instances["Things"][dedicated_thing]["@iot.id"]})
-            instances["Datastreams"][datastream]["Sensor"] = dict({
-                "@iot.id": instances["Sensors"][dedicated_sensor]["@iot.id"]})
-
-            # Deep patch is not supported, no Thing, Sensor or Observed property
-            # PATCH thing
-            if name in gost_datastream_list:
-                idx = [gost_datastreams for gost_datastreams in gost_datastreams["value"]
-                       if name == gost_datastreams["name"]][0]["@iot.id"]
-                uri = gost_url + "/v1.0/Datastreams({})".format(idx)
-                self.logger.info("register: Make a patch of: {}".format(
-                    json.dumps(instances["Datastreams"][datastream]["name"], indent=2)))
-
-                instances["Datastreams"][datastream].pop("Thing", None)
-                instances["Datastreams"][datastream].pop("Sensor", None)
-                instances["Datastreams"][datastream].pop("ObservedProperty", None)
-                res = requests.patch(uri, json=instances["Datastreams"][datastream])
-            # POST datastream
-            else:
-                self.logger.info("register: Make a post of: {}".format(json.dumps(
-                    instances["Datastreams"][datastream]["name"], indent=2)))
-                uri = gost_url + "/v1.0/Datastreams"
-                res = requests.post(uri, json=instances["Datastreams"][datastream])
-
-            # Test if everything worked
-            if res.status_code in [200, 201, 202]:
-                self.logger.info(
-                    "register: Successfully upsert the Datastreams: {} with the URI: {} and status code: {}".format(
-                        name, uri, res.status_code))
-                instances["Datastreams"][datastream] = res.json()
-            else:
-                self.logger.warning(
-                    "register: Problems to upsert Datastreams on instance: {}, with URI: {}, status code: {}, "
-                    "payload: {}".format(name, uri, res.status_code, json.dumps(res.json(), indent=2)))
-                print(json.dumps(instances["Datastreams"][datastream]))
-
-        self.instances = instances
-        self.logger.info("register: Successfully registered instances:")
+        # The RegisterHelper class does the whole register workflow
+        register_helper = RegisterHelper(self.logger, self.config)
+        self.instances = register_helper.register(instance_file)
+        # Prints the registered instances
         for category in list(self.instances.keys()):
-            print(self.instances[category].items())
+            self.logger.debug(self.instances[category].items())
             items = [{"name": key, "@iot.id": value["@iot.id"]} for key, value
                      in list(self.instances[category].items())]
             self.logger.info("register: {}".format(items))
 
-        # Create Mapping to send on the correct data type
-        self.mapping["logging"] = {"name": "logging", "kafka-topic": self.config["Logging"], "@iot.id": -1}
+        # Create Mapping to send on the correct data type: Generic logger and one for each datastream
+        self.mapping["logging"] = {"name": "logging", "kafka-topic": "eu.{}.logging".format(self.config["system_name"]),
+                                   "@iot.id": -1}
         for key, value in self.instances["Datastreams"].items():
             self.mapping[key] = {"name": value["name"],
                                  "@iot.id": value["@iot.id"],
-                                 "kafka-topic": self.config[value["observationType"]]}
+                                 "kafka-topic": "eu.{}.{}".format(self.config["system_name"],
+                                                                  self.type_mappings[value["observationType"]])}
         self.logger.info("register: Successfully loaded mapping: {}".format(self.mapping))
 
         # Create Kafka Producer
-        self.producer = confluent_kafka.Producer({'bootstrap.servers': self.config["BOOTSTRAP_SERVERS"]})
+        self.producer = confluent_kafka.Producer({'bootstrap.servers': self.config["kafka_bootstrap_servers"]})
         self.send("logging", "Started Digital Twin Client with name: {} at: {} UTC".format(
-            self.client_name, datetime.utcnow()))
+            self.config["client_name"], datetime.utcnow()))
         self.logger.info("register: Successfully created Digital Twin Client with name: {} at: {} UTC".format(
-            self.client_name, datetime.utcnow()))
+            self.config["client_name"], datetime.utcnow()))
 
     def send(self, quantity, result, timestamp=None):
         """
@@ -264,7 +135,7 @@ class DigitalTwinClient:
         # Asynchronously produce a message, the delivery report callback
         # will be triggered from poll() above, or flush() below, when the message has
         # been successfully delivered or failed permanently.
-        self.producer.produce(kafka_topic, json.dumps(data).encode('utf-8'), key=self.client_name,
+        self.producer.produce(kafka_topic, json.dumps(data).encode('utf-8'), key=self.config["client_name"],
                               callback=self.delivery_report)
         # Wait for any outstanding messages to be delivered and delivery report
         # callbacks to be triggered.
@@ -332,25 +203,23 @@ class DigitalTwinClient:
         self.logger.info("subscribe: Subscribing to datastreams with names: {}".format(subscriptions["subscribed_ds"]))
 
         # Create Kafka Consumer instance
-        conf = {'bootstrap.servers': self.config["BOOTSTRAP_SERVERS"],
+        conf = {'bootstrap.servers': self.config["kafka_bootstrap_servers"],
                 'session.timeout.ms': 6000,
-                'group.id': self.client_name}
+                'group.id': self.config["client_name"]}
         self.consumer = confluent_kafka.Consumer(**conf)
         self.consumer.subscribe(
-            [self.config["http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_TruthObservation"],
-             self.config["http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_CountObservation"],
-             self.config["http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Measurement"],
-             self.config["http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_CategoryObservation"],
-             self.config["http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Observation"]])
+            ["eu.{}.metric".format(self.config["system_name"]),
+             "eu.{}.string".format(self.config["system_name"]),
+             "eu.{}.object".format(self.config["system_name"])])
 
         # get subscribed datastreams of the form:
         # {4: {'@iot.id': 4, 'name': 'Machine Temperature', '@iot.selfLink': 'http://...}, 5: {....}, ...}
-        gost_url = "http://" + self.config["GOST_SERVER"]
-        gost_datastreams = requests.get(gost_url + "/v1.0/Datastreams").json()["value"]
+        gost_url = "http://" + self.config["gost_servers"]
+        gost_datastreams = requests.get(gost_url
+                                        + "/v1.0/Datastreams?$expand=Sensors,Thing,ObservedProperty").json()["value"]
         self.subscribed_datastreams = {ds["@iot.id"]: ds for ds in gost_datastreams if ds["name"]
                                        in subscriptions["subscribed_ds"]}
-        # self.subscribed_datastreams_full = dict()
-        # TODO augment with Sensor and Thing data
+
         for key, value in self.subscribed_datastreams.items():
             self.logger.info("subscribe: Subscribed to datastream: id: {}, definition: {}".format(key, value))
         if len(self.subscribed_datastreams.keys()) == 0:

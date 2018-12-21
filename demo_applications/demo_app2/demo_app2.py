@@ -13,6 +13,7 @@ import os
 import sys
 import inspect
 import time
+import json
 
 # Append path of client to pythonpath in order to import the client from cli
 sys.path.append(os.getcwd())
@@ -25,8 +26,12 @@ dirname = os.path.dirname(os.path.abspath(filename))
 INSTANCES = os.path.join(dirname, "digital_twin_mapping/instances.json")
 SUBSCRIPTIONS = os.path.join(dirname, "digital_twin_mapping/subscriptions.json")
 
-# Init a new Digital Twin Instance and register file structure
-client = DigitalTwinClient("demo_app2")
+# Set the configs, create a new Digital Twin Instance and register file structure
+config = {"client_name": "demo_app2",
+          "system_name": "demo-system",
+          "kafka_bootstrap_servers": "localhost:9092",  # "192.168.48.81:9092,192.168.48.82:9092,192.168.48.83:9092"
+          "gost_servers": "localhost:8082"}  # "192.168.48.81:8082"
+client = DigitalTwinClient(**config)
 client.register(instance_file=INSTANCES)
 client.subscribe(subscription_file=SUBSCRIPTIONS)
 
@@ -34,23 +39,31 @@ fan_status = False
 try:
     while True:
         # Receive all queued messages of 'demo_temperature'
-        received_quantities = client.poll(timeout=1)
-        if received_quantities is None:
+        received_quantity = client.poll(timeout=1)
+        if received_quantity is None:
             continue
 
-        print("Received new data: {}".format(received_quantities))
+        # The resolves the all meta-data for an received data-point
+        print("Received new data-point: Quantity: '{}' = {} {}."
+              .format(received_quantity["Datastream"]["name"],
+                      received_quantity["result"],
+                      received_quantity["Datastream"]["unitOfMeasurement"]["symbol"]))
+        # To view the whole data-point in a pretty format, uncomment:
+        # print("Received new data: {}".format(json.dumps(received_quantity, indent=2)))
 
-        # As we have only subscribed one datastream, we can be sure that this is the Temperature data
-        current_temperature = received_quantities["result"]
-        if current_temperature > 70:
-            fan_status = True
-        elif current_temperature < 60:
-            fan_status = False
+        # Only use the quantity, if it is the Machine Temperature
+        if received_quantity.get("Datastream").get("name") == "Machine Temperature":
+            current_temperature = received_quantity["result"]
+            # If the temperature exceeds 70 degree, it will turned on. Under 60 degree, it is turned off.
+            if current_temperature > 70:
+                fan_status = True
+            elif current_temperature < 60:
+                fan_status = False
 
-            timestamp = time.time()  # epoch and ISO 8601 UTC are both valid
+                timestamp = time.time()  # epoch and ISO 8601 UTC are both valid
 
-            # Sending fan status
-            client.send(quantity="demo_fan-status", result=fan_status, timestamp=timestamp)
+                # Sending fan status
+                client.send(quantity="demo_fan-status", result=fan_status, timestamp=timestamp)
 
 except KeyboardInterrupt:
     client.disconnect()
