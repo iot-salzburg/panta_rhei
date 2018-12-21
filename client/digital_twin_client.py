@@ -215,11 +215,11 @@ class DigitalTwinClient:
         # get subscribed datastreams of the form:
         # {4: {'@iot.id': 4, 'name': 'Machine Temperature', '@iot.selfLink': 'http://...}, 5: {....}, ...}
         gost_url = "http://" + self.config["gost_servers"]
-        gost_datastreams = requests.get(gost_url + "/v1.0/Datastreams").json()["value"]
+        gost_datastreams = requests.get(gost_url
+                                        + "/v1.0/Datastreams?$expand=Sensors,Thing,ObservedProperty").json()["value"]
         self.subscribed_datastreams = {ds["@iot.id"]: ds for ds in gost_datastreams if ds["name"]
                                        in subscriptions["subscribed_ds"]}
-        # self.subscribed_datastreams_full = dict()
-        # TODO augment with Sensor and Thing data
+
         for key, value in self.subscribed_datastreams.items():
             self.logger.info("subscribe: Subscribed to datastream: id: {}, definition: {}".format(key, value))
         if len(self.subscribed_datastreams.keys()) == 0:

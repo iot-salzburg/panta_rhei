@@ -13,6 +13,7 @@ import os
 import sys
 import inspect
 import time
+import json
 
 # Append path of client to pythonpath in order to import the client from cli
 sys.path.append(os.getcwd())
@@ -41,7 +42,13 @@ try:
         if received_quantity is None:
             continue
 
-        print("Received new data: {}".format(received_quantity))
+        # The received data-points contain all metadata, although only 4 key-value pairs are sent.
+        print("Received new data-point: Quantity: '{}' = {} {}."
+              .format(received_quantity["Datastream"]["name"],
+                      received_quantity["result"],
+                      received_quantity["Datastream"]["unitOfMeasurement"]["symbol"]))
+        # To view the whole data-point in a pretty format, uncomment:
+        # print("Received new data: {}".format(json.dumps(received_quantity, indent=2)))
 
         # Only use the quantity, if it is the Machine Temperature
         if received_quantity.get("Datastream").get("name") == "Machine Temperature":
