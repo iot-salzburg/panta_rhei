@@ -43,10 +43,11 @@ try:
             continue
 
         # The resolves the all meta-data for an received data-point
-        print("Received new data-point: Quantity: '{}' = {} {}."
+        print("Received new data-point: '{}' = {} {} at {}."
               .format(received_quantity["Datastream"]["name"],
                       received_quantity["result"],
-                      received_quantity["Datastream"]["unitOfMeasurement"]["symbol"]))
+                      received_quantity["Datastream"]["unitOfMeasurement"]["symbol"],
+                      received_quantity["phenomenonTime"]))
         # To view the whole data-point in a pretty format, uncomment:
         # print("Received new data: {}".format(json.dumps(received_quantity, indent=2)))
 
