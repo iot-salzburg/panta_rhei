@@ -11,9 +11,8 @@ Example:
 
 import os
 import sys
-import inspect
 import time
-import json
+import inspect
 
 # Append path of client to pythonpath in order to import the client from cli
 sys.path.append(os.getcwd())
@@ -33,6 +32,7 @@ config = {"client_name": "demo_app2",
 client = DigitalTwinClient(**config)
 client.register(instance_file=INSTANCES)
 client.subscribe(subscription_file=SUBSCRIPTIONS)
+
 
 fan_status = False
 try:

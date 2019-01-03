@@ -102,7 +102,9 @@ class DigitalTwinClient:
         self.logger.info("register: Successfully loaded mapping: {}".format(self.mapping))
 
         # Create Kafka Producer
-        self.producer = confluent_kafka.Producer({'bootstrap.servers': self.config["kafka_bootstrap_servers"]})
+        self.producer = confluent_kafka.Producer({'bootstrap.servers': self.config["kafka_bootstrap_servers"],
+                                                  'client.id': self.config["client_name"],
+                                                  'default.topic.config': {'acks': 'all'}})
         self.send("logging", "Started Digital Twin Client with name '{}' at {} UTC".format(
             self.config["client_name"], datetime.utcnow()))
         self.logger.info("register: Successfully created Digital Twin Client with name: {} at: {} UTC".format(
