@@ -8,11 +8,8 @@ class RegisterHelper:
         self.logger = logger
         self.config = config
         self.instances = dict()
-        self.logger.warning("Created instance of RegisterHelper")
 
     def register(self, instance_file):
-
-        self.logger.info("register: Loading instances")
         instances = self.load_instances(instance_file)
         self.logger.info("register: Loaded instances")
 
@@ -20,18 +17,10 @@ class RegisterHelper:
 
         self.register_things(instances, gost_url)
         self.register_sensors(instances, gost_url)
-        # self.register_observations(instances, gost_url)
+        self.register_observed_properties(instances, gost_url)
         self.register_datastreams(instances, gost_url)
 
-        self.logger.info("register: Successfully registered instances:")
-
-        # Printing registered instances
-        for category in list(self.instances.keys()):
-            print(self.instances[category].items())
-            items = [{"name": key, "@iot.id": value["@iot.id"]} for key, value
-                     in list(self.instances[category].items())]
-            self.logger.info("register: {}".format(items))
-
+        self.logger.info("register: Successfully registered instances.")
         return self.instances
 
     def load_instances(self, instance_file):
@@ -67,18 +56,18 @@ class RegisterHelper:
         create requests
         If they exist: make patches
         Else: make posts and create the instance new
-        :param instance_file. Stores Things, Sensors and Datastreams+ObservedProperties, it also stores the structure
+        :param instances. Stores Things, Sensors and Datastreams+ObservedProperties, it also stores the structure
         :param gost_url. URL of the gost server
         :return:
         """
 
         # Register Things. Patch or post
-        self.logger.info("register: Register Things")
+        self.logger.debug("register: Register Things")
         gost_things = requests.get(gost_url + "/v1.0/Things").json()
         gost_thing_list = [thing["name"] for thing in gost_things["value"]]
         for thing in instances["Things"].keys():
             name = instances["Things"][thing]["name"]
-            self.logger.info("register: Thing: {}, GOST name: {}".format(thing, name))
+            self.logger.debug("register: Thing: {}, GOST name: {}".format(thing, name))
             # PATCH thing
             if name in gost_thing_list:
                 idx = [gost_thing for gost_thing in gost_things["value"] if name == gost_thing["name"]][0]["@iot.id"]
@@ -96,7 +85,7 @@ class RegisterHelper:
             # Test if everything worked
             if res.status_code in [200, 201, 202]:
                 self.logger.info(
-                    "register: Successfully upsert the Thing: {} with the URI: {} and status code: {}".format(
+                    "register: Successfully upsert the Thing '{}' with the URI '{}' and status code '{}'".format(
                         name, uri, res.status_code))
                 instances["Things"][thing] = res.json()
 
@@ -113,17 +102,17 @@ class RegisterHelper:
         create requests
         If they exist: make patches
         Else: make posts and create the instance new
-        :param instance_file. Stores Things, Sensors and Datastreams+ObservedProperties, it also stores the structure
+        :param instances. Stores Things, Sensors and Datastreams+ObservedProperties, it also stores the structure
         :param gost_url. URL of the gost server
         :return:
         """
         # Register Sensors. Patch or post
-        self.logger.info("register: Register Sensors")
+        self.logger.debug("register: Register Sensors")
         gost_sensors = requests.get(gost_url + "/v1.0/Sensors").json()
         gost_sensor_list = [sensor["name"] for sensor in gost_sensors["value"]]
         for sensor in instances["Sensors"].keys():
             name = instances["Sensors"][sensor]["name"]
-            self.logger.info("register: Sensor: {}, GOST name: {}".format(sensor, name))
+            self.logger.debug("register: Sensor: {}, GOST name: {}".format(sensor, name))
             status_max = 0
             res = None
             # PATCH sensor
@@ -147,7 +136,7 @@ class RegisterHelper:
             # Test if everything worked
             if status_max in [200, 201, 202]:
                 self.logger.info(
-                    "register: Successfully upsert the Sensors: {} with the URI: {} and status code: {}".format(
+                    "register: Successfully upsert the Sensor '{}' with the URI '{}' and status code '{}'".format(
                         name, uri, status_max))
                 instances["Sensors"][sensor] = res.json()
             else:
@@ -157,32 +146,84 @@ class RegisterHelper:
 
         self.instances["Sensors"] = instances["Sensors"]
 
+    def register_observed_properties(self, instances, gost_url):
+        """
+        Opens the Observed properties stored nested in the datastreams of the instance file
+        create requests
+        If they exist: make patches
+        Else: make posts and create the instance new
+        :param instances. Stores Things, Sensors and Datastreams+ObservedProperties, it also stores the structure
+        :param gost_url. URL of the gost server
+        :return:
+        """
+        # Register Observed Properties. Patch or post
+        self.logger.debug("register: Register Observed Properties")
+        self.instances["Datastreams"] = dict()
+        gost_observed_properties = requests.get(gost_url + "/v1.0/ObservedProperties").json()
+        gost_observed_properties_list = [obs_property["name"] for obs_property in gost_observed_properties["value"]]
+
+        for datastream in instances["Datastreams"].keys():
+            name = instances["Datastreams"][datastream]["ObservedProperty"]["name"]
+            self.logger.debug("register: for datastream '{}' the observed property with name '{}'"
+                              "".format(datastream, name))
+
+            # PATCH thing
+            if name in gost_observed_properties_list:
+                idx = [gost_obs_property for gost_obs_property in gost_observed_properties["value"]
+                       if name == gost_obs_property["name"]][0]["@iot.id"]
+                uri = gost_url + "/v1.0/ObservedProperties({})".format(idx)
+                self.logger.debug("register: Make a patch of: {}".format(
+                    json.dumps(instances["Datastreams"][datastream]["ObservedProperty"]["name"], indent=2)))
+
+                res = requests.patch(uri, json=instances["Datastreams"][datastream]["ObservedProperty"])
+            # POST thing
+            else:
+                self.logger.debug("register: Make a post of: {}".format(
+                    json.dumps(instances["Datastreams"][datastream]["ObservedProperty"]["name"], indent=2)))
+                uri = gost_url + "/v1.0/ObservedProperties"
+
+                res = requests.post(uri, json=instances["Datastreams"][datastream]["ObservedProperty"])
+
+            # Test if everything worked
+            if res.status_code in [200, 201, 202]:
+                self.logger.info("register: Successfully upsert the Observed Property '{}' with the URI '{}' "
+                                 "and status code '{}'".format(name, uri, res.status_code))
+                self.instances["Datastreams"][datastream] = dict({"ObservedProperty": res.json()})
+            else:
+                self.logger.warning(
+                    "register: Problems in upserting Observed Property on instance: {}, with URI: {}, status code: {}, "
+                    "payload: {}".format(name, uri, res.status_code, json.dumps(res.json(), indent=2)))
+            # self.instances doesn't need to be copied, as it already done in the loop
+            # self.instances["ObservedProperties"][name] = instances["Datastreams"][datastream]["ObservedProperty"]
+
     def register_datastreams(self, instances, gost_url):
         """
         Opens the Datastreams with observed properties of the instance file
         create requests
         If they exist: make patches
         Else: make posts and create the instance new
-        :param instance_file. Stores Things, Sensors and Datastreams+ObservedProperties, it also stores the structure
+        :param instances. Stores Things, Sensors and Datastreams+ObservedProperties, it also stores the structure
         :param gost_url. URL of the gost server
         :return:
         """
-        # TODO Register Observation property extra, make an own class to register all instances
         # Register Datastreams with observation. Patch or post
-        self.logger.info("register: Register Datastreams")
+        self.logger.debug("register: Register Datastreams")
         gost_datastreams = requests.get(gost_url + "/v1.0/Datastreams").json()
         gost_datastream_list = [datastream["name"] for datastream in gost_datastreams["value"]]
+
         for datastream in instances["Datastreams"].keys():
             name = instances["Datastreams"][datastream]["name"]
-            self.logger.info("register: Datastream: {}, GOST name: {}".format(datastream, name))
+            self.logger.debug("register: Datastream: {}, GOST name: {}".format(datastream, name))
 
             dedicated_thing = instances["Datastreams"][datastream]["Thing"]
             dedicated_sensor = instances["Datastreams"][datastream]["Sensor"]
-
+            
             instances["Datastreams"][datastream]["Thing"] = dict({
-                "@iot.id": instances["Things"][dedicated_thing]["@iot.id"]})
+                "@iot.id": self.instances["Things"][dedicated_thing]["@iot.id"]})
             instances["Datastreams"][datastream]["Sensor"] = dict({
-                "@iot.id": instances["Sensors"][dedicated_sensor]["@iot.id"]})
+                "@iot.id": self.instances["Sensors"][dedicated_sensor]["@iot.id"]})
+            instances["Datastreams"][datastream]["ObservedProperty"] = \
+                self.instances["Datastreams"][datastream]["ObservedProperty"]
 
             # Deep patch is not supported, no Thing, Sensor or Observed property
             # PATCH thing
@@ -190,7 +231,7 @@ class RegisterHelper:
                 idx = [gost_datastreams for gost_datastreams in gost_datastreams["value"]
                        if name == gost_datastreams["name"]][0]["@iot.id"]
                 uri = gost_url + "/v1.0/Datastreams({})".format(idx)
-                self.logger.info("register: Make a patch of: {}".format(
+                self.logger.debug("register: Make a patch of: {}".format(
                     json.dumps(instances["Datastreams"][datastream]["name"], indent=2)))
 
                 instances["Datastreams"][datastream].pop("Thing", None)
@@ -199,16 +240,15 @@ class RegisterHelper:
                 res = requests.patch(uri, json=instances["Datastreams"][datastream])
             # POST datastream
             else:
-                self.logger.info("register: Make a post of: {}".format(json.dumps(
+                self.logger.debug("register: Make a post of: {}".format(json.dumps(
                     instances["Datastreams"][datastream]["name"], indent=2)))
                 uri = gost_url + "/v1.0/Datastreams"
                 res = requests.post(uri, json=instances["Datastreams"][datastream])
 
             # Test if everything worked
             if res.status_code in [200, 201, 202]:
-                self.logger.info(
-                    "register: Successfully upsert the Datastreams: {} with the URI: {} and status code: {}".format(
-                        name, uri, res.status_code))
+                self.logger.info("register: Successfully upsert the Datastream '{}' with the URI '{}' "
+                                 "and status code '{}'".format(name, uri, res.status_code))
                 instances["Datastreams"][datastream] = res.json()
             else:
                 self.logger.warning(

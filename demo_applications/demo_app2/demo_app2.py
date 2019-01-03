@@ -11,9 +11,8 @@ Example:
 
 import os
 import sys
-import inspect
 import time
-import json
+import inspect
 
 # Append path of client to pythonpath in order to import the client from cli
 sys.path.append(os.getcwd())
@@ -35,6 +34,7 @@ client = DigitalTwinClient(**config)
 client.register(instance_file=INSTANCES)
 client.subscribe(subscription_file=SUBSCRIPTIONS)
 
+
 fan_status = False
 try:
     while True:
@@ -44,10 +44,11 @@ try:
             continue
 
         # The resolves the all meta-data for an received data-point
-        print("Received new data-point: Quantity: '{}' = {} {}."
+        print("Received new data-point: '{}' = {} {} at {}."
               .format(received_quantity["Datastream"]["name"],
                       received_quantity["result"],
-                      received_quantity["Datastream"]["unitOfMeasurement"]["symbol"]))
+                      received_quantity["Datastream"]["unitOfMeasurement"]["symbol"],
+                      received_quantity["phenomenonTime"]))
         # To view the whole data-point in a pretty format, uncomment:
         # print("Received new data: {}".format(json.dumps(received_quantity, indent=2)))
 

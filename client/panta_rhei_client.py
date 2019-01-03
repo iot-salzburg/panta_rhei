@@ -8,7 +8,7 @@ from datetime import datetime
 
 # confluent_kafka is based on librdkafka, details in install_kafka_requirements.sh
 import confluent_kafka
-from client.digital_twin_register import RegisterHelper
+from client.registerHelper import RegisterHelper
 
 
 class DigitalTwinClient:
@@ -37,7 +37,7 @@ class DigitalTwinClient:
         self.logger.info("init: Successfully loaded configs: {}".format(self.config))
 
         # Check Sensorthings connection
-        self.logger.info("init: Checking Sensorthings connection")
+        self.logger.debug("init: Checking Sensorthings connection")
         gost_url = "http://" + self.config["gost_servers"]
         res = requests.get(gost_url + "/v1.0/Things")
         if res.status_code in [200, 201, 202]:
@@ -48,7 +48,7 @@ class DigitalTwinClient:
             sys.exit(1)
 
         # Init Kafka, test for "Logging" with an unique group.id
-        self.logger.info("init: Checking Kafka connection")
+        self.logger.debug("init: Checking Kafka connection")
         check_group_id = str(hash(self.config["client_name"] + "_" + str(os.getpid())))[-3:]  # Use a 3 digit hash
         conf = {'bootstrap.servers': self.config["kafka_bootstrap_servers"],
                 'session.timeout.ms': 6000,
@@ -83,12 +83,13 @@ class DigitalTwinClient:
         # The RegisterHelper class does the whole register workflow
         register_helper = RegisterHelper(self.logger, self.config)
         self.instances = register_helper.register(instance_file)
-        # Prints the registered instances
-        for category in list(self.instances.keys()):
-            self.logger.debug(self.instances[category].items())
-            items = [{"name": key, "@iot.id": value["@iot.id"]} for key, value
-                     in list(self.instances[category].items())]
-            self.logger.info("register: {}".format(items))
+
+        # # Prints the registered instances
+        # for category in list(self.instances.keys()):
+        #     self.logger.debug(self.instances[category].items())
+        #     items = [{"name": key, "@iot.id": value["@iot.id"]} for key, value
+        #              in list(self.instances[category].items())]
+        #     self.logger.info("register: {}".format(items))
 
         # Create Mapping to send on the correct data type: Generic logger and one for each datastream
         self.mapping["logging"] = {"name": "logging", "kafka-topic": "eu.{}.logging".format(self.config["system_name"]),
@@ -101,8 +102,10 @@ class DigitalTwinClient:
         self.logger.info("register: Successfully loaded mapping: {}".format(self.mapping))
 
         # Create Kafka Producer
-        self.producer = confluent_kafka.Producer({'bootstrap.servers': self.config["kafka_bootstrap_servers"]})
-        self.send("logging", "Started Digital Twin Client with name: {} at: {} UTC".format(
+        self.producer = confluent_kafka.Producer({'bootstrap.servers': self.config["kafka_bootstrap_servers"],
+                                                  'client.id': self.config["client_name"],
+                                                  'default.topic.config': {'acks': 'all'}})
+        self.send("logging", "Started Digital Twin Client with name '{}' at {} UTC".format(
             self.config["client_name"], datetime.utcnow()))
         self.logger.info("register: Successfully created Digital Twin Client with name: {} at: {} UTC".format(
             self.config["client_name"], datetime.utcnow()))
@@ -221,7 +224,7 @@ class DigitalTwinClient:
                                        in subscriptions["subscribed_ds"]}
 
         for key, value in self.subscribed_datastreams.items():
-            self.logger.info("subscribe: Subscribed to datastream: id: {}, definition: {}".format(key, value))
+            self.logger.info("subscribe: Subscribed to datastream: id: {} and metadata: {}".format(key, value))
         if len(self.subscribed_datastreams.keys()) == 0:
             self.logger.info("subscribe: No subscription matches an existing datastream.")
 
@@ -265,4 +268,4 @@ class DigitalTwinClient:
             self.consumer.close()
         except AttributeError:
             pass
-        self.logger.info("disconnect: Digital Twin Client successfully disconnected")
+        self.logger.info("disconnect: Digital Twin Client disconnected")

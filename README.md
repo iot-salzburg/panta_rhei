@@ -40,13 +40,12 @@ Here, we use Ubuntu 18.04.
  
 #### Firstly, **Apache Kafka** and some requirements have to be installed:
 
-Currently, we use Kafka **version 0.11.0.3** as it seems to be the most reliable version, 
-but it is planned to update to version 2.X in the future. All installations are stored in `/kafka`.
+The Datastack uses Kafka **version 2.1.0** as the communication layer, the installations is done in `/kafka`.
 
     sudo apt-get update
     cd setup
-    sh kafka/install-kafka-0v11.sh
-    sudo sh kafka/install-kafka-libs-0v11.sh
+    sh kafka/install-kafka-2v1.sh
+    sudo sh kafka/install-kafka-libs-2v1.sh
     pip3 install -r requirements.txt
 
 Then, to test the installation:
@@ -130,7 +129,7 @@ The deployment in cluster node requires the following steps:
     
         sudo apt-get update
         cd setup
-        sh kafka/install-kafka-0v11.sh
+        sh kafka/install-kafka-2v1.sh
      
 *   Configure the Kafka Cluster on each node:
 

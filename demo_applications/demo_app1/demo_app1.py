@@ -52,6 +52,5 @@ try:
             demo_temp, datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat()))
 
         time.sleep(1)
-
 except KeyboardInterrupt:
     client.disconnect()
