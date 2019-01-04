@@ -11,7 +11,7 @@ class RegisterHelper:
 
     def register(self, instance_file):
         instances = self.load_instances(instance_file)
-        self.logger.info("register: Loaded instances")
+        self.logger.debug("register: Loaded instances")
 
         gost_url = "http://" + self.config["gost_servers"]
 
@@ -20,7 +20,7 @@ class RegisterHelper:
         self.register_observed_properties(instances, gost_url)
         self.register_datastreams(instances, gost_url)
 
-        self.logger.info("register: Successfully registered instances.")
+        self.logger.debug("register: Successfully registered instances.")
         return self.instances
 
     def load_instances(self, instance_file):

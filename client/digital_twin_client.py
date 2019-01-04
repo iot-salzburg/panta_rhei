@@ -47,29 +47,31 @@ class DigitalTwinClient:
                 gost_servers, res.status_code, res.json()))
             sys.exit(1)
 
-        # Init Kafka, test for "Logging" with an unique group.id
+        # Create Kafka Producer
         self.logger.debug("init: Checking Kafka connection")
-        check_group_id = str(hash(self.config["client_name"] + "_" + str(os.getpid())))[-3:]  # Use a 3 digit hash
-        conf = {'bootstrap.servers': self.config["kafka_bootstrap_servers"],
-                'session.timeout.ms': 6000,
-                'group.id': check_group_id}
-        consumer = confluent_kafka.Consumer(**conf)
-        consumer.subscribe(["eu.{}.logging".format(self.config["system_name"])])
-        msg = consumer.poll(1)  # Waits up to 1 for a message
-        if msg is not None:
-            # print(msg.value().decode('utf-8'))
-            self.logger.info("init: Successfully connected to the Kafka Broker: {}".format(
-                self.config["kafka_bootstrap_servers"]))
-        else:
-            self.logger.warning("init: Error, couldn't connect to Kafka Broker: {}".format(
-                self.config["kafka_bootstrap_servers"]))
-        consumer.close()
+        self.mapping = dict()
+        self.mapping["logging"] = {"name": "logging", "kafka-topic": "eu.{}.logging".format(self.config["system_name"]),
+                                   "@iot.id": -1}
+        self.producer = confluent_kafka.Producer({'bootstrap.servers': self.config["kafka_bootstrap_servers"],
+                                                  'client.id': self.config["client_name"],
+                                                  'default.topic.config': {'acks': 'all'}})
+
+        data = dict({"phenomenonTime": datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat(),
+                     "resultTime": datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat(),
+                     "result": "Started Digital Twin Client with name '{}'".format(self.config["client_name"]),
+                     "Datastream": {"@iot.id": self.mapping["logging"]["@iot.id"]}})
+
+        # Trigger any available delivery report callbacks from previous produce() calls
+        self.producer.poll(0)
+        self.producer.produce(self.mapping["logging"]["kafka-topic"], json.dumps(data).encode('utf-8'),
+                              key=self.config["client_name"], callback=self.delivery_report_connection_check)
+        # Wait for any outstanding messages to be delivered and delivery report
+        # callbacks to be triggered.
+        self.producer.flush()
 
         # Init other objects used in later methods
-        self.instances = dict()
-        self.mapping = dict()
         self.subscribed_datastreams = None
-        self.producer = None
+        self.instances = None
         self.consumer = None
 
     def register(self, instance_file):
@@ -83,7 +85,6 @@ class DigitalTwinClient:
         # The RegisterHelper class does the whole register workflow
         register_helper = RegisterHelper(self.logger, self.config)
         self.instances = register_helper.register(instance_file)
-
         # # Prints the registered instances
         # for category in list(self.instances.keys()):
         #     self.logger.debug(self.instances[category].items())
@@ -99,16 +100,12 @@ class DigitalTwinClient:
                                  "@iot.id": value["@iot.id"],
                                  "kafka-topic": "eu.{}.{}".format(self.config["system_name"],
                                                                   self.type_mappings[value["observationType"]])}
-        self.logger.info("register: Successfully loaded mapping: {}".format(self.mapping))
+        self.logger.debug("register: Successfully loaded mapping: {}".format(self.mapping))
 
-        # Create Kafka Producer
-        self.producer = confluent_kafka.Producer({'bootstrap.servers': self.config["kafka_bootstrap_servers"],
-                                                  'client.id': self.config["client_name"],
-                                                  'default.topic.config': {'acks': 'all'}})
-        self.send("logging", "Started Digital Twin Client with name '{}' at {} UTC".format(
-            self.config["client_name"], datetime.utcnow()))
-        self.logger.info("register: Successfully created Digital Twin Client with name: {} at: {} UTC".format(
-            self.config["client_name"], datetime.utcnow()))
+        self.send("logging", "Registered instances for Digital Twin Client '{}': {}".format(
+            self.config["client_name"], self.mapping))
+        self.logger.info("register: Registered instances for Digital Twin Client '{}': {}".format(
+            self.config["client_name"], self.mapping))
 
     def send(self, quantity, result, timestamp=None):
         """
@@ -173,6 +170,17 @@ class DigitalTwinClient:
             else:  # Expects the timestamp in the form of 1541514377497349 (ns)
                 return datetime.utcfromtimestamp(timestamp / 1e9).replace(tzinfo=pytz.UTC).isoformat()
 
+    def delivery_report_connection_check(self, err, msg):
+        """ Called only once to check the connection to kafka.
+            Triggered by poll() or flush()."""
+        if err is not None:
+            self.logger.error("init: Kafka connection check to brokers '{}' Message delivery failed: {}".format(
+                self.config["kafka_bootstrap_servers"], err))
+            sys.exit(4)
+        else:
+            self.logger.info("init: Successfully connected to the Kafka Broker: {} with topic: '{}', partitions: [{}]".
+                             format(self.config["kafka_bootstrap_servers"], msg.topic(), msg.partition()))
+
     def delivery_report(self, err, msg):
         """ Called once for each message produced to indicate delivery result.
             Triggered by poll() or flush()."""
@@ -191,7 +199,7 @@ class DigitalTwinClient:
         :param subscription_file:
         :return:
         """
-        self.logger.info("subscribe: Subscribing on {}, loading instances".format(subscription_file))
+        self.logger.debug("subscribe: Subscribing on {}, loading instances".format(subscription_file))
         # {"subscribed_ds": ["ds_1", ... ]}
         try:
             with open(subscription_file) as f:
