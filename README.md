@@ -130,13 +130,37 @@ The deployment in cluster node requires the following steps:
         sudo apt-get update
         cd setup
         sh kafka/install-kafka-2v1.sh
-     
-*   Configure the Kafka Cluster on each node:
 
-    Exemplary, we are using the node with ip 192.168.48.81 as our Kafka leader, 
-    on which zookeeper will run:
+
+*   Configure the Zookeeper and Kafka on each node:
+
+    In this example, we set up a small cluster of nodes with the ips `192.168.48.81`,
+    `192.168.48.82` and `192.168.48.83`. For simplicity, we use the term
+    `[k]` as a variable for the last number of the node ip, e.g. k in {1,2,3}
     
-    Copy and change the config file for each broker on  node `[k]`, e.g. k in {1,2,3} :
+    
+    Copy and change the config file for each broker on  node `[k]`:
+    
+        sudo mkdir /var/lib/zookeeper
+        sudo echo "[k]" > /var/lib/zookeeper/myid
+        sudo chown -R user.group /var/lib/zookeeper/
+        nano /kafka/config/zookeeper.properties
+        
+    And set the following properties to:
+    
+        tickTime=2000
+        dataDir=/var/lib/zookeeper/
+        clientPort=2181
+        initLimit=5
+        syncLimit=2
+        server.1=192.168.48.81:2888:3888
+        server.2=192.168.48.82:2888:3888
+        server.3=192.168.48.83:2888:3888
+        autopurge.snapRetainCount=3
+        autopurge.purgeInterval=24
+
+    
+    Copy and change the config file for each broker on  node `[k]`:
 
         cp /kafka/config/server.properties /kafka/config/il08[k].properties
         nano /kafka/config/il08[k].properties
@@ -147,39 +171,38 @@ The deployment in cluster node requires the following steps:
         log.retention.hours=720
         zookeeper.connect=192.168.48.81:2181,192.168.48.82:2181,192.168.48.83:2181
 
-    Note that zookeeper will run on the nodes ending with 81, 82 and 83.
+    Note that both zookeeper and Kafka will run on the nodes with their ips 
+    ending with 81, 82 and 83.
 
 
 * Create Systemd file and enable autostart
 
-    As zookeeper will run on each node with ips 192.68.48.81,192.68.48.82 and 
-    192.68.48.83, therefore we copy the file `zookeeper.service` 
+    Copy the files `zookeeper.service` and `kafka.service`
     from `setup/kafka` into `/etc/systemd/system/` and adjust the *user* and *group*. 
 
+    
     ```bash
     cp setup/kafka/zookeeper.service /etc/systemd/system/
     sudo nano /etc/systemd/system/zookeeper.service
-    ```
 
-    Kafka will run on each node, so we copy the file `kafka.service` 
-    from `setup/kafka` into `/etc/systemd/system/` and them adjust the *user*, *group* and 
-    the node id *[k]* in *ExecStart*. Do that on each node.
-
-    ```bash
     cp setup/kafka/kafka.service /etc/systemd/system/
     sudo nano /etc/systemd/system/kafka.service
     ```
+
     
     After that, reload the services on each node and enable autostart for each service:
     
-        sudo systemctl daemon-reload
-        sudo systemctl restart zookeeper
-        sudo systemctl status --no-pager zookeeper
-        sudo systemctl restart kafka
-        sudo systemctl status --no-pager kafka
-        sudo systemctl enable kafka
-        sudo systemctl enable zookeeper
-
+    
+    ```bash
+    sudo systemctl daemon-reload
+    sudo systemctl restart zookeeper
+    sudo systemctl status --no-pager zookeeper
+    sudo systemctl restart kafka
+    sudo systemctl status --no-pager kafka
+    sudo systemctl enable kafka
+    sudo systemctl enable zookeeper
+    ```
+    
     The status should show that the service run successful. If you are curious, run the 
     tests [here](#firstly-apache-kafka-and-some-requirements-have-to-be-installed).
 
