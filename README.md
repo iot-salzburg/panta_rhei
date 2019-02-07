@@ -144,8 +144,8 @@ The deployment in cluster node requires the following steps:
     And set the following properties to:
 
         broker.id=[k]
-        log.retention.hours=720
         log.dirs=/tmp/kafka-logs
+        log.retention.hours=720
         zookeeper.connect=192.168.48.81:2181
 
     Note that zookeeper will run solely on node 192.168.48.81.
