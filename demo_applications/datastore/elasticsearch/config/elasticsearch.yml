@@ -1,0 +1,24 @@
+# set indexes to be created
+action.auto_create_index: .security,.monitoring*,.watches,.triggered_watches,.watcher-history*,logstash*,data-*,logging-*
+
+network.host: ${HOSTNAME}
+#network.host: 0.0.0.0
+
+# this value is required because we set "network.host"
+# be sure to modify it appropriately for a production cluster deployment
+discovery.zen.minimum_master_nodes: 2
+
+#path.repo: ["/usr/share/elasticsearch/backup/"]
+
+# allow url for restoring backups
+#repositories.url.allowed_urls: ["http://il081/es_backup/*"]
+
+discovery.zen.ping.unicast.hosts: localhost
+cluster.name: il.es.cluster
+node.name: ${HOSTNAME}
+
+node.max_local_storage_nodes: 2
+# defaults:
+# node.master: true
+# node.data: true
+# node.ingest: true

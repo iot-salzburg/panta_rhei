@@ -91,6 +91,17 @@ Now, open new terminals to run the demo applications from the `client` directory
     ...
     > Received new data: {'phenomenonTime': ....}
     
+
+##### Run the Datastore
+
+First, some configs have to be set in order to make the datastore work properly:
+    
+    ulimit -n 65536  # Increase the max file descriptor
+    sudo sysctl -w vm.max_map_count=262144  # Increase the virtual memory
+    sudo service docker restart  # Restart docker to make the changes work
+    
+    
+    
     
 #### Track what happens behind the scenes:
 
