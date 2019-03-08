@@ -12,7 +12,7 @@ from client.registerHelper import RegisterHelper
 
 
 class DigitalTwinClient:
-    def __init__(self, client_name, system_name, kafka_bootstrap_servers, gost_servers):
+    def __init__(self, client_name, system_prefix, system_name, kafka_bootstrap_servers, gost_servers):
         """
         Load config files
         Checks GOST server connection
@@ -22,22 +22,18 @@ class DigitalTwinClient:
         self.logger = logging.getLogger("PR Client Logger")
         self.logger.setLevel(logging.INFO)
         logging.basicConfig(level='WARNING')
-        self.logger.info("init: Initialising Digital Twin Client with name: {}".format(client_name))
+        self.logger.info("init: Initialising Digital Twin Client with name '{}' on '{}'".format(
+            client_name, system_prefix+"."+system_name))
 
         # Load config
         self.config = {"client_name": client_name,
+                       "system_prefix": system_prefix,
                        "system_name": system_name,
                        "kafka_bootstrap_servers": kafka_bootstrap_servers,
                        "gost_servers": gost_servers}
-        type_mapping_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "type_mappings.json")
-        with open(type_mapping_file) as f:
-            self.type_mappings = json.loads(f.read())
-        with open(type_mapping_file, "w") as f:
-            f.write(json.dumps(self.type_mappings, indent=2))
-        self.logger.info("init: Successfully loaded configs: {}".format(self.config))
 
-        # Check Sensorthings connection
-        self.logger.debug("init: Checking Sensorthings connection")
+        # Check SensorThings connection
+        self.logger.debug("init: Checking SensorThings connection")
         gost_url = "http://" + self.config["gost_servers"]
         res = requests.get(gost_url + "/v1.0/Things")
         if res.status_code in [200, 201, 202]:
@@ -45,24 +41,32 @@ class DigitalTwinClient:
         else:
             self.logger.error("init: Error, couldn't connect to GOST server: {}, status code: {}, result: {}".format(
                 gost_servers, res.status_code, res.json()))
-            sys.exit(1)
+            sys.exit(10)
 
         # Create Kafka Producer
         self.logger.debug("init: Checking Kafka connection")
         self.mapping = dict()
-        self.mapping["logging"] = {"name": "logging", "kafka-topic": "eu.{}.logging".format(self.config["system_name"]),
-                                   "@iot.id": -1}
+        self.mapping["logging"] = {"name": "logging", "@iot.id": -1,
+                                   "kafka-topic": "{}.{}.logging".format(self.config["system_prefix"],
+                                                                         self.config["system_name"])}
         self.producer = confluent_kafka.Producer({'bootstrap.servers': self.config["kafka_bootstrap_servers"],
                                                   'client.id': self.config["client_name"],
                                                   'default.topic.config': {'acks': 'all'}})
+        # Check if the topic exists
+        if self.mapping["logging"]["kafka-topic"] not in self.producer.list_topics().topics.keys():
+            self.logger.error("init: Error, topic '{}' doesn't exist in Kafka cluster, stopping client".format(
+                self.mapping["logging"]["kafka-topic"]))
+            sys.exit(20)
+            # TODO How to create a topic via the client
+            # a = confluent_kafka.admin.AdminClient({'bootstrap.servers': self.config["kafka_bootstrap_servers"]})
+            # a.create_topics([confluent_kafka.admin.NewTopic("test.mytopic", 2, 1)])
 
+        # Trigger any available delivery report callbacks from previous produce() calls
+        self.producer.poll(0)
         data = dict({"phenomenonTime": datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat(),
                      "resultTime": datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat(),
                      "result": "Started Digital Twin Client with name '{}'".format(self.config["client_name"]),
                      "Datastream": {"@iot.id": self.mapping["logging"]["@iot.id"]}})
-
-        # Trigger any available delivery report callbacks from previous produce() calls
-        self.producer.poll(0)
         self.producer.produce(self.mapping["logging"]["kafka-topic"], json.dumps(data).encode('utf-8'),
                               key=self.config["client_name"], callback=self.delivery_report_connection_check)
         # Wait for any outstanding messages to be delivered and delivery report
@@ -85,21 +89,14 @@ class DigitalTwinClient:
         # The RegisterHelper class does the whole register workflow
         register_helper = RegisterHelper(self.logger, self.config)
         self.instances = register_helper.register(instance_file)
-        # # Prints the registered instances
-        # for category in list(self.instances.keys()):
-        #     self.logger.debug(self.instances[category].items())
-        #     items = [{"name": key, "@iot.id": value["@iot.id"]} for key, value
-        #              in list(self.instances[category].items())]
-        #     self.logger.info("register: {}".format(items))
 
         # Create Mapping to send on the correct data type: Generic logger and one for each datastream
-        self.mapping["logging"] = {"name": "logging", "kafka-topic": "eu.{}.logging".format(self.config["system_name"]),
-                                   "@iot.id": -1}
+        # value dict_keys(['@iot.id', 'name', 'description', 'unitOfMeasurement', 'observationType', 'Thing', 'Sensor'])
         for key, value in self.instances["Datastreams"].items():
             self.mapping[key] = {"name": value["name"],
                                  "@iot.id": value["@iot.id"],
-                                 "kafka-topic": "eu.{}.{}".format(self.config["system_name"],
-                                                                  self.type_mappings[value["observationType"]])}
+                                 "Thing": value["Thing"],
+                                 "observationType": value["observationType"]}
         self.logger.debug("register: Successfully loaded mapping: {}".format(self.mapping))
 
         self.send("logging", "Registered instances for Digital Twin Client '{}': {}".format(
@@ -116,12 +113,12 @@ class DigitalTwinClient:
         be created.
         :return:
         """
-        try:
-            kafka_topic = self.mapping[quantity]["kafka-topic"]
-            # self.logger.info("Sending to kafka topic: {}".format(kafka_topic))
-        except KeyError:
+        # try:
+        #     kafka_topic = self.mapping[quantity]["kafka-topic"]
+        #     # self.logger.info("Sending to kafka topic: {}".format(kafka_topic))
+        if quantity not in self.mapping.keys():
             self.logger.error("send: Quantity is not registered: {}".format(quantity))
-            sys.exit(1)
+            sys.exit(30)
 
         timestamp = self.get_iso8601_time(timestamp)
 
@@ -135,7 +132,12 @@ class DigitalTwinClient:
         # Asynchronously produce a message, the delivery report callback
         # will be triggered from poll() above, or flush() below, when the message has
         # been successfully delivered or failed permanently.
-        self.producer.produce(kafka_topic, json.dumps(data).encode('utf-8'), key=self.config["client_name"],
+        kafka_topic = "{}.{}.data".format(self.config["system_prefix"], self.config["system_name"])
+        # The key is of the form "thing.data-type" or "client-name.logging"
+        kafka_key = self.mapping[quantity].get("Thing", self.config["client_name"])
+        kafka_key += "." + self.mapping[quantity].get("observationType", "logging")
+
+        self.producer.produce(kafka_topic, json.dumps(data).encode('utf-8'), key=kafka_key,
                               callback=self.delivery_report)
         # Wait for any outstanding messages to be delivered and delivery report
         # callbacks to be triggered.
@@ -176,10 +178,11 @@ class DigitalTwinClient:
         if err is not None:
             self.logger.error("init: Kafka connection check to brokers '{}' Message delivery failed: {}".format(
                 self.config["kafka_bootstrap_servers"], err))
-            sys.exit(4)
+            sys.exit(40)
         else:
-            self.logger.info("init: Successfully connected to the Kafka Broker: {} with topic: '{}', partitions: [{}]".
-                             format(self.config["kafka_bootstrap_servers"], msg.topic(), msg.partition()))
+            self.logger.info(
+                "init: Successfully connected to the Kafka bootstrap server: {} with topic: '{}', partitions: [{}]"
+                    .format(self.config["kafka_bootstrap_servers"], msg.topic(), msg.partition()))
 
     def delivery_report(self, err, msg):
         """ Called once for each message produced to indicate delivery result.

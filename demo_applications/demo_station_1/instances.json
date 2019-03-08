@@ -1,0 +1,38 @@
+{
+  "Things": {
+    "demo_station_1": {
+      "name": "Demo Station 1",
+      "description": "Weather Station that provides temperature data",
+      "properties": {
+        "specification": "https://www.machine-url.com/downloads/demo-machine.pdf"
+      }
+    }
+  },
+  "Sensors": {
+    "demo_temp-sensor": {
+      "name": "PT100 temperature sensor",
+      "description": "PT100 temperature sensor, 3-wire, model number: H2-013",
+      "encodingType": "application/pdf",
+      "metadata": "http://www.reissmann.com/fileadmin/templates/_media/produkte/pdf/st_pt_100_en.pdf"
+    }
+  },
+  "Datastreams": {
+    "temperature": {
+      "name": "Air Temperature",
+      "description": "Air Temperature measured in the weather station 1",
+      "observationType": "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Measurement",
+      "unitOfMeasurement": {
+        "name": "Degree Celsius",
+        "symbol": "degC",
+        "definition": "http://www.qudt.org/qudt/owl/1.0.0/unit/Instances.html#DegreeCelsius"
+      },
+      "ObservedProperty": {
+        "name": "Air Temperature",
+        "description": "Air Temperature at the demo station 1",
+        "definition": "http://www.qudt.org/qudt/owl/1.0.0/quantity/Instances.html#AreaTemperature"
+      },
+      "Thing": "demo_station_1",
+      "Sensor": "demo_temp-sensor"
+    }
+  }
+}

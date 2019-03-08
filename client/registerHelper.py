@@ -250,6 +250,8 @@ class RegisterHelper:
                 self.logger.info("register: Successfully upsert the Datastream '{}' with the URI '{}' "
                                  "and status code '{}'".format(name, uri, res.status_code))
                 instances["Datastreams"][datastream] = res.json()
+                instances["Datastreams"][datastream]["Thing"] = dedicated_thing
+                instances["Datastreams"][datastream]["Sensor"] = dedicated_sensor
             else:
                 self.logger.warning(
                     "register: Problems to upsert Datastreams on instance: {}, with URI: {}, status code: {}, "
