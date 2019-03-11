@@ -193,7 +193,7 @@ class DigitalTwinClient:
         else:
             self.logger.info(
                 "init: Successfully connected to the Kafka bootstrap server: {} with topic: '{}', partitions: [{}]"
-                    .format(self.config["kafka_bootstrap_servers"], msg.topic(), msg.partition()))
+                "".format(self.config["kafka_bootstrap_servers"], msg.topic(), msg.partition()))
 
     def delivery_report(self, err, msg):
         """ Called once for each message produced to indicate delivery result.
@@ -242,8 +242,9 @@ class DigitalTwinClient:
         # get subscribed datastreams of the form:
         # {4: {'@iot.id': 4, 'name': 'Machine Temperature', '@iot.selfLink': 'http://...}, 5: {....}, ...}
         gost_url = "http://" + self.config["gost_servers"]
-        gost_datastreams = requests.get(gost_url
-                                        + "/v1.0/Datastreams?$expand=Sensors,Thing,ObservedProperty").json()["value"]
+        # Sort datastreams to pick latest stream datastream in case of duplicates
+        gost_datastreams = sorted(requests.get(gost_url + "/v1.0/Datastreams?$expand=Sensors,Thing,ObservedProperty")
+                                  .json()["value"], key=lambda k: k["@iot.id"])
         self.subscribed_datastreams = {ds["@iot.id"]: ds for ds in gost_datastreams if ds["name"]
                                        in subscriptions["subscribed_datastreams"]}
 
