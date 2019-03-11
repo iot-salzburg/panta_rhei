@@ -63,10 +63,17 @@ class RegisterHelper:
 
         # Register Things. Patch or post
         self.logger.debug("register: Register Things")
+
+        # Add an unique prefix to identify the instances in the GOST server
+        for key, thing in instances["Things"].items():
+            if not thing["name"].startswith(self.config["system_prefix"] + "." + self.config["system_name"]):
+                thing["name"] = self.config["system_prefix"] + "." + self.config["system_name"] + "." + thing["name"]
+
         gost_things = requests.get(gost_url + "/v1.0/Things").json()
         gost_thing_list = [thing["name"] for thing in gost_things["value"]]
         for thing in instances["Things"].keys():
             name = instances["Things"][thing]["name"]
+
             self.logger.debug("register: Thing: {}, GOST name: {}".format(thing, name))
             # PATCH thing
             if name in gost_thing_list:
@@ -108,11 +115,18 @@ class RegisterHelper:
         """
         # Register Sensors. Patch or post
         self.logger.debug("register: Register Sensors")
+
+        # Add an unique prefix to identify the instances in the GOST server
+        for key, sensor in instances["Sensors"].items():
+            if not sensor["name"].startswith(self.config["system_prefix"] + "." + self.config["system_name"]):
+                sensor["name"] = self.config["system_prefix"] + "." + self.config["system_name"] + "." + sensor["name"]
+
         gost_sensors = requests.get(gost_url + "/v1.0/Sensors").json()
         gost_sensor_list = [sensor["name"] for sensor in gost_sensors["value"]]
         for sensor in instances["Sensors"].keys():
             name = instances["Sensors"][sensor]["name"]
             self.logger.debug("register: Sensor: {}, GOST name: {}".format(sensor, name))
+
             status_max = 0
             res = None
             # PATCH sensor
@@ -158,6 +172,14 @@ class RegisterHelper:
         """
         # Register Observed Properties. Patch or post
         self.logger.debug("register: Register Observed Properties")
+
+        # Add an unique prefix to identify the instances in the GOST server
+        for key, ds in instances["Datastreams"].items():
+            if not ds["ObservedProperty"]["name"].startswith(".".join([self.config["system_prefix"],
+                                                                       self.config["system_name"], ds["Thing"]])):
+                ds["ObservedProperty"]["name"] = ".".join([self.config["system_prefix"], self.config["system_name"],
+                                                           ds["Thing"], ds["ObservedProperty"]["name"]])
+
         self.instances["Datastreams"] = dict()
         gost_observed_properties = requests.get(gost_url + "/v1.0/ObservedProperties").json()
         gost_observed_properties_list = [obs_property["name"] for obs_property in gost_observed_properties["value"]]
@@ -208,6 +230,14 @@ class RegisterHelper:
         """
         # Register Datastreams with observation. Patch or post
         self.logger.debug("register: Register Datastreams")
+
+        # Add an unique prefix to identify the instances in the GOST server
+        for key, ds in instances["Datastreams"].items():
+            if not ds["name"].startswith(".".join([self.config["system_prefix"], self.config["system_name"],
+                                                   ds["Thing"]])):
+                ds["name"] = ".".join([self.config["system_prefix"], self.config["system_name"], ds["Thing"],
+                                       ds["name"]])
+
         gost_datastreams = requests.get(gost_url + "/v1.0/Datastreams").json()
         gost_datastream_list = [datastream["name"] for datastream in gost_datastreams["value"]]
 

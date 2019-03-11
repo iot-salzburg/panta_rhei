@@ -9,6 +9,7 @@ from datetime import datetime
 # confluent_kafka is based on librdkafka, details in install_kafka_requirements.sh
 import confluent_kafka
 from client.registerHelper import RegisterHelper
+from client.type_mappings import type_mappings
 
 
 class DigitalTwinClient:
@@ -48,7 +49,9 @@ class DigitalTwinClient:
         self.mapping = dict()
         self.mapping["logging"] = {"name": "logging", "@iot.id": -1,
                                    "kafka-topic": "{}.{}.logging".format(self.config["system_prefix"],
-                                                                         self.config["system_name"])}
+                                                                         self.config["system_name"]),
+                                   "observationType": "http://www.opengis.net/def/observationType/OGC-OM/2.0/"
+                                                      "OM_CategoryObservation"}
         self.producer = confluent_kafka.Producer({'bootstrap.servers': self.config["kafka_bootstrap_servers"],
                                                   'client.id': self.config["client_name"],
                                                   'default.topic.config': {'acks': 'all'}})
@@ -113,19 +116,23 @@ class DigitalTwinClient:
         be created.
         :return:
         """
-        # try:
-        #     kafka_topic = self.mapping[quantity]["kafka-topic"]
-        #     # self.logger.info("Sending to kafka topic: {}".format(kafka_topic))
+        # check, if the quantity is registered
         if quantity not in self.mapping.keys():
             self.logger.error("send: Quantity is not registered: {}".format(quantity))
             sys.exit(30)
 
-        timestamp = self.get_iso8601_time(timestamp)
-
-        data = dict({"phenomenonTime": timestamp,
+        data = dict({"phenomenonTime": self.get_iso8601_time(timestamp),
                      "resultTime": datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat(),
-                     "result": result,
                      "Datastream": {"@iot.id": self.mapping[quantity]["@iot.id"]}})
+
+        # check, if the type of the result is correct
+        try:
+            data["result"] = type_mappings[self.mapping[quantity]["observationType"]](result)
+        except ValueError:
+            self.logger.error("send: Error, incorrect type was recognized, result: {}, "
+                              "result.type: {}, dedicated type (as registered): {}"
+                              "".format(result, type(result), self.mapping[quantity]["observationType"]))
+            sys.exit(31)
 
         # Trigger any available delivery report callbacks from previous produce() calls
         self.producer.poll(0)

@@ -1,8 +1,0 @@
-{
-  "_comment": "These types must fit with the kafka topic postfixes in config.json of the client. TODO: this could be removed",
-  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_TruthObservation": "metric",
-  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_CountObservation": "metric",
-  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Measurement": "metric",
-  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_CategoryObservation": "string",
-  "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Observation": "object"
-}
