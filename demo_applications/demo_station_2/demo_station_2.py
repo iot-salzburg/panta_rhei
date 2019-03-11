@@ -39,7 +39,7 @@ config = {"client_name": "demo_station_1",
 client = DigitalTwinClient(**config)
 client.register(instance_file=INSTANCES)
 
-randomised_temp = SimulateTemperatures(t_factor=100, day_amplitude=5, year_amplitude=-5, average=2.5)
+randomised_temp = SimulateTemperatures(t_factor=100, day_amplitude=6, year_amplitude=-6, average=3.5)
 
 try:
     while True:
@@ -53,7 +53,7 @@ try:
         client.send(quantity="temperature", result=temperature, timestamp=timestamp)
 
         # Print the temperature with the corresponding timestamp in ISO format
-        print("The air temperature at the demo station 1 is {} °C at {}".format(
+        print("The air temperature at the demo station 2 is {} °C at {}".format(
             temperature, datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat()))
 
         time.sleep(1)

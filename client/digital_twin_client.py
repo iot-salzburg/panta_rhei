@@ -50,8 +50,7 @@ class DigitalTwinClient:
         self.mapping["logging"] = {"name": "logging", "@iot.id": -1,
                                    "kafka-topic": "{}.{}.logging".format(self.config["system_prefix"],
                                                                          self.config["system_name"]),
-                                   "observationType": "http://www.opengis.net/def/observationType/OGC-OM/2.0/"
-                                                      "OM_CategoryObservation"}
+                                   "observationType": "logging"}
         self.producer = confluent_kafka.Producer({'bootstrap.servers': self.config["kafka_bootstrap_servers"],
                                                   'client.id': self.config["client_name"],
                                                   'default.topic.config': {'acks': 'all'}})
@@ -139,7 +138,12 @@ class DigitalTwinClient:
         # Asynchronously produce a message, the delivery report callback
         # will be triggered from poll() above, or flush() below, when the message has
         # been successfully delivered or failed permanently.
-        kafka_topic = "{}.{}.data".format(self.config["system_prefix"], self.config["system_name"])
+        kafka_topic = "{}.{}.".format(self.config["system_prefix"], self.config["system_name"])
+        if self.mapping[quantity]["observationType"] == "logging":
+            kafka_topic += "logging"
+        else:
+            kafka_topic += "data"
+
         # The key is of the form "thing.data-type" or "client-name.logging"
         kafka_key = self.mapping[quantity].get("Thing", self.config["client_name"])
         kafka_key += "." + self.mapping[quantity].get("observationType", "logging")
@@ -210,28 +214,30 @@ class DigitalTwinClient:
         :return:
         """
         self.logger.debug("subscribe: Subscribing on {}, loading instances".format(subscription_file))
-        # {"subscribed_ds": ["ds_1", ... ]}
+        # {"subscribed_datastreams": ["domain.enterprise...system.thing.ds_1", ... ]}
         try:
             with open(subscription_file) as f:
                 subscriptions = json.loads(f.read())
         except FileNotFoundError:
             self.logger.warning("subscribe: FileNotFound, creating empty subscription file")
-            subscriptions = json.loads('{"subscribed_ds": []}')
+            subscriptions = json.loads('{"subscribed_datastreams": []}')
         # Make structure pretty
         with open(subscription_file, "w") as f:
             f.write(json.dumps(subscriptions, indent=2))
 
-        self.logger.info("subscribe: Subscribing to datastreams with names: {}".format(subscriptions["subscribed_ds"]))
+        self.logger.info("subscribe: Subscribing to datastreams with names: {}".format(
+            subscriptions["subscribed_datastreams"]))
 
         # Create Kafka Consumer instance
         conf = {'bootstrap.servers': self.config["kafka_bootstrap_servers"],
                 'session.timeout.ms': 6000,
-                'group.id': self.config["client_name"]}
+                'group.id': "{}.{}.{}".format(self.config["system_prefix"], self.config["system_name"],
+                                              self.config["client_name"])}
+
         self.consumer = confluent_kafka.Consumer(**conf)
-        self.consumer.subscribe(
-            ["eu.{}.metric".format(self.config["system_name"]),
-             "eu.{}.string".format(self.config["system_name"]),
-             "eu.{}.object".format(self.config["system_name"])])
+        self.consumer.subscribe([
+            "{}.{}.data".format(self.config["system_prefix"], self.config["system_name"]),
+            "{}.{}.external".format(self.config["system_prefix"], self.config["system_name"])])
 
         # get subscribed datastreams of the form:
         # {4: {'@iot.id': 4, 'name': 'Machine Temperature', '@iot.selfLink': 'http://...}, 5: {....}, ...}
@@ -239,7 +245,7 @@ class DigitalTwinClient:
         gost_datastreams = requests.get(gost_url
                                         + "/v1.0/Datastreams?$expand=Sensors,Thing,ObservedProperty").json()["value"]
         self.subscribed_datastreams = {ds["@iot.id"]: ds for ds in gost_datastreams if ds["name"]
-                                       in subscriptions["subscribed_ds"]}
+                                       in subscriptions["subscribed_datastreams"]}
 
         for key, value in self.subscribed_datastreams.items():
             self.logger.info("subscribe: Subscribed to datastream: id: {} and metadata: {}".format(key, value))
