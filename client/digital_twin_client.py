@@ -265,20 +265,18 @@ class DigitalTwinClient:
         """
         msg = self.consumer.poll(timeout)  # Waits up to 'session.timeout.ms' for a message
 
-        if msg is None:
-            pass
-        elif not msg.error():
-            data = json.loads(msg.value().decode('utf-8'))
-            iot_id = data.get("Datastream", None).get("@iot.id", None)
-            if iot_id in self.subscribed_datastreams.keys():
-                data["Datastream"] = self.subscribed_datastreams[iot_id]
-                return data
-        else:
-            if msg.error().code() == confluent_kafka.KafkaError._PARTITION_EOF:
-                # self.logger.warning("poll: confluent_kafka.KafkaError._PARTITION_EOF exception")
-                pass
+        while msg is not None:
+            if not msg.error():
+                data = json.loads(msg.value().decode('utf-8'))
+                iot_id = data.get("Datastream", None).get("@iot.id", None)
+                if iot_id in self.subscribed_datastreams.keys():
+                    data["Datastream"] = self.subscribed_datastreams[iot_id]
+                    return data
             else:
-                self.logger.error("poll: {}".format(msg.error()))
+                if msg.error().code() != confluent_kafka.KafkaError._PARTITION_EOF:
+                    self.logger.error("poll: {}".format(msg.error()))
+
+            msg = self.consumer.poll(0)  # Waits up to 'session.timeout.ms' for a message
 
     def disconnect(self):
         """
