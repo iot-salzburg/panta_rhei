@@ -31,17 +31,17 @@ INSTANCES = os.path.join(dirname, "instances.json")
 SUBSCRIPTIONS = os.path.join(dirname, "subscriptions.json")
 
 # Set the configs, create a new Digital Twin Instance and register file structure
-config = {"client_name": "demo_car_1",
+config = {"client_name": "demo_car_2",
             # TODO will be reduced by registration id
           "system_prefix": "eu.srfg.iot-iot4cps-wp5",  # only with 2 dots, alphanumeric and "-"
-          "system_name": "car1",  # will be reduced by registration id
+          "system_name": "car2",  # will be reduced by registration id
           "kafka_bootstrap_servers": "localhost:9092",
           "gost_servers": "localhost:8082"}
 client = DigitalTwinClient(**config)
 client.register(instance_file=INSTANCES)
 client.subscribe(subscription_file=SUBSCRIPTIONS)
 
-randomised_temp = SimulateTemperatures(t_factor=100, day_amplitude=4, year_amplitude=-4, average=3)
+randomised_temp = SimulateTemperatures(t_factor=100, day_amplitude=4.5, year_amplitude=-3.5, average=2)
 
 try:
     while True:
@@ -55,7 +55,7 @@ try:
         client.send(quantity="temperature", result=temperature, timestamp=timestamp)
 
         # Print the temperature with the corresponding timestamp in ISO format
-        print("The air temperature at the demo car 1 is {} °C at {}".format(temperature, timestamp))
+        print("The air temperature at the demo car 2 is {} °C at {}".format(temperature, timestamp))
 
         # Receive all queued messages of the weather-service and other connected cars and calculate the minimum
         minimal_temps = list()

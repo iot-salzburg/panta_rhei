@@ -1,0 +1,38 @@
+{
+  "Things": {
+    "car_2": {
+      "name": "Demo Car 2",
+      "description": "A demo Car that is an unique system that provides and consumes temperature data",
+      "properties": {
+        "specification": "https://www.salzburgresearch.at/projekt/iot4cps/"
+      }
+    }
+  },
+  "Sensors": {
+    "demo_temp-sensor": {
+      "name": "PT100 temperature sensor",
+      "description": "PT100 temperature sensor, 3-wire, model number: H2-013",
+      "encodingType": "application/pdf",
+      "metadata": "http://www.reissmann.com/fileadmin/templates/_media/produkte/pdf/st_pt_100_en.pdf"
+    }
+  },
+  "Datastreams": {
+    "temperature": {
+      "name": "Air Temperature",
+      "description": "Air temperature measured in the connected car 2",
+      "observationType": "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Measurement",
+      "unitOfMeasurement": {
+        "name": "Degree Celsius",
+        "symbol": "degC",
+        "definition": "http://www.qudt.org/qudt/owl/1.0.0/unit/Instances.html#DegreeCelsius"
+      },
+      "ObservedProperty": {
+        "name": "Air Temperature",
+        "description": "Air temperature measured in the connected car 2",
+        "definition": "http://www.qudt.org/qudt/owl/1.0.0/quantity/Instances.html#AreaTemperature"
+      },
+      "Thing": "car_2",
+      "Sensor": "demo_temp-sensor"
+    }
+  }
+}

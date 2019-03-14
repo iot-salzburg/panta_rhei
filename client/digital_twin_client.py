@@ -251,7 +251,10 @@ class DigitalTwinClient:
         for key, value in self.subscribed_datastreams.items():
             self.logger.info("subscribe: Subscribed to datastream: id: {} and metadata: {}".format(key, value))
         if len(self.subscribed_datastreams.keys()) == 0:
-            self.logger.info("subscribe: No subscription matches an existing datastream.")
+            self.logger.warning("subscribe: No subscription matches an existing datastream.")
+        for stream in subscriptions["subscribed_datastreams"]:
+            if stream not in [subscribed_ds["name"] for subscribed_ds in self.subscribed_datastreams.values()]:
+                self.logger.warning("subscribe: Couldn't subscribe to {}, may not be registered".format(stream))
 
     def poll(self, timeout=0.1):
         """

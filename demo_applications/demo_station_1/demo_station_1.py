@@ -56,6 +56,6 @@ try:
         print("The air temperature at the demo station 1 is {} °C at {}".format(
             temperature, datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat()))
 
-        time.sleep(1)
+        time.sleep(10)
 except KeyboardInterrupt:
     client.disconnect()
