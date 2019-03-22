@@ -110,3 +110,5 @@ gost_server/samba-mount
 client/config.json.save*
 setup/gost/swarm_docker-compose-with-glusterfs.yml.s*
 README.md.*
+
+demo_applications/com.github.christophschranz.iot4cps.streamhub/target

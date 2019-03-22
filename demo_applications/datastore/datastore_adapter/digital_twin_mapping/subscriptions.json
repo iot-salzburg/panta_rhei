@@ -1,5 +1,5 @@
 {
-  "subscribed_ds": [
+  "subscribed_datastreams": [
     "Machine Temperature",
     "Fan Status"
   ]
