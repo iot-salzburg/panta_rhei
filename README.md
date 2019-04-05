@@ -45,38 +45,37 @@ The Datastack uses Kafka **version 2.1.0** as the communication layer, the insta
 
     sudo apt-get update
     cd setup
-    sh kafka/install-kafka-2v1.sh
-    sudo sh kafka/install-kafka-libs-2v1.sh
+    sh kafka/install-confluent.sh
+    export PATH=/confluent/bin:$PATH
     pip3 install -r requirements.txt
 
 Then, to test the installation:
 
-    /kafka/bin/zookeeper-server-start.sh -daemon /kafka/config/zookeeper.properties
-    /kafka/bin/kafka-server-start.sh -daemon /kafka/config/server.properties
-    /kafka/bin/kafka-topics.sh --zookeeper localhost:2181 --create --topic test-topic --replication-factor 1 --partitions 1
-    /kafka/bin/kafka-topics.sh --zookeeper localhost:2181 --list
+    confluent start
+    kafka-topics.sh --zookeeper localhost:2181 --list
     
-    /kafka/bin/kafka-console-producer.sh --broker-list localhost:9092 --topic test-topic
-    >Hello Franz
+    # Test the installation
+    kafka-topics.sh --zookeeper localhost:2181 --create --topic test-topic --replication-factor 1 --partitions 1
+    kafka-console-producer.sh --broker-list localhost:9092 --topic test-topic
+    >Hello Kafka
     > [Ctrl]+C
-    /kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic test-topic --from-beginning
-    Hello Franz
+    kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic test-topic --from-beginning
+    Hello Kafka
     
-    /kafka/bin/kafka-topics.sh --zookeeper localhost:2181 --create --topic eu.srfg.iot-iot4cps-wp5.car1.data --replication-factor 1 --partitions 1
-    /kafka/bin/kafka-topics.sh --zookeeper localhost:2181 --create --topic eu.srfg.iot-iot4cps-wp5.car1.external --replication-factor 1 --partitions 1
-    /kafka/bin/kafka-topics.sh --zookeeper localhost:2181 --create --topic eu.srfg.iot-iot4cps-wp5.car1.logging --replication-factor 1 --partitions 1
-    Do the same for 'car2' and 'weather-service'
+    kafka-topics.sh --zookeeper localhost:2181 --create --partitions 3 --replication-factor 1 --config min.insync.replicas=1 --config cleanup.policy=compact --config retention.ms=241920000 --topic eu.srfg.iot-iot4cps-wp5.car1.data
+    kafka-topics.sh --zookeeper localhost:2181 --create --partitions 3 --replication-factor 1 --config min.insync.replicas=1 --config cleanup.policy=compact --config retention.ms=241920000 --topic eu.srfg.iot-iot4cps-wp5.car1.external
+    kafka-topics.sh --zookeeper localhost:2181 --create --partitions 3 --replication-factor 1 --config min.insync.replicas=1 --config cleanup.policy=compact --config retention.ms=241920000 --topic eu.srfg.iot-iot4cps-wp5.car1.logging
+    # Create analog topics for 'car2' and 'weather-service'
 
+Test the conluent kafka platform on [http://localhost:9021/](http://localhost:9021/)
 
 #### Secondly, the **SensorThings Server** GOST is set up to add semantics to Apache Kafka:
-
 
     cd setup/gost/
     docker-compose up -d
 
-
 The flag `-d` stands for `daemon` mode. To check if everything worked well, open
-[http://localhost:8082/](http://localhost:8082/) or view the logs:
+[http://localhost:8084/](http://localhost:8084/) or view the logs:
 
     docker-compose logs -f
 

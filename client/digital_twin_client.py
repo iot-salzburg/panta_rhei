@@ -6,8 +6,8 @@ import logging
 import requests
 from datetime import datetime
 
-# confluent_kafka is based on librdkafka, details in install_kafka_requirements.sh
-import confluent_kafka
+# # confluent_kafka is based on librdkafka, details in install_kafka_requirements.sh
+# import confluent_kafka
 from client.registerHelper import RegisterHelper
 from client.type_mappings import type_mappings
 
@@ -22,7 +22,6 @@ class DigitalTwinClient:
         # Init logging
         self.logger = logging.getLogger("PR Client Logger")
         self.logger.setLevel(logging.INFO)
-        self.logger.setLevel(logging.DEBUG)
         logging.basicConfig(level='WARNING')
         self.logger.info("init: Initialising Digital Twin Client with name '{}' on '{}'".format(
             client_name, system_prefix+"."+system_name))
@@ -96,11 +95,50 @@ class DigitalTwinClient:
         self.post("logging", json.dumps(data).encode('utf-8'))
 
         # Init other objects used in later methods
-        self.subscribed_datastreams = None
+        self.used_datastreams = None
         self.instances = None
         self.consumer = None
 
-    def register(self, instance_file):
+    def register_existing(self, mappings_file):
+        """
+        Create a mappings between internal and unique quantity ids
+        :param mappings_file. Stores the mapping between internal and external quantity name
+        :return:
+        """
+        try:
+            with open(mappings_file) as f:
+                mappings = json.loads(f.read())
+        except FileNotFoundError:
+            self.logger.warning("subscribe: FileNotFound, creating empty mappings file")
+            mappings = json.loads('{"Datastreams": {}}')
+        # Make structure pretty
+        with open(mappings_file, "w") as f:
+            f.write(json.dumps(mappings, indent=2))
+
+        # Get the datastreams of the form
+        # {4: {'@iot.id': 4, 'name': 'Machine Temperature', '@iot.selfLink': 'http://...}, 5: {....}, ...}
+        gost_url = "http://" + self.config["gost_servers"]
+        # Sort datastreams to pick latest stream datastream in case of duplicates
+        gost_datastreams = sorted(requests.get(gost_url + "/v1.0/Datastreams?$expand=Thing").json()["value"],
+                                  key=lambda k: k["@iot.id"])
+
+        prefix = self.config["system_prefix"] + "." + self.config["system_name"] + "."
+        for key, v in mappings["Datastreams"].items():
+            unique_ds_name = prefix + v["Thing"] + "." + v["name"]
+            for ds in gost_datastreams:
+                if unique_ds_name == ds["name"]:
+                    self.mapping[key] = {"name": ds["name"],
+                         "@iot.id": ds["@iot.id"],
+                         "Thing": ds["Thing"],
+                         "observationType": ds["observationType"]}
+
+        self.logger.debug("register: Successfully loaded mapping: {}".format(self.mapping))
+        msg = "Found registered instances for Digital Twin Client '{}': {}".format(self.config["client_name"],
+                                                                                   self.mapping)
+        self.post("logging", msg)
+        self.logger.info("register: " + msg)
+
+    def register_new(self, instance_file):
         """
         Post or path instances using the RegisterHanlder class.
         Create mapping to use the correct kafka topic for each datastream type.
@@ -119,60 +157,60 @@ class DigitalTwinClient:
                                  "@iot.id": value["@iot.id"],
                                  "Thing": value["Thing"],
                                  "observationType": value["observationType"]}
-        self.logger.debug("register: Successfully loaded mapping: {}".format(self.mapping))
+        self.logger.debug("register_new: Successfully loaded mapping: {}".format(self.mapping))
 
         self.post("logging", "Registered instances for Digital Twin Client '{}': {}".format(
             self.config["client_name"], self.mapping))
-        self.logger.info("register: Registered instances for Digital Twin Client '{}': {}".format(
+        self.logger.info("register_new: Registered instances for Digital Twin Client '{}': {}".format(
             self.config["client_name"], self.mapping))
 
-    def send(self, quantity, result, timestamp=None):
-        """
-        Function that sends data of registered datastreams semantically annotated to the Digital Twin Messaging System
-        :param quantity: Quantity of the Data
-        :param result: The actual value without units. Can be boolean, integer, float, category or an object
-        :param timestamp: either ISO 8601 or a 10,13,16 or 19 digit unix epoch format. If not given, it will
-        be created.
-        :return:
-        """
-        # check, if the quantity is registered
-        if quantity not in self.mapping.keys():
-            self.logger.error("send: Quantity is not registered: {}".format(quantity))
-            raise Exception("send: Quantity is not registered: {}".format(quantity))
-
-        data = dict({"phenomenonTime": self.get_iso8601_time(timestamp),
-                     "resultTime": datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat(),
-                     "Datastream": {"@iot.id": self.mapping[quantity]["@iot.id"]}})
-
-        # check, if the type of the result is correct
-        try:
-            data["result"] = type_mappings[self.mapping[quantity]["observationType"]](result)
-        except ValueError as e:
-            self.logger.error("send: Error, incorrect type was recognized, result: {}, "
-                              "result.type: {}, dedicated type (as registered): {}"
-                              "".format(result, type(result), self.mapping[quantity]["observationType"]))
-            raise e
-
-        # Trigger any available delivery report callbacks from previous produce() calls
-        self.producer.poll(0)
-        # Asynchronously produce a message, the delivery report callback
-        # will be triggered from poll() above, or flush() below, when the message has
-        # been successfully delivered or failed permanently.
-        kafka_topic = "{}.{}.".format(self.config["system_prefix"], self.config["system_name"])
-        if self.mapping[quantity]["observationType"] == "logging":
-            kafka_topic += "logging"
-        else:
-            kafka_topic += "data"
-
-        # The key is of the form "thing.data-type" or "client-name.logging"
-        kafka_key = self.mapping[quantity].get("Thing", self.config["client_name"])
-        kafka_key += "." + self.mapping[quantity].get("observationType", "logging")
-
-        self.producer.produce(kafka_topic, json.dumps(data).encode('utf-8'), key=kafka_key,
-                              callback=self.delivery_report)
-        # Wait for any outstanding messages to be delivered and delivery report
-        # callbacks to be triggered.
-        self.producer.flush()
+    # def send(self, quantity, result, timestamp=None):
+    #     """
+    #     Function that sends data of registered datastreams semantically annotated to the Digital Twin Messaging System
+    #     :param quantity: Quantity of the Data
+    #     :param result: The actual value without units. Can be boolean, integer, float, category or an object
+    #     :param timestamp: either ISO 8601 or a 10,13,16 or 19 digit unix epoch format. If not given, it will
+    #     be created.
+    #     :return:
+    #     """
+    #     # check, if the quantity is registered
+    #     if quantity not in self.mapping.keys():
+    #         self.logger.error("send: Quantity is not registered: {}".format(quantity))
+    #         raise Exception("send: Quantity is not registered: {}".format(quantity))
+    #
+    #     data = dict({"phenomenonTime": self.get_iso8601_time(timestamp),
+    #                  "resultTime": datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat(),
+    #                  "Datastream": {"@iot.id": self.mapping[quantity]["@iot.id"]}})
+    #
+    #     # check, if the type of the result is correct
+    #     try:
+    #         data["result"] = type_mappings[self.mapping[quantity]["observationType"]](result)
+    #     except ValueError as e:
+    #         self.logger.error("send: Error, incorrect type was recognized, result: {}, "
+    #                           "result.type: {}, dedicated type (as registered): {}"
+    #                           "".format(result, type(result), self.mapping[quantity]["observationType"]))
+    #         raise e
+    #
+    #     # Trigger any available delivery report callbacks from previous produce() calls
+    #     self.producer.poll(0)
+    #     # Asynchronously produce a message, the delivery report callback
+    #     # will be triggered from poll() above, or flush() below, when the message has
+    #     # been successfully delivered or failed permanently.
+    #     kafka_topic = "{}.{}.".format(self.config["system_prefix"], self.config["system_name"])
+    #     if self.mapping[quantity]["observationType"] == "logging":
+    #         kafka_topic += "logging"
+    #     else:
+    #         kafka_topic += "data"
+    #
+    #     # The key is of the form "thing.data-type" or "client-name.logging"
+    #     kafka_key = self.mapping[quantity].get("Thing", self.config["client_name"])
+    #     kafka_key += "." + self.mapping[quantity].get("observationType", "logging")
+    #
+    #     self.producer.produce(kafka_topic, json.dumps(data).encode('utf-8'), key=kafka_key,
+    #                           callback=self.delivery_report)
+    #     # Wait for any outstanding messages to be delivered and delivery report
+    #     # callbacks to be triggered.
+    #     self.producer.flush()
 
     def post(self, quantity, result, timestamp=None):
         """
@@ -201,7 +239,6 @@ class DigitalTwinClient:
                               "".format(result, type(result), self.mapping[quantity]["observationType"]))
             raise e
 
-
         # Build the kafka-topic that is used
         kafka_topic = "{}.{}.".format(self.config["system_prefix"], self.config["system_name"])
         if self.mapping[quantity]["observationType"] == "logging":
@@ -226,7 +263,7 @@ class DigitalTwinClient:
                 self.logger.warning("Couldn't post message to {}, status code: {}".format(kafka_url, res.status_code))
                 raise ConnectionError("Couldn't post message to {}, status code: {}".format(kafka_url, res.status_code))
         except ConnectionError as e:
-            self.logger.error("Couldn't post message to {}, status code: {}".format(kafka_url, res.status_code))
+            self.logger.error("Couldn't post message to {}".format(kafka_url))
             raise e
 
     @staticmethod
@@ -258,27 +295,27 @@ class DigitalTwinClient:
             else:  # Expects the timestamp in the form of 1541514377497349 (ns)
                 return datetime.utcfromtimestamp(timestamp / 1e9).replace(tzinfo=pytz.UTC).isoformat()
 
-    def delivery_report_connection_check(self, err, msg):
-        """ Called only once to check the connection to kafka.
-            Triggered by poll() or flush()."""
-        if err is not None:
-            self.logger.error("init: Kafka connection check to brokers '{}' Message delivery failed: {}".format(
-                self.config["kafka_bootstrap_servers"], err))
-            raise Exception("init: Kafka connection check to brokers '{}' Message delivery failed: {}".format(
-                self.config["kafka_bootstrap_servers"], err))
-        else:
-            self.logger.info(
-                "init: Successfully connected to the Kafka bootstrap server: {} with topic: '{}', partitions: [{}]"
-                "".format(self.config["kafka_bootstrap_servers"], msg.topic(), msg.partition()))
-
-    def delivery_report(self, err, msg):
-        """ Called once for each message produced to indicate delivery result.
-            Triggered by poll() or flush()."""
-        if err is not None:
-            self.logger.warning('delivery_report: Message delivery failed: {}'.format(err))
-        else:
-            self.logger.debug("delivery_report: Message delivered to topic: '{}', partitions: [{}]".format(
-                msg.topic(), msg.partition()))
+    # def delivery_report_connection_check(self, err, msg):
+    #     """ Called only once to check the connection to kafka.
+    #         Triggered by poll() or flush()."""
+    #     if err is not None:
+    #         self.logger.error("init: Kafka connection check to brokers '{}' Message delivery failed: {}".format(
+    #             self.config["kafka_bootstrap_servers"], err))
+    #         raise Exception("init: Kafka connection check to brokers '{}' Message delivery failed: {}".format(
+    #             self.config["kafka_bootstrap_servers"], err))
+    #     else:
+    #         self.logger.info(
+    #             "init: Successfully connected to the Kafka bootstrap server: {} with topic: '{}', partitions: [{}]"
+    #             "".format(self.config["kafka_bootstrap_servers"], msg.topic(), msg.partition()))
+    #
+    # def delivery_report(self, err, msg):
+    #     """ Called once for each message produced to indicate delivery result.
+    #         Triggered by poll() or flush()."""
+    #     if err is not None:
+    #         self.logger.warning('delivery_report: Message delivery failed: {}'.format(err))
+    #     else:
+    #         self.logger.debug("delivery_report: Message delivered to topic: '{}', partitions: [{}]".format(
+    #             msg.topic(), msg.partition()))
 
     def subscribe(self, subscription_file=None):
         """
@@ -315,7 +352,7 @@ class DigitalTwinClient:
             "name": self.config["client_name"],  # consumer name equals consumer group name
             "format": "json",
             "auto.offset.reset": "earliest",
-            "auto.commit.enable": "false"})
+            "auto.commit.enable": "true"})
         kafka_url = "http://{}/consumers/{}".format(self.config["kafka_bootstrap_servers"], self.config["client_name"])
 
         res = requests.post(kafka_url, data=data, headers=dict({"Content-Type": "application/vnd.kafka.v2+json"}))
@@ -347,41 +384,41 @@ class DigitalTwinClient:
         # Sort datastreams to pick latest stream datastream in case of duplicates
         gost_datastreams = sorted(requests.get(gost_url + "/v1.0/Datastreams?$expand=Sensors,Thing,ObservedProperty")
                                   .json()["value"], key=lambda k: k["@iot.id"])
-        self.subscribed_datastreams = {ds["@iot.id"]: ds for ds in gost_datastreams if ds["name"]
-                                       in subscriptions["subscribed_datastreams"]}
+        self.used_datastreams = {ds["@iot.id"]: ds for ds in gost_datastreams if ds["name"]
+                                 in subscriptions["subscribed_datastreams"]}
 
-        for key, value in self.subscribed_datastreams.items():
+        for key, value in self.used_datastreams.items():
             self.logger.info("subscribe: Subscribed to datastream: id: {} and metadata: {}".format(key, value))
-        if len(self.subscribed_datastreams.keys()) == 0:
+        if len(self.used_datastreams.keys()) == 0:
             self.logger.warning("subscribe: No subscription matches an existing datastream.")
         for stream in subscriptions["subscribed_datastreams"]:
-            if stream not in [subscribed_ds["name"] for subscribed_ds in self.subscribed_datastreams.values()]:
+            if stream not in [subscribed_ds["name"] for subscribed_ds in self.used_datastreams.values()]:
                 self.logger.warning("subscribe: Couldn't subscribe to {}, may not be registered".format(stream))
 
-    def poll(self, timeout=0.1):
-        """
-        Receives data from the Kafka topics. On new data, it checks if it is valid, filters for subscribed datastreams
-        and returns the message augmented with datastream metadata.
-        :param timeout: duration how long to wait to reveive data
-        :return: either None or data in SensorThings format and augmented with metadata for each received and
-        subscribed datastream. e.g.
-        {'phenomenonTime': '2018-12-03T16:08:03.366855+00:00', 'resultTime': '2018-12-03T16:08:03.367045+00:00',
-        'result': 50.44982168968592, 'Datastream': {'@iot.id': 4, ...}
-        """
-        msg = self.consumer.poll(timeout)  # Waits up to 'session.timeout.ms' for a message
-
-        while msg is not None:
-            if not msg.error():
-                data = json.loads(msg.value().decode('utf-8'))
-                iot_id = data.get("Datastream", None).get("@iot.id", None)
-                if iot_id in self.subscribed_datastreams.keys():
-                    data["Datastream"] = self.subscribed_datastreams[iot_id]
-                    return data
-            else:
-                if msg.error().code() != confluent_kafka.KafkaError._PARTITION_EOF:
-                    self.logger.error("poll: {}".format(msg.error()))
-
-            msg = self.consumer.poll(0)  # Waits up to 'session.timeout.ms' for a message
+    # def poll(self, timeout=0.1):
+    #     """
+    #     Receives data from the Kafka topics. On new data, it checks if it is valid, filters for subscribed datastreams
+    #     and returns the message augmented with datastream metadata.
+    #     :param timeout: duration how long to wait to reveive data
+    #     :return: either None or data in SensorThings format and augmented with metadata for each received and
+    #     subscribed datastream. e.g.
+    #     {'phenomenonTime': '2018-12-03T16:08:03.366855+00:00', 'resultTime': '2018-12-03T16:08:03.367045+00:00',
+    #     'result': 50.44982168968592, 'Datastream': {'@iot.id': 4, ...}
+    #     """
+    #     msg = self.consumer.poll(timeout)  # Waits up to 'session.timeout.ms' for a message
+    #
+    #     while msg is not None:
+    #         if not msg.error():
+    #             data = json.loads(msg.value().decode('utf-8'))
+    #             iot_id = data.get("Datastream", None).get("@iot.id", None)
+    #             if iot_id in self.subscribed_datastreams.keys():
+    #                 data["Datastream"] = self.subscribed_datastreams[iot_id]
+    #                 return data
+    #         else:
+    #             if msg.error().code() != confluent_kafka.KafkaError._PARTITION_EOF:
+    #                 self.logger.error("poll: {}".format(msg.error()))
+    #
+    #         msg = self.consumer.poll(0)  # Waits up to 'session.timeout.ms' for a message
 
     def get(self, timeout=1):
         """
@@ -404,7 +441,7 @@ class DigitalTwinClient:
             # raise Exception("subscribe: can't create consumer instance")
         if not res.json():
             self.logger.debug("get: got empty list")
-            return None
+            return list()
 
         results = res.json()
         datapoints = list()
@@ -413,27 +450,23 @@ class DigitalTwinClient:
         for result in results:
             iot_id = result.get("value", None).get("Datastream", None).get("@iot.id", None)
             # print(iot_id)
-            if iot_id in self.subscribed_datastreams.keys():
+            if iot_id in self.used_datastreams.keys():
                 datapoint = result["value"]
-                datapoint["Datastream"] = self.subscribed_datastreams[iot_id]
+                datapoint["Datastream"] = self.used_datastreams[iot_id]
                 datapoints.append(datapoint)
-                print(datapoint)
-        if datapoints:
-            return datapoints
-        else:
-            return None
+        return datapoints
 
     def disconnect(self):
         """
         Disconnect and close Kafka Connections
         :return:
         """
-        try:
-            self.producer.flush()
-        except AttributeError:
-            pass
-        try:
-            self.consumer.close()
-        except AttributeError:
-            pass
+        # try:
+        #     self.producer.flush()
+        # except AttributeError:
+        #     pass
+        # try:
+        #     self.consumer.close()
+        # except AttributeError:
+        #     pass
         self.logger.info("disconnect: Digital Twin Client disconnected")

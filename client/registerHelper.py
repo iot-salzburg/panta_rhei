@@ -11,7 +11,7 @@ class RegisterHelper:
 
     def register(self, instance_file):
         instances = self.load_instances(instance_file)
-        self.logger.debug("register: Loaded instances")
+        self.logger.debug("register_new: Loaded instances")
 
         gost_url = "http://" + self.config["gost_servers"]
 
@@ -20,7 +20,7 @@ class RegisterHelper:
         self.register_observed_properties(instances, gost_url)
         self.register_datastreams(instances, gost_url)
 
-        self.logger.debug("register: Successfully registered instances.")
+        self.logger.debug("register_new: Successfully registered instances.")
         return self.instances
 
     def load_instances(self, instance_file):
@@ -62,7 +62,7 @@ class RegisterHelper:
         """
 
         # Register Things. Patch or post
-        self.logger.debug("register: Register Things")
+        self.logger.debug("register_new: Register Things")
 
         # Add an unique prefix to identify the instances in the GOST server
         for key, thing in instances["Things"].items():
@@ -74,17 +74,17 @@ class RegisterHelper:
         for thing in instances["Things"].keys():
             name = instances["Things"][thing]["name"]
 
-            self.logger.debug("register: Thing: {}, GOST name: {}".format(thing, name))
+            self.logger.debug("register_new: Thing: {}, GOST name: {}".format(thing, name))
             # PATCH thing
             if name in gost_thing_list:
                 idx = [gost_thing for gost_thing in gost_things["value"] if name == gost_thing["name"]][0]["@iot.id"]
                 uri = gost_url + "/v1.0/Things({})".format(idx)
-                self.logger.debug("register: Make a patch of: {}".format(json.dumps(instances["Things"][thing]["name"],
+                self.logger.debug("register_new: Make a patch of: {}".format(json.dumps(instances["Things"][thing]["name"],
                                                                                     indent=2)))
                 res = requests.patch(uri, json=instances["Things"][thing])
             # POST thing
             else:
-                self.logger.debug("register: Make a post of: {}".format(json.dumps(instances["Things"][thing]["name"],
+                self.logger.debug("register_new: Make a post of: {}".format(json.dumps(instances["Things"][thing]["name"],
                                                                                    indent=2)))
                 uri = gost_url + "/v1.0/Things"
                 res = requests.post(uri, json=instances["Things"][thing])
@@ -92,7 +92,7 @@ class RegisterHelper:
             # Test if everything worked
             if res.status_code in [200, 201, 202]:
                 self.logger.info(
-                    "register: Successfully upsert the Thing '{}' with the URI '{}' and status code '{}'".format(
+                    "register_new: Successfully upsert the Thing '{}' with the URI '{}' and status code '{}'".format(
                         name, uri, res.status_code))
                 instances["Things"][thing] = res.json()
 
@@ -114,7 +114,7 @@ class RegisterHelper:
         :return:
         """
         # Register Sensors. Patch or post
-        self.logger.debug("register: Register Sensors")
+        self.logger.debug("register_new: Register Sensors")
 
         # Add an unique prefix to identify the instances in the GOST server
         for key, sensor in instances["Sensors"].items():
@@ -125,7 +125,7 @@ class RegisterHelper:
         gost_sensor_list = [sensor["name"] for sensor in gost_sensors["value"]]
         for sensor in instances["Sensors"].keys():
             name = instances["Sensors"][sensor]["name"]
-            self.logger.debug("register: Sensor: {}, GOST name: {}".format(sensor, name))
+            self.logger.debug("register_new: Sensor: {}, GOST name: {}".format(sensor, name))
 
             status_max = 0
             res = None
@@ -150,12 +150,12 @@ class RegisterHelper:
             # Test if everything worked
             if status_max in [200, 201, 202]:
                 self.logger.info(
-                    "register: Successfully upsert the Sensor '{}' with the URI '{}' and status code '{}'".format(
+                    "register_new: Successfully upsert the Sensor '{}' with the URI '{}' and status code '{}'".format(
                         name, uri, status_max))
                 instances["Sensors"][sensor] = res.json()
             else:
                 self.logger.warning(
-                    "register: Problems to upsert Sensors on instance: {}, with URI: {}, status code: {}, "
+                    "register_new: Problems to upsert Sensors on instance: {}, with URI: {}, status code: {}, "
                     "payload: {}".format(name, uri, status_max, json.dumps(res.json(), indent=2)))
 
         self.instances["Sensors"] = instances["Sensors"]
@@ -171,7 +171,7 @@ class RegisterHelper:
         :return:
         """
         # Register Observed Properties. Patch or post
-        self.logger.debug("register: Register Observed Properties")
+        self.logger.debug("register_new: Register Observed Properties")
 
         # Add an unique prefix to identify the instances in the GOST server
         for key, ds in instances["Datastreams"].items():
@@ -186,7 +186,7 @@ class RegisterHelper:
 
         for datastream in instances["Datastreams"].keys():
             name = instances["Datastreams"][datastream]["ObservedProperty"]["name"]
-            self.logger.debug("register: for datastream '{}' the observed property with name '{}'"
+            self.logger.debug("register_new: for datastream '{}' the observed property with name '{}'"
                               "".format(datastream, name))
 
             # PATCH thing
@@ -194,13 +194,13 @@ class RegisterHelper:
                 idx = [gost_obs_property for gost_obs_property in gost_observed_properties["value"]
                        if name == gost_obs_property["name"]][0]["@iot.id"]
                 uri = gost_url + "/v1.0/ObservedProperties({})".format(idx)
-                self.logger.debug("register: Make a patch of: {}".format(
+                self.logger.debug("register_new: Make a patch of: {}".format(
                     json.dumps(instances["Datastreams"][datastream]["ObservedProperty"]["name"], indent=2)))
 
                 res = requests.patch(uri, json=instances["Datastreams"][datastream]["ObservedProperty"])
             # POST thing
             else:
-                self.logger.debug("register: Make a post of: {}".format(
+                self.logger.debug("register_new: Make a post of: {}".format(
                     json.dumps(instances["Datastreams"][datastream]["ObservedProperty"]["name"], indent=2)))
                 uri = gost_url + "/v1.0/ObservedProperties"
 
@@ -208,7 +208,7 @@ class RegisterHelper:
 
             # Test if everything worked
             if res.status_code in [200, 201, 202]:
-                self.logger.info("register: Successfully upsert the Observed Property '{}' with the URI '{}' "
+                self.logger.info("register_new: Successfully upsert the Observed Property '{}' with the URI '{}' "
                                  "and status code '{}'".format(name, uri, res.status_code))
                 self.instances["Datastreams"][datastream] = dict({"ObservedProperty": res.json()})
             else:
@@ -229,7 +229,7 @@ class RegisterHelper:
         :return:
         """
         # Register Datastreams with observation. Patch or post
-        self.logger.debug("register: Register Datastreams")
+        self.logger.debug("register_new: Register Datastreams")
 
         # Add an unique prefix to identify the instances in the GOST server
         for key, ds in instances["Datastreams"].items():
@@ -243,7 +243,7 @@ class RegisterHelper:
 
         for datastream in instances["Datastreams"].keys():
             name = instances["Datastreams"][datastream]["name"]
-            self.logger.debug("register: Datastream: {}, GOST name: {}".format(datastream, name))
+            self.logger.debug("register_new: Datastream: {}, GOST name: {}".format(datastream, name))
 
             dedicated_thing = instances["Datastreams"][datastream]["Thing"]
             dedicated_sensor = instances["Datastreams"][datastream]["Sensor"]
@@ -261,7 +261,7 @@ class RegisterHelper:
                 idx = [gost_datastreams for gost_datastreams in gost_datastreams["value"]
                        if name == gost_datastreams["name"]][0]["@iot.id"]
                 uri = gost_url + "/v1.0/Datastreams({})".format(idx)
-                self.logger.debug("register: Make a patch of: {}".format(
+                self.logger.debug("register_new: Make a patch of: {}".format(
                     json.dumps(instances["Datastreams"][datastream]["name"], indent=2)))
 
                 instances["Datastreams"][datastream].pop("Thing", None)
@@ -270,21 +270,21 @@ class RegisterHelper:
                 res = requests.patch(uri, json=instances["Datastreams"][datastream])
             # POST datastream
             else:
-                self.logger.debug("register: Make a post of: {}".format(json.dumps(
+                self.logger.debug("register_new: Make a post of: {}".format(json.dumps(
                     instances["Datastreams"][datastream]["name"], indent=2)))
                 uri = gost_url + "/v1.0/Datastreams"
                 res = requests.post(uri, json=instances["Datastreams"][datastream])
 
             # Test if everything worked
             if res.status_code in [200, 201, 202]:
-                self.logger.info("register: Successfully upsert the Datastream '{}' with the URI '{}' "
+                self.logger.info("register_new: Successfully upsert the Datastream '{}' with the URI '{}' "
                                  "and status code '{}'".format(name, uri, res.status_code))
                 instances["Datastreams"][datastream] = res.json()
                 instances["Datastreams"][datastream]["Thing"] = dedicated_thing
                 instances["Datastreams"][datastream]["Sensor"] = dedicated_sensor
             else:
                 self.logger.warning(
-                    "register: Problems to upsert Datastreams on instance: {}, with URI: {}, status code: {}, "
+                    "register_new: Problems to upsert Datastreams on instance: {}, with URI: {}, status code: {}, "
                     "payload: {}".format(name, uri, res.status_code, json.dumps(res.json(), indent=2)))
                 print(json.dumps(instances["Datastreams"][datastream]))
 
