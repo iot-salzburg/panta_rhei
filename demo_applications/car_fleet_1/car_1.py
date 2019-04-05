@@ -61,7 +61,7 @@ try:
         # Receive all queued messages of the weather-service and other connected cars and calculate the minimum
         minimal_temps = list()
         if temperature <= 0:
-            minimal_temps.append({"origin": config["system_prefix"]+config["system_name"], "temperature": temperature})
+            minimal_temps.append({"origin": config["system_prefix"]+"."+config["system_name"], "temperature": temperature})
 
         received_quantities = client.get(timeout=0.5)
         for received_quantity in received_quantities:
