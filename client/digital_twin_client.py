@@ -6,14 +6,15 @@ import logging
 import requests
 from datetime import datetime
 
-# # confluent_kafka is based on librdkafka, details in install_kafka_requirements.sh
-# import confluent_kafka
+# confluent_kafka is based on librdkafka, details in install_kafka_requirements.sh
+import confluent_kafka
+
 from client.registerHelper import RegisterHelper
 from client.type_mappings import type_mappings
 
 
 class DigitalTwinClient:
-    def __init__(self, client_name, system, kafka_bootstrap_servers, gost_servers):
+    def __init__(self, client_name, system, kafka_bootstrap_servers, kafka_rest_server, gost_servers):
         """
         Load config files
         Checks GOST server connection
@@ -22,74 +23,87 @@ class DigitalTwinClient:
         # Init logging
         self.logger = logging.getLogger("PR Client Logger")
         self.logger.setLevel(logging.INFO)
-        # self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(logging.DEBUG)
         logging.basicConfig(level='WARNING')
         self.logger.info("init: Initialising Digital Twin Client with name '{}' on '{}'".format(client_name, system))
 
         # Load config
         self.config = {"client_name": client_name,
                        "system": system,
+                       "gost_servers": gost_servers,
                        "kafka_bootstrap_servers": kafka_bootstrap_servers,
-                       "gost_servers": gost_servers}
+                       "kafka_rest_server": kafka_rest_server}
 
-        # Check SensorThings connection
-        self.logger.debug("init: Checking SensorThings connection")
-        gost_url = "http://" + self.config["gost_servers"]
-        try:
-            res = requests.get(gost_url + "/v1.0/Things")
-            if res.status_code in [200, 201, 202]:
-                self.logger.info("init: Successfully connected to GOST server {}.".format(gost_servers))
-            else:
-                self.logger.error("init: Error, couldn't connect to GOST server: {}, status code: {}, result: {}".format(
-                    gost_servers, res.status_code, res.json()))
-                raise ConnectionError("init: Error, couldn't connect to GOST server: {}, status code: {}, result: {}".format(
-                    gost_servers, res.status_code, res.json()))
-        except Exception as e:
-            self.logger.error("init: Error, couldn't connect to GOST server: {}".format(gost_servers))
-            raise e
+        # Check the connection to the SensorThings server
+        self.logger.debug("init: Checking SenorThings server connection")
+        self.check_gost_connection()
 
-        # Create Kafka Producer
-        self.logger.debug("init: Checking Kafka connection")
+        # Create a mapping for each datastream of the client
         self.mapping = dict()
         self.mapping["logging"] = {"name": "logging", "@iot.id": -1,
                                    "kafka-topic": "{}.logging".format(self.config["system"]),
                                    "observationType": "logging"}
-        kafka_rest_url = "http://" + self.config["kafka_bootstrap_servers"]
-        try:
-            res = requests.get(kafka_rest_url + "/topics", headers=dict({"Accecpt": "application/vnd.kafka.v2+json"}))
-            if res.status_code == 200 and self.mapping["logging"]["kafka-topic"] in res.json():
-                self.logger.info("init: Successfully connected to kafka-rest {}.".format(kafka_rest_url))
-            else:
-                if res.status_code != 200:
-                    self.logger.error("init: Error, couldn't connect to kafka-rest: {}, status code: {}, result: {}".
-                                      format(kafka_rest_url, res.status_code, res.json()))
-                else:
-                    self.logger.error("init: Error, topic '{}' doesn't exist in Kafka cluster, stopping client, "
-                                      "return code {}".format(self.mapping["logging"]["kafka-topic"], res.status_code))
-                raise ConnectionError(
-                    "init: Error, couldn't connect to kafka-rest: {}, status code: {}, result: {}".format(
-                        kafka_rest_url, res.status_code, res.json()))
-        except Exception as e:
-            self.logger.error("init: Error, couldn't connect to kafka-rest: {}".format(kafka_rest_url))
-            raise e
 
-        # self.producer = confluent_kafka.Producer({'bootstrap.servers': self.config["kafka_bootstrap_servers"],
-        #                                           'client.id': self.config["client_name"],
-        #                                           'default.topic.config': {'acks': 'all'}})
-        #     # TODO How to create a topic via the client
-        #     # a = confluent_kafka.admin.AdminClient({'bootstrap.servers': self.config["kafka_bootstrap_servers"]})
-        #     # a.create_topics([confluent_kafka.admin.NewTopic("test.mytopic", 2, 1)])
-
-        data = dict({"phenomenonTime": datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat(),
-                     "resultTime": datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat(),
-                     "result": "Started Digital Twin Client with name '{}'".format(self.config["client_name"]),
-                     "Datastream": {"@iot.id": self.mapping["logging"]["@iot.id"]}})
-        self.post("logging", json.dumps(data).encode('utf-8'))
+        # Check the connection to Kafka, note that the connection to the brokers are preferred
+        self.logger.debug("init: Checking Kafka connection")
+        self.check_kafka_connection()
 
         # Init other objects used in later methods
         self.used_datastreams = None
         self.instances = None
         self.consumer = None
+
+    def check_gost_connection(self):
+        gost_url = "http://" + self.config["gost_servers"]
+        try:
+            res = requests.get(gost_url + "/v1.0/Things")
+            if res.status_code in [200, 201, 202]:
+                self.logger.info("init: Successfully connected to GOST server {}.".format(gost_url))
+            else:
+                self.logger.error("init: Error, couldn't connect to GOST server: {}, status code: {}, result: {}".
+                                  format(gost_url, res.status_code, res.json()))
+                raise ConnectionError("init: Error, couldn't connect to GOST server: {}, status code: {}, result: {}".
+                                      format(gost_url, res.status_code, res.json()))
+        except Exception as e:
+            self.logger.error("init: Error, couldn't connect to GOST server: {}".format(gost_url))
+            raise e
+
+    def check_kafka_connection(self):
+        # distinguish to connect to the kafka_bootstrap_servers (preferred) or to kafka_rest
+        if self.config["kafka_bootstrap_servers"]:
+            # Create Kafka Producer
+            self.producer = confluent_kafka.Producer({'bootstrap.servers': self.config["kafka_bootstrap_servers"],
+                                                  'client.id': self.config["client_name"],
+                                                  'default.topic.config': {'acks': 'all'}})
+            # TODO How to create a topic via the client
+            # a = confluent_kafka.admin.AdminClient({'bootstrap.servers': self.config["kafka_bootstrap_servers"]})
+            # a.create_topics([confluent_kafka.admin.NewTopic("test.mytopic", 2, 1)])
+
+        else:
+            kafka_rest_url = "http://" + self.config["kafka_rest_server"] + "/topics"
+            try:
+                res = requests.get(kafka_rest_url, headers=dict({"Accecpt": "application/vnd.kafka.v2+json"}))
+                if res.status_code == 200 and self.mapping["logging"]["kafka-topic"] in res.json():
+                    self.logger.info("init: Successfully connected to kafka-rest {}.".format(kafka_rest_url))
+                else:
+                    if res.status_code != 200:
+                        self.logger.error("init: Error, couldn't connect to kafka-rest: {}, status code: {}, "
+                                          "result: {}".format(kafka_rest_url, res.status_code, res.json()))
+                    else:
+                        self.logger.error("init: Error, topic '{}' doesn't exist in Kafka cluster, stopping client, "
+                                          "return code {}".format(self.mapping["logging"]["kafka-topic"], res.status_code))
+                    raise ConnectionError(
+                        "init: Error, couldn't connect to kafka-rest: {}, status code: {}, result: {}".format(
+                            kafka_rest_url, res.status_code, res.json()))
+            except Exception as e:
+                self.logger.error("init: Error, couldn't connect to kafka-rest: {}".format(kafka_rest_url))
+                raise e
+
+        data = dict({"phenomenonTime": datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat(),
+                     "resultTime": datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat(),
+                     "result": "Started Digital Twin Client with name '{}'".format(self.config["client_name"]),
+                     "Datastream": {"@iot.id": self.mapping["logging"]["@iot.id"]}})
+        self.produce("logging", "Started Digital Twin Client with name '{}'".format(self.config["client_name"]))
 
     def register_existing(self, mappings_file):
         """
@@ -127,7 +141,7 @@ class DigitalTwinClient:
         self.logger.debug("register: Successfully loaded mapping: {}".format(self.mapping))
         msg = "Found registered instances for Digital Twin Client '{}': {}".format(self.config["client_name"],
                                                                                    self.mapping)
-        self.post("logging", msg)
+        self.produce("logging", msg)
         self.logger.info("register: " + msg)
 
     def register_new(self, instance_file):
@@ -151,62 +165,15 @@ class DigitalTwinClient:
                                  "observationType": value["observationType"]}
         self.logger.debug("register_new: Successfully loaded mapping: {}".format(self.mapping))
 
-        self.post("logging", "Registered instances for Digital Twin Client '{}': {}".format(
+        self.produce("logging", "Registered instances for Digital Twin Client '{}': {}".format(
             self.config["client_name"], self.mapping))
         self.logger.info("register_new: Registered instances for Digital Twin Client '{}': {}".format(
             self.config["client_name"], self.mapping))
 
-    # def send(self, quantity, result, timestamp=None):
-    #     """
-    #     Function that sends data of registered datastreams semantically annotated to the Digital Twin Messaging System
-    #     :param quantity: Quantity of the Data
-    #     :param result: The actual value without units. Can be boolean, integer, float, category or an object
-    #     :param timestamp: either ISO 8601 or a 10,13,16 or 19 digit unix epoch format. If not given, it will
-    #     be created.
-    #     :return:
-    #     """
-    #     # check, if the quantity is registered
-    #     if quantity not in self.mapping.keys():
-    #         self.logger.error("send: Quantity is not registered: {}".format(quantity))
-    #         raise Exception("send: Quantity is not registered: {}".format(quantity))
-    #
-    #     data = dict({"phenomenonTime": self.get_iso8601_time(timestamp),
-    #                  "resultTime": datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat(),
-    #                  "Datastream": {"@iot.id": self.mapping[quantity]["@iot.id"]}})
-    #
-    #     # check, if the type of the result is correct
-    #     try:
-    #         data["result"] = type_mappings[self.mapping[quantity]["observationType"]](result)
-    #     except ValueError as e:
-    #         self.logger.error("send: Error, incorrect type was recognized, result: {}, "
-    #                           "result.type: {}, dedicated type (as registered): {}"
-    #                           "".format(result, type(result), self.mapping[quantity]["observationType"]))
-    #         raise e
-    #
-    #     # Trigger any available delivery report callbacks from previous produce() calls
-    #     self.producer.poll(0)
-    #     # Asynchronously produce a message, the delivery report callback
-    #     # will be triggered from poll() above, or flush() below, when the message has
-    #     # been successfully delivered or failed permanently.
-    #     # kafka_topic = "{}.{}.".format(self.config["system_prefix"], self.config["system_name"])
-    #     if self.mapping[quantity]["observationType"] == "logging":
-    #         kafka_topic = self.config["system"] + "." + "logging"
-    #     else:
-    #         kafka_topic = self.config["system"] + "." + "data"
-    #
-    #     # The key is of the form "thing.data-type" or "client-name.logging"
-    #     kafka_key = self.mapping[quantity].get("Thing", self.config["client_name"])
-    #     kafka_key += "." + self.mapping[quantity].get("observationType", "logging")
-    #
-    #     self.producer.produce(kafka_topic, json.dumps(data).encode('utf-8'), key=kafka_key,
-    #                           callback=self.delivery_report)
-    #     # Wait for any outstanding messages to be delivered and delivery report
-    #     # callbacks to be triggered.
-    #     self.producer.flush()
-
-    def post(self, quantity, result, timestamp=None):
+    def produce(self, quantity, result, timestamp=None):
         """
         Function that sends data of registered datastreams semantically annotated to the Digital Twin Messaging System
+        via the bootstrap_server (preferred) or kafka_rest
         :param quantity: Quantity of the Data
         :param result: The actual value without units. Can be boolean, integer, float, category or an object
         :param timestamp: either ISO 8601 or a 10,13,16 or 19 digit unix epoch format. If not given, it will
@@ -238,27 +205,14 @@ class DigitalTwinClient:
         else:
             kafka_topic = self.config["system"] + "." + "data"
 
-        # The key is of the form "thing.data-type" or "client-name.logging"
-        kafka_key = self.mapping[quantity].get("Thing", self.config["client_name"])
-        # kafka_key += "." + self.mapping[quantity].get("observationType", "logging")
+        # The key is of the form "thing" or "client-name"
+        kafka_key = str(self.mapping[quantity].get("Thing", dict()).get("name", self.config["client_name"]))
 
-        # Build the payload
-        data = json.dumps({"records": [{"key": kafka_key, "value": data}]})
-
-        # Post the data with headers to kafka-rest
-        kafka_url = "http://{}/topics/{}".format(self.config["kafka_bootstrap_servers"], kafka_topic)
-        try:
-            res = requests.post(kafka_url, data=data, headers=dict(
-                {'Content-type': 'application/vnd.kafka.json.v2+json',
-                 'Accept': 'application/vnd.kafka.v2+json, application/vnd.kafka+json, application/json'}))
-            if res.status_code == 200:
-                self.logger.debug("post: posted message to {}".format(kafka_url))
-            else:
-                self.logger.warning("post: Couldn't post message to {}, status code: {}".format(kafka_url, res.status_code))
-                raise ConnectionError("Couldn't post message to {}, status code: {}".format(kafka_url, res.status_code))
-        except ConnectionError as e:
-            self.logger.error("post: Couldn't post message to {}".format(kafka_url))
-            raise e
+        # Either send to kafka bootstrap, or to kafka rest endpoint
+        if self.config["kafka_bootstrap_servers"]:
+            self.send_to_kafka_bootstrap(kafka_topic, kafka_key, data)
+        else:
+            self.send_to_kafka_rest(kafka_topic, kafka_key, data)
 
     @staticmethod
     def get_iso8601_time(timestamp):
@@ -289,27 +243,74 @@ class DigitalTwinClient:
             else:  # Expects the timestamp in the form of 1541514377497349 (ns)
                 return datetime.utcfromtimestamp(timestamp / 1e9).replace(tzinfo=pytz.UTC).isoformat()
 
-    # def delivery_report_connection_check(self, err, msg):
-    #     """ Called only once to check the connection to kafka.
-    #         Triggered by poll() or flush()."""
-    #     if err is not None:
-    #         self.logger.error("init: Kafka connection check to brokers '{}' Message delivery failed: {}".format(
-    #             self.config["kafka_bootstrap_servers"], err))
-    #         raise Exception("init: Kafka connection check to brokers '{}' Message delivery failed: {}".format(
-    #             self.config["kafka_bootstrap_servers"], err))
-    #     else:
-    #         self.logger.info(
-    #             "init: Successfully connected to the Kafka bootstrap server: {} with topic: '{}', partitions: [{}]"
-    #             "".format(self.config["kafka_bootstrap_servers"], msg.topic(), msg.partition()))
-    #
-    # def delivery_report(self, err, msg):
-    #     """ Called once for each message produced to indicate delivery result.
-    #         Triggered by poll() or flush()."""
-    #     if err is not None:
-    #         self.logger.warning('delivery_report: Message delivery failed: {}'.format(err))
-    #     else:
-    #         self.logger.debug("delivery_report: Message delivered to topic: '{}', partitions: [{}]".format(
-    #             msg.topic(), msg.partition()))
+    def delivery_report_connection_check(self, err, msg):
+        """ Called only once to check the connection to kafka.
+            Triggered by poll() or flush()."""
+        if err is not None:
+            self.logger.error("init: Kafka connection check to brokers '{}' Message delivery failed: {}".format(
+                self.config["kafka_bootstrap_servers"], err))
+            raise Exception("init: Kafka connection check to brokers '{}' Message delivery failed: {}".format(
+                self.config["kafka_bootstrap_servers"], err))
+        else:
+            self.logger.info(
+                "init: Successfully connected to the Kafka bootstrap server: {} with topic: '{}', partitions: [{}]"
+                "".format(self.config["kafka_bootstrap_servers"], msg.topic(), msg.partition()))
+
+    def delivery_report(self, err, msg):
+        """ Called once for each message produced to indicate delivery result.
+            Triggered by poll() or flush()."""
+        if err is not None:
+            self.logger.warning('delivery_report: Message delivery failed: {}'.format(err))
+        else:
+            self.logger.debug("delivery_report: Message delivered to topic: '{}', partitions: [{}]".format(
+                msg.topic(), msg.partition()))
+
+    def send_to_kafka_bootstrap(self, kafka_topic, kafka_key, data):
+        """
+        Function that sends data to the kafka_bootstrap_servers
+        :param kafka_topic: topic to which the data will sent
+        :param kafka_key: key for the data
+        :param data: data that is sent to the kafka bootstrap server
+        :return:
+        """
+        # Trigger any available delivery report callbacks from previous produce() calls
+        self.producer.poll(0)
+
+        # Asynchronously produce a message, the delivery report callback
+        # will be triggered from poll() above, or flush() below, when the message has
+        # been successfully delivered or failed permanently.
+        self.producer.produce(kafka_topic, json.dumps(data, separators=(',', ':')).encode('utf-8'),
+                              key=json.dumps(kafka_key, separators=(',', ':')).encode('utf-8'),
+                              callback=self.delivery_report)
+        # Wait for any outstanding messages to be delivered and delivery report
+        # callbacks to be triggered.
+        self.producer.flush()
+
+    def send_to_kafka_rest(self, kafka_topic, kafka_key, data):
+        """
+        Function that sends data to the kafka_rest_server
+        :param kafka_topic: topic to which the data will sent
+        :param kafka_key: key for the data
+        :param data: data that is sent to the kafka bootstrap server
+        :return:
+        """
+        # Build the payload
+        data = json.dumps({"records": [{"key": kafka_key, "value": data}]})
+
+        # Post the data with headers to kafka-rest
+        kafka_url = "http://{}/topics/{}".format(self.config["kafka_rest_server"], kafka_topic)
+        try:
+            res = requests.post(kafka_url, data=data, headers=dict(
+                {'Content-type': 'application/vnd.kafka.json.v2+json',
+                 'Accept': 'application/vnd.kafka.v2+json, application/vnd.kafka+json, application/json'}))
+            if res.status_code == 200:
+                self.logger.debug("produce: sent message to {}".format(kafka_url))
+            else:
+                self.logger.warning("produce: Couldn't post message to {}, status code: {}".format(kafka_url, res.status_code))
+                raise ConnectionError("Couldn't post message to {}, status code: {}".format(kafka_url, res.status_code))
+        except ConnectionError as e:
+            self.logger.error("produce: Couldn't post message to {}".format(kafka_url))
+            raise e
 
     def subscribe(self, subscription_file=None):
         """
@@ -346,7 +347,7 @@ class DigitalTwinClient:
             "format": "json",
             "auto.offset.reset": "earliest",
             "auto.commit.enable": "true"})
-        kafka_url = "http://{}/consumers/{}".format(self.config["kafka_bootstrap_servers"], self.config["client_name"])
+        kafka_url = "http://{}/consumers/{}".format(self.config["kafka_rest_server"], self.config["client_name"])
 
         res = requests.post(kafka_url, data=data, headers=dict({"Content-Type": "application/vnd.kafka.v2+json"}))
         if res.status_code == 200:
@@ -359,7 +360,7 @@ class DigitalTwinClient:
 
         # consumers/my-consumer-group/instances/my_consumer_json/subscription
         kafka_url = "http://{}/consumers/{}/instances/{}/subscription"\
-            .format(self.config["kafka_bootstrap_servers"], self.config["client_name"], self.config["client_name"])
+            .format(self.config["kafka_rest_server"], self.config["client_name"], self.config["client_name"])
         data = json.dumps({
             "topics": [
                 "{}.data".format(self.config["system"]),
@@ -426,7 +427,7 @@ class DigitalTwinClient:
         # msg = self.consumer.poll(timeout)  # Waits up to 'session.timeout.ms' for a message
 
         kafka_url = "http://{}/consumers/{}/instances/{}/records?timeout=3000&max_bytes=300000".format(
-            self.config["kafka_bootstrap_servers"], self.config["client_name"], self.config["client_name"], timeout)
+            self.config["kafka_rest_server"], self.config["client_name"], self.config["client_name"], timeout)
 
         res = requests.get(kafka_url, headers=dict({"Accept": "application/vnd.kafka.json.v2+json"}))
         if res.status_code != 200:

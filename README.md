@@ -73,7 +73,7 @@ Then, to test the installation:
     
     kafka-topics.sh --zookeeper localhost:2181 --create --partitions 3 --replication-factor 1 --config min.insync.replicas=1 --config cleanup.policy=compact --config retention.ms=241920000 --topic eu.srfg.iot-iot4cps-wp5.car1.data
     kafka-topics.sh --zookeeper localhost:2181 --create --partitions 3 --replication-factor 1 --config min.insync.replicas=1 --config cleanup.policy=compact --config retention.ms=241920000 --topic eu.srfg.iot-iot4cps-wp5.car1.external
-    kafka-topics.sh --zookeeper localhost:2181 --create --partitions 3 --replication-factor 1 --config min.insync.replicas=1 --config cleanup.policy=compact --config retention.ms=241920000 --topic eu.srfg.iot-iot4cps-wp5.car1.logging
+    kafka-topics.sh --zookeeper localhost:2181 --create --partitions 2 --replication-factor 1 --config min.insync.replicas=1 --config cleanup.policy=compact --config retention.ms=241920000 --topic eu.srfg.iot-iot4cps-wp5.car1.logging
     # Create analog topics for 'car2' and 'weather-service'
 
 Test the conluent kafka platform on [http://localhost:9021/](http://localhost:9021/)

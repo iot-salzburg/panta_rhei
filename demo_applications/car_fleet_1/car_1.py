@@ -35,8 +35,9 @@ MAPPINGS = os.path.join(dirname, "ds-mappings.json")
 config = {"client_name": "demo_car_1",
             # TODO will be reduced by registration id and key
           "system": "eu.srfg.iot-iot4cps-wp5.car1",  # will be reduced by registration id, may refactor to CarFleet1
-          "kafka_bootstrap_servers": "localhost:8082",
-          "gost_servers": "localhost:8084"}
+          "gost_servers": "localhost:8084",
+          "kafka_bootstrap_servers": None, #"localhost:9092",  # kafka bootstrap server is the preferred way to connect
+          "kafka_rest_server": "localhost:8082"}
 client = DigitalTwinClient(**config)
 client.register_existing(mappings_file=MAPPINGS)
 # client.register_new(instance_file=INSTANCES)
@@ -52,32 +53,32 @@ try:
         temperature = randomised_temp.get_temp()
 
         # Send the demo temperature
-        client.post(quantity="temperature", result=temperature, timestamp=timestamp)
+        client.produce(quantity="temperature", result=temperature, timestamp=timestamp)
 
         # Print the temperature with the corresponding timestamp in ISO format
         print("The air temperature at the demo car 1 is {} °C at {}".format(temperature, timestamp))
 
-        # Receive all queued messages of the weather-service and other connected cars and calculate the minimum
-        minimal_temps = list()
-        if temperature <= 0:
-            minimal_temps.append({"origin": config["system_prefix"]+"."+config["system_name"], "temperature": temperature})
-
-        received_quantities = client.get(timeout=0.5)
-        for received_quantity in received_quantities:
-            # The resolves the all meta-data for an received data-point
-            print("  -> Received new external data-point at {}: '{}' = {} {}."
-                  .format(received_quantity["phenomenonTime"],
-                          received_quantity["Datastream"]["name"],
-                          received_quantity["result"],
-                          received_quantity["Datastream"]["unitOfMeasurement"]["symbol"]))
-            # To view the whole data-point in a pretty format, uncomment:
-            # print("Received new data: {}".format(json.dumps(received_quantity, indent=2)))
-            if received_quantity["result"] <= 0:
-                minimal_temps.append(
-                    {"origin": received_quantity["Datastream"]["name"], "temperature": received_quantity["result"]})
-
-        if minimal_temps != list():
-            print("    WARNING, the road could be slippery, see: {}".format(minimal_temps))
+        # # Receive all queued messages of the weather-service and other connected cars and calculate the minimum
+        # minimal_temps = list()
+        # if temperature <= 0:
+        #     minimal_temps.append({"origin": config["system_prefix"]+"."+config["system_name"], "temperature": temperature})
+        #
+        # received_quantities = client.get(timeout=0.5)
+        # for received_quantity in received_quantities:
+        #     # The resolves the all meta-data for an received data-point
+        #     print("  -> Received new external data-point at {}: '{}' = {} {}."
+        #           .format(received_quantity["phenomenonTime"],
+        #                   received_quantity["Datastream"]["name"],
+        #                   received_quantity["result"],
+        #                   received_quantity["Datastream"]["unitOfMeasurement"]["symbol"]))
+        #     # To view the whole data-point in a pretty format, uncomment:
+        #     # print("Received new data: {}".format(json.dumps(received_quantity, indent=2)))
+        #     if received_quantity["result"] <= 0:
+        #         minimal_temps.append(
+        #             {"origin": received_quantity["Datastream"]["name"], "temperature": received_quantity["result"]})
+        #
+        # if minimal_temps != list():
+        #     print("    WARNING, the road could be slippery, see: {}".format(minimal_temps))
 
         time.sleep(10)
 except KeyboardInterrupt:
