@@ -14,7 +14,8 @@ from client.digital_twin_client import DigitalTwinClient
 config = {"client_name": "demo_station_1",
           "system": "eu.srfg.iot-iot4cps-wp5.car1",
           "gost_servers": "localhost:8084",
-          "kafka_bootstrap_servers": None,  # "localhost:9092",
+          # Use one of the both, bootstrap server is dominating
+          "kafka_bootstrap_servers": None,  # "localhost:9092", 
           "kafka_rest_server": "localhost:8082"}
           
 client = DigitalTwinClient(**config)
