@@ -28,18 +28,19 @@ from demo_applications.simulator.SimulateTemperatures import SimulateTemperature
 filename = inspect.getframeinfo(inspect.currentframe()).filename
 dirname = os.path.dirname(os.path.abspath(filename))
 INSTANCES = os.path.join(dirname, "instances.json")
+MAPPINGS = os.path.join(dirname, "ds-mappings.json")
 
 # Set the configs, create a new Digital Twin Instance and register file structure
-config = {"client_name": "demo_station_1",
-            # TODO will be reduced by registration id
-          "system_prefix": "eu.srfg.iot-iot4cps-wp5",  # only with 2 dots, alphanumeric and "-"
-          "system_name": "weather-service",  # will be reduced by registration id
-          "kafka_bootstrap_servers": "localhost:9092",
-          "gost_servers": "localhost:8082"}
+config = {"client_name": "demo_station_2",
+          "system": "eu.srfg.iot-iot4cps-wp5.WeatherService",
+          "gost_servers": "localhost:8084",
+          "kafka_bootstrap_servers": None,  # kafka bootstrap server is the preferred way to connect
+          "kafka_rest_server": "localhost:8082"}
 client = DigitalTwinClient(**config)
-client.register(instance_file=INSTANCES)
+client.register_existing(mappings_file=MAPPINGS)
+# client.register_new(instance_file=INSTANCES)
 
-randomised_temp = SimulateTemperatures(t_factor=100, day_amplitude=5, year_amplitude=-5, average=2.5)
+randomised_temp = SimulateTemperatures(t_factor=100, day_amplitude=6, year_amplitude=-6, average=3.5)
 
 try:
     while True:
@@ -50,10 +51,10 @@ try:
         temperature = randomised_temp.get_temp()
 
         # Send the demo temperature
-        client.send(quantity="temperature", result=temperature, timestamp=timestamp)
+        client.produce(quantity="temperature", result=temperature, timestamp=timestamp)
 
         # Print the temperature with the corresponding timestamp in ISO format
-        print("The air temperature at the demo station 1 is {} °C at {}".format(
+        print("The air temperature at the demo station 2 is {} °C at {}".format(
             temperature, datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat()))
 
         time.sleep(10)

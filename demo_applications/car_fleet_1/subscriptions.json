@@ -1,7 +1,0 @@
-{
-  "subscribed_datastreams": [
-    "eu.srfg.iot-iot4cps-wp5.weather-service.demo_station_1.Air Temperature",
-    "eu.srfg.iot-iot4cps-wp5.weather-service.demo_station_2.Air Temperature",
-    "eu.srfg.iot-iot4cps-wp5.car2.car_2.Air Temperature"
-  ]
-}

@@ -25,13 +25,12 @@ SUBSCRIPTIONS = os.path.join(dirname, "subscriptions.json")
 
 # Set the configs, create a new Digital Twin Instance and register file structure
 config = {"client_name": "weather-service-consumer",
-            # TODO will be reduced by registration id
-          "system_prefix": "eu.srfg.iot-iot4cps-wp5",  # only with 2 dots, alphanumeric and "-"
-          "system_name": "weather-service",  # will be reduced by registration id
-          "kafka_bootstrap_servers": "localhost:9092",
-          "gost_servers": "localhost:8082"}
+          "system": "eu.srfg.iot-iot4cps-wp5.WeatherService",
+          "gost_servers": "localhost:8084",
+          "kafka_bootstrap_servers": None,  # kafka bootstrap server is the preferred way to connect
+          "kafka_rest_server": "localhost:8082"}
 client = DigitalTwinClient(**config)
-client.register(instance_file=INSTANCES)
+# client.register_new(instance_file=INSTANCES)
 client.subscribe(subscription_file=SUBSCRIPTIONS)
 
 
@@ -39,16 +38,15 @@ fan_status = False
 try:
     while True:
         # Receive all queued messages of the weather-service
-        received_quantity = client.poll(timeout=1)
-        if received_quantity is None:
-            continue
+        received_quantities = client.consume(timeout=0.5)
+        for received_quantity in received_quantities:
+            # The resolves the all meta-data for an received data-point
+            print("  -> Received new external data-point at {}: '{}' = {} {}."
+                  .format(received_quantity["phenomenonTime"],
+                          received_quantity["Datastream"]["name"],
+                          received_quantity["result"],
+                          received_quantity["Datastream"]["unitOfMeasurement"]["symbol"]))
 
-        # The resolves the all meta-data for an received data-point
-        print("Received new data-point: '{}' = {} {} at {}."
-              .format(received_quantity["Datastream"]["name"],
-                      received_quantity["result"],
-                      received_quantity["Datastream"]["unitOfMeasurement"]["symbol"],
-                      received_quantity["phenomenonTime"]))
         # To view the whole data-point in a pretty format, uncomment:
         # print("Received new data: {}".format(json.dumps(received_quantity, indent=2)))
 

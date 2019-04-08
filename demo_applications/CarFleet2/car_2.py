@@ -29,19 +29,21 @@ filename = inspect.getframeinfo(inspect.currentframe()).filename
 dirname = os.path.dirname(os.path.abspath(filename))
 INSTANCES = os.path.join(dirname, "instances.json")
 SUBSCRIPTIONS = os.path.join(dirname, "subscriptions.json")
+MAPPINGS = os.path.join(dirname, "ds-mappings.json")
 
 # Set the configs, create a new Digital Twin Instance and register file structure
-config = {"client_name": "demo_car_1",
-            # TODO will be reduced by registration id
-          "system_prefix": "eu.srfg.iot-iot4cps-wp5",  # only with 2 dots, alphanumeric and "-"
-          "system_name": "car1",  # will be reduced by registration id, may refactor to CarFleet1
-          "kafka_bootstrap_servers": "localhost:9092",
-          "gost_servers": "localhost:8082"}
+config = {"client_name": "demo_car_2",
+            # TODO will be reduced by registration id and key
+          "system": "eu.srfg.iot-iot4cps-wp5.CarFleet2",
+          "gost_servers": "localhost:8084",
+          "kafka_bootstrap_servers": "localhost:9092",  # kafka bootstrap server is the preferred way to connect
+          "kafka_rest_server": None}  # "localhost:8082"}
 client = DigitalTwinClient(**config)
-client.register(instance_file=INSTANCES)
+# client.register_existing(mappings_file=MAPPINGS)
+client.register_new(instance_file=INSTANCES)
 client.subscribe(subscription_file=SUBSCRIPTIONS)
 
-randomised_temp = SimulateTemperatures(t_factor=100, day_amplitude=4, year_amplitude=-4, average=3)
+randomised_temp = SimulateTemperatures(t_factor=100, day_amplitude=4.5, year_amplitude=-3.5, average=2)
 
 try:
     while True:
@@ -52,17 +54,18 @@ try:
         temperature = randomised_temp.get_temp()
 
         # Send the demo temperature
-        client.send(quantity="temperature", result=temperature, timestamp=timestamp)
+        client.produce(quantity="temperature", result=temperature, timestamp=timestamp)
 
         # Print the temperature with the corresponding timestamp in ISO format
-        print("The air temperature at the demo car 1 is {} °C at {}".format(temperature, timestamp))
+        print("The air temperature at the demo car 2 is {} °C at {}".format(temperature, timestamp))
 
         # Receive all queued messages of the weather-service and other connected cars and calculate the minimum
         minimal_temps = list()
         if temperature <= 0:
-            minimal_temps.append({"origin": config["system_prefix"]+config["system_name"], "temperature": temperature})
-        received_quantity = client.poll(timeout=0.5)
-        while received_quantity is not None:
+            minimal_temps.append({"origin": config["system"], "temperature": temperature})
+
+        received_quantities = client.consume(timeout=0.5)
+        for received_quantity in received_quantities:
             # The resolves the all meta-data for an received data-point
             print("  -> Received new external data-point at {}: '{}' = {} {}."
                   .format(received_quantity["phenomenonTime"],
@@ -74,8 +77,6 @@ try:
             if received_quantity["result"] <= 0:
                 minimal_temps.append(
                     {"origin": received_quantity["Datastream"]["name"], "temperature": received_quantity["result"]})
-
-            received_quantity = client.poll(timeout=0.5)
 
         if minimal_temps != list():
             print("    WARNING, the road could be slippery, see: {}".format(minimal_temps))
