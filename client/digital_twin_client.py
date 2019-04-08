@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import pytz
+import random
 import logging
 import requests
 from datetime import datetime
@@ -14,7 +15,7 @@ from client.type_mappings import type_mappings
 
 
 class DigitalTwinClient:
-    def __init__(self, client_name, system, kafka_bootstrap_servers, kafka_rest_server, gost_servers):
+    def __init__(self, client_name, system, gost_servers, kafka_bootstrap_servers=None, kafka_rest_server=None):
         """
         Load config files
         Checks GOST server connection
@@ -32,7 +33,11 @@ class DigitalTwinClient:
                        "system": system,
                        "gost_servers": gost_servers,
                        "kafka_bootstrap_servers": kafka_bootstrap_servers,
-                       "kafka_rest_server": kafka_rest_server}
+                       "kafka_rest_server": kafka_rest_server,
+                       # Use a randomized hash for an unique consumer id in an client-wide consumer group
+                       "kafka_group_id": "{}.{}".format(system, client_name),
+                       "kafka_consumer_id": "consumer_%04x" % random.getrandbits(16)}
+        self.logger.debug("Config for client is: {}".format(self.config))
 
         # Check the connection to the SensorThings server
         self.logger.debug("init: Checking SenorThings server connection")
@@ -41,7 +46,7 @@ class DigitalTwinClient:
         # Create a mapping for each datastream of the client
         self.mapping = dict()
         self.mapping["logging"] = {"name": "logging", "@iot.id": -1,
-                                   "kafka-topic": "{}.logging".format(self.config["system"]),
+                                   "kafka-topic": self.config["system"] + ".logging",
                                    "observationType": "logging"}
 
         # Check the connection to Kafka, note that the connection to the brokers are preferred
@@ -49,7 +54,7 @@ class DigitalTwinClient:
         self.check_kafka_connection()
 
         # Init other objects used in later methods
-        self.used_datastreams = None
+        self.subscribed_datastreams = None
         self.instances = None
         self.consumer = None
 
@@ -295,7 +300,7 @@ class DigitalTwinClient:
         :return:
         """
         # Build the payload
-        data = json.dumps({"records": [{"key": kafka_key, "value": data}]})
+        data = json.dumps({"records": [{"key": kafka_key, "value": data}]}).encode("utf-8")
 
         # Post the data with headers to kafka-rest
         kafka_url = "http://{}/topics/{}".format(self.config["kafka_rest_server"], kafka_topic)
@@ -336,85 +341,84 @@ class DigitalTwinClient:
         self.logger.info("subscribe: Subscribing to datastreams with names: {}".format(
             subscriptions["subscribed_datastreams"]))
 
-        # Create Kafka Consumer instance
-        conf = {'bootstrap.servers': self.config["kafka_bootstrap_servers"],
-                'session.timeout.ms': 6000,
-                'group.id': "{}.{}".format(self.config["system"], self.config["client_name"])}
+        # Either consume from kafka bootstrap, or to kafka rest endpoint
+        if self.config["kafka_bootstrap_servers"]:
+            # Create consumer
+            conf = {'bootstrap.servers': self.config["kafka_bootstrap_servers"],
+                    'session.timeout.ms': 6000,
+                    'group.id': self.config["kafka_group_id"]}
+            self.consumer = confluent_kafka.Consumer(**conf)
 
-        # Post the data with headers to kafka-rest
-        data = json.dumps({
-            "name": self.config["client_name"],  # consumer name equals consumer group name
-            "format": "json",
-            "auto.offset.reset": "earliest",
-            "auto.commit.enable": "true"})
-        kafka_url = "http://{}/consumers/{}".format(self.config["kafka_rest_server"], self.config["client_name"])
+            # Subscribe to topics
+            self.consumer.subscribe([self.config["system"] + ".data", self.config["system"] + ".external"])
 
-        res = requests.post(kafka_url, data=data, headers=dict({"Content-Type": "application/vnd.kafka.v2+json"}))
-        if res.status_code == 200:
-            self.logger.debug("subscribe: created consumer instance")
-        elif res.status_code == 409:
-            self.logger.debug("subscribe: already created consumer instance")
+        # # get subscribed datastreams of the form:
+        # # {4: {'@iot.id': 4, 'name': 'Machine Temperature', '@iot.selfLink': 'http://...}, 5: {....}, ...}
+        # gost_url = "http://" + self.config["gost_servers"]
+        # # Sort datastreams to pick latest stream datastream in case of duplicates
+        # gost_datastreams = sorted(requests.get(gost_url + "/v1.0/Datastreams?$expand=Sensors,Thing,ObservedProperty")
+        #                           .json()["value"], key=lambda k: k["@iot.id"])
+        # self.subscribed_datastreams = {ds["@iot.id"]: ds for ds in gost_datastreams if ds["name"]
+        #                                in subscriptions["subscribed_datastreams"]}
+        #
+        # for key, value in self.subscribed_datastreams.items():
+        #     self.logger.info("subscribe: Subscribed to datastream: id: {} and metadata: {}".format(key, value))
+        # if len(self.subscribed_datastreams.keys()) == 0:
+        #     self.logger.warning("subscribe: No subscription matches an existing datastream.")
+        # for stream in subscriptions["subscribed_datastreams"]:
+        #     if stream not in [subscribed_ds["name"] for subscribed_ds in self.subscribed_datastreams.values()]:
+        #         self.logger.warning("subscribe: Couldn't subscribe to {}, may not be registered".format(stream))
+
         else:
-            self.logger.error("subscribe: can't create consumer instance")
-            raise Exception("subscribe: can't create consumer instance")
+            # Create consumer
+            data = json.dumps({
+                "name": self.config["kafka_consumer_id"],  # consumer name equals consumer group name
+                "format": "json",
+                "auto.offset.reset": "earliest",
+                "auto.commit.enable": "true"}).encode("utf-8")
+            kafka_url = "http://{}/consumers/{}".format(self.config["kafka_rest_server"], self.config["kafka_group_id"])
+            res = requests.post(kafka_url, data=data, headers=dict({"Content-Type": "application/vnd.kafka.v2+json"}))
+            if res.status_code == 200:
+                self.logger.debug("subscribe: Created consumer instance '{}'".format(self.config["kafka_consumer_id"]))
+            elif res.status_code == 409:
+                self.logger.debug("subscribe: already created consumer instance")
+            else:
+                self.logger.error("subscribe: can't create consumer instance")
+                raise Exception("subscribe: can't create consumer instance")
 
-        # consumers/my-consumer-group/instances/my_consumer_json/subscription
-        kafka_url = "http://{}/consumers/{}/instances/{}/subscription"\
-            .format(self.config["kafka_rest_server"], self.config["client_name"], self.config["client_name"])
-        data = json.dumps({
-            "topics": [
-                "{}.data".format(self.config["system"]),
-                "{}.external".format(self.config["system"])]})
-        res = requests.post(kafka_url, data=data, headers=dict({"Content-Type": "application/vnd.kafka.json.v2+json"}))
-        if res.status_code == 204:
-            self.logger.debug("subscribe: created consumer instance")
-        else:
-            self.logger.error("subscribe: can't create consumer instance, status code: {}".format(res.status_code))
-            raise Exception("subscribe: can't create consumer instance, status code: {}".format(res.status_code))
+            # Subscribe to topics
+            kafka_url = "http://{}/consumers/{}/instances/{}/subscription".format(
+                self.config["kafka_rest_server"], self.config["kafka_group_id"], self.config["kafka_consumer_id"])
+            data = json.dumps({"topics": [self.config["system"] + ".data", self.config["system"] + ".external"]}
+                              ).encode("utf-8")
+            res = requests.post(kafka_url, data=data,
+                                headers=dict({"Content-Type": "application/vnd.kafka.json.v2+json"}))
+            if res.status_code == 204:
+                self.logger.debug("subscribe: Subscribed on topics: {}".format(json.loads(data)["topics"]))
+            else:
+                self.logger.error(
+                    "subscribe: can't create consumer instance, status code: {}".format(res.status_code))
+                raise Exception(
+                    "subscribe: can't create consumer instance, status code: {}".format(res.status_code))
 
-        # get subscribed datastreams of the form:
+        # Check the subscriptions and create mapping
         # {4: {'@iot.id': 4, 'name': 'Machine Temperature', '@iot.selfLink': 'http://...}, 5: {....}, ...}
         gost_url = "http://" + self.config["gost_servers"]
         # Sort datastreams to pick latest stream datastream in case of duplicates
         gost_datastreams = sorted(requests.get(gost_url + "/v1.0/Datastreams?$expand=Sensors,Thing,ObservedProperty")
                                   .json()["value"], key=lambda k: k["@iot.id"])
-        self.used_datastreams = {ds["@iot.id"]: ds for ds in gost_datastreams if ds["name"]
+        self.subscribed_datastreams = {ds["@iot.id"]: ds for ds in gost_datastreams if ds["name"]
                                  in subscriptions["subscribed_datastreams"]}
 
-        for key, value in self.used_datastreams.items():
+        for key, value in self.subscribed_datastreams.items():
             self.logger.info("subscribe: Subscribed to datastream: id: {} and metadata: {}".format(key, value))
-        if len(self.used_datastreams.keys()) == 0:
+        if len(self.subscribed_datastreams.keys()) == 0:
             self.logger.warning("subscribe: No subscription matches an existing datastream.")
         for stream in subscriptions["subscribed_datastreams"]:
-            if stream not in [subscribed_ds["name"] for subscribed_ds in self.used_datastreams.values()]:
+            if stream not in [subscribed_ds["name"] for subscribed_ds in self.subscribed_datastreams.values()]:
                 self.logger.warning("subscribe: Couldn't subscribe to {}, may not be registered".format(stream))
 
-    # def poll(self, timeout=0.1):
-    #     """
-    #     Receives data from the Kafka topics. On new data, it checks if it is valid, filters for subscribed datastreams
-    #     and returns the message augmented with datastream metadata.
-    #     :param timeout: duration how long to wait to reveive data
-    #     :return: either None or data in SensorThings format and augmented with metadata for each received and
-    #     subscribed datastream. e.g.
-    #     {'phenomenonTime': '2018-12-03T16:08:03.366855+00:00', 'resultTime': '2018-12-03T16:08:03.367045+00:00',
-    #     'result': 50.44982168968592, 'Datastream': {'@iot.id': 4, ...}
-    #     """
-    #     msg = self.consumer.poll(timeout)  # Waits up to 'session.timeout.ms' for a message
-    #
-    #     while msg is not None:
-    #         if not msg.error():
-    #             data = json.loads(msg.value().decode('utf-8'))
-    #             iot_id = data.get("Datastream", None).get("@iot.id", None)
-    #             if iot_id in self.subscribed_datastreams.keys():
-    #                 data["Datastream"] = self.subscribed_datastreams[iot_id]
-    #                 return data
-    #         else:
-    #             if msg.error().code() != confluent_kafka.KafkaError._PARTITION_EOF:
-    #                 self.logger.error("poll: {}".format(msg.error()))
-    #
-    #         msg = self.consumer.poll(0)  # Waits up to 'session.timeout.ms' for a message
-
-    def get(self, timeout=1):
+    def consume_via_bootstrap(self, timeout=0.1):
         """
         Receives data from the Kafka topics. On new data, it checks if it is valid, filters for subscribed datastreams
         and returns the message augmented with datastream metadata.
@@ -424,43 +428,93 @@ class DigitalTwinClient:
         {'phenomenonTime': '2018-12-03T16:08:03.366855+00:00', 'resultTime': '2018-12-03T16:08:03.367045+00:00',
         'result': 50.44982168968592, 'Datastream': {'@iot.id': 4, ...}
         """
+        msg = self.consumer.poll(timeout)  # Waits up to 'session.timeout.ms' for a message
+
+        while msg is not None:
+            if not msg.error():
+                data = json.loads(msg.value().decode('utf-8'))
+                iot_id = data.get("Datastream", None).get("@iot.id", None)
+                if iot_id in self.subscribed_datastreams.keys():
+                    data["Datastream"] = self.subscribed_datastreams[iot_id]
+                    data["partition"] = msg.partition
+                    data["topic"] = msg.topic
+                    return data
+            else:
+                if msg.error().code() != confluent_kafka.KafkaError._PARTITION_EOF:
+                    self.logger.error("poll: {}".format(msg.error()))
+            msg = self.consumer.poll(0)  # Waits up to 'session.timeout.ms' for a message
+
+    def consume(self, timeout=1):
+        """
+        Receives data from the Kafka topics directly via a bootstrap server (preferred) or via kafka rest.
+        On new data, it checks if it is valid and filters for subscribed datastreams
+        and returns a list of messages augmented with datastream metadata.
+        :param timeout: duration how long to wait to receive data
+        :return: either None or data in SensorThings format and augmented with metadata for each received and
+        subscribed datastream. e.g.
+        [{"topic": "eu.srfg.iot-iot4cps-wp5.car1.data","key": "eu.srfg.iot-iot4cps-wp5.car1.Demo Car 1",
+        "value": {"phenomenonTime": "2019-04-08T09:47:35.408785+00:00","resultTime": "2019-04-08T09:47:35.408950+00:00",
+        "Datastream": {"@iot.id": 11},"result": 2.9698054997459593},"partition": 0,"offset": 1},...]
+        """
         # msg = self.consumer.poll(timeout)  # Waits up to 'session.timeout.ms' for a message
+        if self.config["kafka_bootstrap_servers"]:
+            payload = list()
+            datapoint = self.consume_via_bootstrap(timeout)
+            while datapoint is not None:
+                payload.append(datapoint)
+                datapoint = self.consume_via_bootstrap(0)
+            return payload
 
-        kafka_url = "http://{}/consumers/{}/instances/{}/records?timeout=3000&max_bytes=300000".format(
-            self.config["kafka_rest_server"], self.config["client_name"], self.config["client_name"], timeout)
+        # Consume data via Kafka Rest
+        else:
+            kafka_url = "http://{}/consumers/{}/instances/{}/records?timeout={}&max_bytes=300000".format(
+                self.config["kafka_rest_server"], self.config["kafka_group_id"],
+                self.config["kafka_consumer_id"], int(timeout*1000))
 
-        res = requests.get(kafka_url, headers=dict({"Accept": "application/vnd.kafka.json.v2+json"}))
-        if res.status_code != 200:
-            self.logger.error("get: can't get messages from {}, status code {}".format(kafka_url, res.status_code))
-            # raise Exception("subscribe: can't create consumer instance")
-        if not res.json():
-            self.logger.debug("get: got empty list")
-            return list()
-
-        results = res.json()
-        datapoints = list()
-        self.logger.debug("get: got {} new message(s)".format(len(results)))
-        # print(self.subscribed_datastreams.items())
-        for result in results:
-            iot_id = result.get("value", None).get("Datastream", None).get("@iot.id", None)
-            # print(iot_id)
-            if iot_id in self.used_datastreams.keys():
-                datapoint = result["value"]
-                datapoint["Datastream"] = self.used_datastreams[iot_id]
-                datapoints.append(datapoint)
-        return datapoints
+            response = requests.get(url=kafka_url, headers=dict({"Accept": "application/vnd.kafka.json.v2+json"}))
+            if response.status_code != 200:
+                self.logger.error("consume: can't get messages from {}, status code {}".format(kafka_url,
+                                                                                               response.status_code))
+                raise Exception("consume: can't get messages from {}".format(kafka_url))
+            records = response.json()
+            if not records:
+                self.logger.debug("consume: got empty list")
+                return list()
+            # print(records)
+            payload = list()
+            self.logger.debug("get: got {} new message(s)".format(len(records)))
+            for record in records:
+                iot_id = record.get("value", None).get("Datastream", None).get("@iot.id", None)
+                if iot_id in self.subscribed_datastreams.keys():
+                    datapoint = record["value"]
+                    datapoint["Datastream"] = self.subscribed_datastreams[iot_id]
+                    payload.append(datapoint)
+                    self.logger.debug("Received new datapoint: '{}'".format(datapoint))
+            return payload
 
     def disconnect(self):
         """
         Disconnect and close Kafka Connections
         :return:
         """
-        # try:
-        #     self.producer.flush()
-        # except AttributeError:
-        #     pass
-        # try:
-        #     self.consumer.close()
-        # except AttributeError:
-        #     pass
+        if self.config["kafka_bootstrap_servers"]:
+            try:
+                self.producer.flush()
+            except AttributeError:
+                pass
+            try:
+                self.consumer.close()
+            except AttributeError:
+                pass
+        else:
+            kafka_url = "http://{}/consumers/{}/instances/{}".format(
+                self.config["kafka_rest_server"], self.config["kafka_group_id"], self.config["kafka_consumer_id"])
+            try:
+                res = requests.delete(kafka_url,  headers=dict({"Content-Type": "application/vnd.kafka.v2+json"}))
+                if res.status_code == 204:
+                    self.logger.info("disconnect: Removed consumer instance.")
+                else:
+                    self.logger.error("subscribe: can't remove consumer instance, status code: {}.".format(res.status_code))
+            except Exception as e:
+                self.logger.error("subscribe: can't remove consumer instance.")
         self.logger.info("disconnect: Digital Twin Client disconnected")

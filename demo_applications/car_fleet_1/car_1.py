@@ -58,27 +58,27 @@ try:
         # Print the temperature with the corresponding timestamp in ISO format
         print("The air temperature at the demo car 1 is {} °C at {}".format(temperature, timestamp))
 
-        # # Receive all queued messages of the weather-service and other connected cars and calculate the minimum
-        # minimal_temps = list()
-        # if temperature <= 0:
-        #     minimal_temps.append({"origin": config["system_prefix"]+"."+config["system_name"], "temperature": temperature})
-        #
-        # received_quantities = client.get(timeout=0.5)
-        # for received_quantity in received_quantities:
-        #     # The resolves the all meta-data for an received data-point
-        #     print("  -> Received new external data-point at {}: '{}' = {} {}."
-        #           .format(received_quantity["phenomenonTime"],
-        #                   received_quantity["Datastream"]["name"],
-        #                   received_quantity["result"],
-        #                   received_quantity["Datastream"]["unitOfMeasurement"]["symbol"]))
-        #     # To view the whole data-point in a pretty format, uncomment:
-        #     # print("Received new data: {}".format(json.dumps(received_quantity, indent=2)))
-        #     if received_quantity["result"] <= 0:
-        #         minimal_temps.append(
-        #             {"origin": received_quantity["Datastream"]["name"], "temperature": received_quantity["result"]})
-        #
-        # if minimal_temps != list():
-        #     print("    WARNING, the road could be slippery, see: {}".format(minimal_temps))
+        # Receive all queued messages of the weather-service and other connected cars and calculate the minimum
+        minimal_temps = list()
+        if temperature <= 0:
+            minimal_temps.append({"origin": config["system"], "temperature": temperature})
+
+        received_quantities = client.consume(timeout=0.5)
+        for received_quantity in received_quantities:
+            # The resolves the all meta-data for an received data-point
+            print("  -> Received new external data-point at {}: '{}' = {} {}."
+                  .format(received_quantity["phenomenonTime"],
+                          received_quantity["Datastream"]["name"],
+                          received_quantity["result"],
+                          received_quantity["Datastream"]["unitOfMeasurement"]["symbol"]))
+            # To view the whole data-point in a pretty format, uncomment:
+            # print("Received new data: {}".format(json.dumps(received_quantity, indent=2)))
+            if received_quantity["result"] <= 0:
+                minimal_temps.append(
+                    {"origin": received_quantity["Datastream"]["name"], "temperature": received_quantity["result"]})
+
+        if minimal_temps != list():
+            print("    WARNING, the road could be slippery, see: {}".format(minimal_temps))
 
         time.sleep(10)
 except KeyboardInterrupt:

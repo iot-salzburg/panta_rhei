@@ -65,7 +65,7 @@ try:
             minimal_temps.append(
                 {"origin": config["system_prefix"] + config["system_name"], "temperature": temperature})
 
-        received_quantities = client.get(timeout=0.5)
+        received_quantities = client.consume(timeout=0.5)
         for received_quantity in received_quantities:
             # The resolves the all meta-data for an received data-point
             print("  -> Received new external data-point at {}: '{}' = {} {}."
