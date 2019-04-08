@@ -1,0 +1,127 @@
+version: '2'
+
+services:
+
+  ##########################
+  ######## Keycloak ########
+  ##########################
+
+  keycloak:
+    #build: ./keycloak
+    image: jboss/keycloak:4.8.3.Final
+    environment:
+      KEYCLOAK_LOGLEVEL: DEBUG
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: password
+      #DB_DATABASE: keycloak
+      #DB_USER: keycloak
+      #DB_PASSWORD: password
+      #POSTGRES_PORT_5432_TCP_ADDR: keycloak-db
+      #PROXY_ADDRESS_FORWARDING: "true"
+      #_JAVA_OPTIONS: -Xmx256m -Xms128m
+    command:
+      #- "-b"
+      #- "0.0.0.0"
+      - "-Dkeycloak.migration.action=import"
+      - "-Dkeycloak.migration.provider=dir"
+      - "-Dkeycloak.migration.dir=/init/"
+      - "-Dkeycloak.migration.strategy=IGNORE_EXISTING"
+    ports:
+      - "8080:8080"
+      # - "9999:9999" # keycloak federation port - not used in local dev setup
+      #- "8443:8443"
+    volumes:
+      - ./keycloak/init/:/init/
+    #links:
+    #  - keycloak-db:postgres
+    #depends_on:
+    #  - keycloak-db
+    networks:
+      - identity-backend
+
+
+  # keycloak-db:
+  #   image: postgres:10
+  #   volumes:
+  #     - keycloak_postgres_data:/var/lib/postgresql/data
+  #   environment:
+  #     POSTGRES_DB: keycloak
+  #     POSTGRES_USER: keycloak
+  #     POSTGRES_PASSWORD: password
+  #     POSTGRES_ROOT_PASSWORD: root_password
+  #   networks:
+  #     - identity-backend
+
+  ############################
+  ##### Identity Service #####
+  ############################
+
+  # identity-service:
+  #   image: nimbleplatform/identity-service:iot4cps
+  #   env_file:
+  #     - env_vars
+  #   environment:
+  #     - _JAVA_OPTIONS=-Xmx256m -Xms50m # -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000
+  #     - POSTGRES_HOST=identity-service-db
+  #     - POSTGRES_PORT=5432
+  #     - POSTGRES_DB=identityDB
+  #     - BINARY_CONTENT_DB_HOST=binary-content-db
+  #     - BINARY_CONTENT_DB_PORT=5432
+  #     - BINARY_CONTENT_DB_NAME=binarycontentdb
+  #     - BINARY_CONTENT_DB_USERNAME=postgres
+  #     - BINARY_CONTENT_DB_PASSWORD=postgres
+  #     - BINARY_CONTENT_URL=http://not-yet-in-use/
+  #     - KAFKA_BOOTSTRAP_SERVERS=il061:9092,il062:9092,il063:9092
+  #     - KAFKA_JAAS_CONFIG=
+  #     - SMTP_HOST=maildev
+  #     - SMTP_PORT=25
+  #     - SMTP_DEFAULT_FROM=nimble@local-dev
+  #     - SMTP_USERNAME=
+  #     - SMTP_PASSWORD=
+  #     - SMTP_AUTH=false
+  #     - SMTP_STARTTLS=false
+  #     - KEYCLOAK_URL=http://keycloak:8080/auth
+  #     - KEYCLOAK_REALM=master
+  #     - KEYCLOAK_ADMIN_USERNAME=admin
+  #     - KEYCLOAK_ADMIN_PASSWORD=password
+  #     - KEYCLOAK_ADMIN_CLIENT_ID=admin-cli
+  #     - KEYCLOAK_ADMIN_CLIENT_SECRET=cd2c2640-bca0-4d1d-9dab-b5705a17fbf8
+  #     - OAUTH_CLIENT_ID=nimble_client
+  #     - OAUTH_CLIENT_SECRET=cbcd2e6f-e58a-42b4-9d2d-95a933ee29ae
+  #     - OAUTH_CLIENT_ACCESSTOKEN_URI=http://keycloak:8080/auth/realms/master/protocol/openid-connect/token
+  #   ports:
+  #     - "9096:9096"
+  #     # - "8000:8000"
+  #   networks:
+  #   #  - infra
+  #     - identity-backend
+  #   depends_on:
+  #     - identity-service-db
+  #    # - binary-content-db
+
+  # identity-service-db:
+  #   image: postgres:9.6.3
+  #   ports:
+  #     - "5433:5432"
+  #   environment:
+  #     - POSTGRES_USER=root
+  #     - POSTGRES_PASSWORD=changeme
+  #     - POSTGRES_DB=identityDB
+  #     - _JAVA_OPTIONS=-Xmx512m -Xms50m
+
+  #   networks:
+  #     - identity-backend
+
+  maildev:
+    image: djfarrelly/maildev:1.0.0-rc2
+    ports:
+      - "8081:80"
+      - "25"
+    networks:
+      - identity-backend
+
+volumes:
+  keycloak_postgres_data:
+
+networks:
+  identity-backend:
