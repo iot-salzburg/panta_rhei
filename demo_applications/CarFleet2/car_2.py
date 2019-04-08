@@ -33,14 +33,14 @@ MAPPINGS = os.path.join(dirname, "ds-mappings.json")
 
 # Set the configs, create a new Digital Twin Instance and register file structure
 config = {"client_name": "demo_car_2",
-            # TODO will be reduced by registration id
-          "system_prefix": "eu.srfg.iot-iot4cps-wp5",  # only with 2 dots, alphanumeric and "-"
-          "system_name": "car2",  # will be reduced by registration id, may refactor to CarFleet1
-          "kafka_bootstrap_servers": "localhost:8082",
-          "gost_servers": "localhost:8084"}
+            # TODO will be reduced by registration id and key
+          "system": "eu.srfg.iot-iot4cps-wp5.CarFleet2",
+          "gost_servers": "localhost:8084",
+          "kafka_bootstrap_servers": "localhost:9092",  # kafka bootstrap server is the preferred way to connect
+          "kafka_rest_server": None}  # "localhost:8082"}
 client = DigitalTwinClient(**config)
-client.register_existing(mappings_file=MAPPINGS)
-# client.register_new(instance_file=INSTANCES)
+# client.register_existing(mappings_file=MAPPINGS)
+client.register_new(instance_file=INSTANCES)
 client.subscribe(subscription_file=SUBSCRIPTIONS)
 
 randomised_temp = SimulateTemperatures(t_factor=100, day_amplitude=4.5, year_amplitude=-3.5, average=2)
@@ -62,8 +62,7 @@ try:
         # Receive all queued messages of the weather-service and other connected cars and calculate the minimum
         minimal_temps = list()
         if temperature <= 0:
-            minimal_temps.append(
-                {"origin": config["system_prefix"] + config["system_name"], "temperature": temperature})
+            minimal_temps.append({"origin": config["system"], "temperature": temperature})
 
         received_quantities = client.consume(timeout=0.5)
         for received_quantity in received_quantities:

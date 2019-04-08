@@ -24,7 +24,7 @@ class DigitalTwinClient:
         # Init logging
         self.logger = logging.getLogger("PR Client Logger")
         self.logger.setLevel(logging.INFO)
-        self.logger.setLevel(logging.DEBUG)
+        # self.logger.setLevel(logging.DEBUG)
         logging.basicConfig(level='WARNING')
         self.logger.info("init: Initialising Digital Twin Client with name '{}' on '{}'".format(client_name, system))
 
@@ -51,6 +51,7 @@ class DigitalTwinClient:
 
         # Check the connection to Kafka, note that the connection to the brokers are preferred
         self.logger.debug("init: Checking Kafka connection")
+        self.producer = None
         self.check_kafka_connection()
 
         # Init other objects used in later methods
@@ -78,8 +79,8 @@ class DigitalTwinClient:
         if self.config["kafka_bootstrap_servers"]:
             # Create Kafka Producer
             self.producer = confluent_kafka.Producer({'bootstrap.servers': self.config["kafka_bootstrap_servers"],
-                                                  'client.id': self.config["client_name"],
-                                                  'default.topic.config': {'acks': 'all'}})
+                                                      'client.id': self.config["client_name"],
+                                                      'default.topic.config': {'acks': 'all'}})
             # TODO How to create a topic via the client
             # a = confluent_kafka.admin.AdminClient({'bootstrap.servers': self.config["kafka_bootstrap_servers"]})
             # a.create_topics([confluent_kafka.admin.NewTopic("test.mytopic", 2, 1)])
@@ -96,7 +97,8 @@ class DigitalTwinClient:
                                           "result: {}".format(kafka_rest_url, res.status_code, res.json()))
                     else:
                         self.logger.error("init: Error, topic '{}' doesn't exist in Kafka cluster, stopping client, "
-                                          "return code {}".format(self.mapping["logging"]["kafka-topic"], res.status_code))
+                                          "return code {}".format(self.mapping["logging"]["kafka-topic"],
+                                                                  res.status_code))
                     raise ConnectionError(
                         "init: Error, couldn't connect to kafka-rest: {}, status code: {}, result: {}".format(
                             kafka_rest_url, res.status_code, res.json()))
@@ -104,10 +106,6 @@ class DigitalTwinClient:
                 self.logger.error("init: Error, couldn't connect to kafka-rest: {}".format(kafka_rest_url))
                 raise e
 
-        data = dict({"phenomenonTime": datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat(),
-                     "resultTime": datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat(),
-                     "result": "Started Digital Twin Client with name '{}'".format(self.config["client_name"]),
-                     "Datastream": {"@iot.id": self.mapping["logging"]["@iot.id"]}})
         self.produce("logging", "Started Digital Twin Client with name '{}'".format(self.config["client_name"]))
 
     def register_existing(self, mappings_file):
@@ -139,9 +137,9 @@ class DigitalTwinClient:
             for ds in gost_datastreams:
                 if unique_ds_name == ds["name"]:
                     self.mapping[key] = {"name": ds["name"],
-                         "@iot.id": ds["@iot.id"],
-                         "Thing": ds["Thing"],
-                         "observationType": ds["observationType"]}
+                                         "@iot.id": ds["@iot.id"],
+                                         "Thing": ds["Thing"].get("name", ds["Thing"]),
+                                         "observationType": ds["observationType"]}
 
         self.logger.debug("register: Successfully loaded mapping: {}".format(self.mapping))
         msg = "Found registered instances for Digital Twin Client '{}': {}".format(self.config["client_name"],
@@ -210,8 +208,8 @@ class DigitalTwinClient:
         else:
             kafka_topic = self.config["system"] + "." + "data"
 
-        # The key is of the form "thing" or "client-name"
-        kafka_key = str(self.mapping[quantity].get("Thing", dict()).get("name", self.config["client_name"]))
+        # The key is of the form "thing" or "client-name" (for logging)
+        kafka_key = str(self.mapping[quantity].get("Thing", self.config["client_name"]))
 
         # Either send to kafka bootstrap, or to kafka rest endpoint
         if self.config["kafka_bootstrap_servers"]:
@@ -311,7 +309,8 @@ class DigitalTwinClient:
             if res.status_code == 200:
                 self.logger.debug("produce: sent message to {}".format(kafka_url))
             else:
-                self.logger.warning("produce: Couldn't post message to {}, status code: {}".format(kafka_url, res.status_code))
+                self.logger.warning(
+                    "produce: Couldn't post message to {}, status code: {}".format(kafka_url, res.status_code))
                 raise ConnectionError("Couldn't post message to {}, status code: {}".format(kafka_url, res.status_code))
         except ConnectionError as e:
             self.logger.error("produce: Couldn't post message to {}".format(kafka_url))
@@ -352,23 +351,6 @@ class DigitalTwinClient:
             # Subscribe to topics
             self.consumer.subscribe([self.config["system"] + ".data", self.config["system"] + ".external"])
 
-        # # get subscribed datastreams of the form:
-        # # {4: {'@iot.id': 4, 'name': 'Machine Temperature', '@iot.selfLink': 'http://...}, 5: {....}, ...}
-        # gost_url = "http://" + self.config["gost_servers"]
-        # # Sort datastreams to pick latest stream datastream in case of duplicates
-        # gost_datastreams = sorted(requests.get(gost_url + "/v1.0/Datastreams?$expand=Sensors,Thing,ObservedProperty")
-        #                           .json()["value"], key=lambda k: k["@iot.id"])
-        # self.subscribed_datastreams = {ds["@iot.id"]: ds for ds in gost_datastreams if ds["name"]
-        #                                in subscriptions["subscribed_datastreams"]}
-        #
-        # for key, value in self.subscribed_datastreams.items():
-        #     self.logger.info("subscribe: Subscribed to datastream: id: {} and metadata: {}".format(key, value))
-        # if len(self.subscribed_datastreams.keys()) == 0:
-        #     self.logger.warning("subscribe: No subscription matches an existing datastream.")
-        # for stream in subscriptions["subscribed_datastreams"]:
-        #     if stream not in [subscribed_ds["name"] for subscribed_ds in self.subscribed_datastreams.values()]:
-        #         self.logger.warning("subscribe: Couldn't subscribe to {}, may not be registered".format(stream))
-
         else:
             # Create consumer
             data = json.dumps({
@@ -408,7 +390,7 @@ class DigitalTwinClient:
         gost_datastreams = sorted(requests.get(gost_url + "/v1.0/Datastreams?$expand=Sensors,Thing,ObservedProperty")
                                   .json()["value"], key=lambda k: k["@iot.id"])
         self.subscribed_datastreams = {ds["@iot.id"]: ds for ds in gost_datastreams if ds["name"]
-                                 in subscriptions["subscribed_datastreams"]}
+                                       in subscriptions["subscribed_datastreams"]}
 
         for key, value in self.subscribed_datastreams.items():
             self.logger.info("subscribe: Subscribed to datastream: id: {} and metadata: {}".format(key, value))
@@ -469,7 +451,7 @@ class DigitalTwinClient:
         else:
             kafka_url = "http://{}/consumers/{}/instances/{}/records?timeout={}&max_bytes=300000".format(
                 self.config["kafka_rest_server"], self.config["kafka_group_id"],
-                self.config["kafka_consumer_id"], int(timeout*1000))
+                self.config["kafka_consumer_id"], int(timeout * 1000))
 
             response = requests.get(url=kafka_url, headers=dict({"Accept": "application/vnd.kafka.json.v2+json"}))
             if response.status_code != 200:
@@ -480,7 +462,6 @@ class DigitalTwinClient:
             if not records:
                 self.logger.debug("consume: got empty list")
                 return list()
-            # print(records)
             payload = list()
             self.logger.debug("get: got {} new message(s)".format(len(records)))
             for record in records:
@@ -509,12 +490,13 @@ class DigitalTwinClient:
         else:
             kafka_url = "http://{}/consumers/{}/instances/{}".format(
                 self.config["kafka_rest_server"], self.config["kafka_group_id"], self.config["kafka_consumer_id"])
-            try:
-                res = requests.delete(kafka_url,  headers=dict({"Content-Type": "application/vnd.kafka.v2+json"}))
-                if res.status_code == 204:
-                    self.logger.info("disconnect: Removed consumer instance.")
-                else:
-                    self.logger.error("subscribe: can't remove consumer instance, status code: {}.".format(res.status_code))
-            except Exception as e:
-                self.logger.error("subscribe: can't remove consumer instance.")
+            # try:
+            res = requests.delete(kafka_url, headers=dict({"Content-Type": "application/vnd.kafka.v2+json"}))
+            if res.status_code == 204:
+                self.logger.info("disconnect: Removed consumer instance.")
+            else:
+                self.logger.error(
+                    "subscribe: can't remove consumer instance, status code: {}.".format(res.status_code))
+            # except Exception as e:
+            #     self.logger.error("subscribe: can't remove consumer instance.")
         self.logger.info("disconnect: Digital Twin Client disconnected")

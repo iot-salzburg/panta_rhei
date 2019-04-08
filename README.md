@@ -12,8 +12,7 @@ Example on how to send data using the Digital Twin Client
 ```python3
 from client.digital_twin_client import DigitalTwinClient
 config = {"client_name": "demo_station_1",
-          "system_prefix": "eu.srfg.iot-iot4cps-wp5",
-          "system_name": "weather-service",
+          "system": "eu.srfg.iot-iot4cps-wp5.car1"
           "kafka_bootstrap_servers": "localhost:8082",
           "gost_servers": "localhost:8084"}
           
@@ -71,12 +70,12 @@ Then, to test the installation:
     kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic test-topic --from-beginning
     Hello Kafka
     
-    kafka-topics.sh --zookeeper localhost:2181 --create --partitions 3 --replication-factor 1 --config min.insync.replicas=1 --config cleanup.policy=compact --config retention.ms=241920000 --topic eu.srfg.iot-iot4cps-wp5.car1.data
-    kafka-topics.sh --zookeeper localhost:2181 --create --partitions 3 --replication-factor 1 --config min.insync.replicas=1 --config cleanup.policy=compact --config retention.ms=241920000 --topic eu.srfg.iot-iot4cps-wp5.car1.external
-    kafka-topics.sh --zookeeper localhost:2181 --create --partitions 2 --replication-factor 1 --config min.insync.replicas=1 --config cleanup.policy=compact --config retention.ms=241920000 --topic eu.srfg.iot-iot4cps-wp5.car1.logging
-    # Create analog topics for 'car2' and 'weather-service'
+    kafka-topics.sh --zookeeper localhost:2181 --create --partitions 3 --replication-factor 1 --config min.insync.replicas=1 --config cleanup.policy=compact --config retention.ms=241920000 --topic eu.srfg.iot-iot4cps-wp5.CarFleet1.data
+    kafka-topics.sh --zookeeper localhost:2181 --create --partitions 3 --replication-factor 1 --config min.insync.replicas=1 --config cleanup.policy=compact --config retention.ms=241920000 --topic eu.srfg.iot-iot4cps-wp5.CarFleet1.external
+    kafka-topics.sh --zookeeper localhost:2181 --create --partitions 1 --replication-factor 1 --config min.insync.replicas=1 --config cleanup.policy=compact --config retention.ms=241920000 --topic eu.srfg.iot-iot4cps-wp5.CarFleet1.logging
+    # Create analog topics for 'CarFleet2' and 'WeatherService'
 
-Test the conluent kafka platform on [http://localhost:9021/](http://localhost:9021/)
+Test the confluent kafka platform on [http://localhost:9021/](http://localhost:9021/)
 
 #### Secondly, the **SensorThings Server** GOST is set up to add semantics to Apache Kafka:
 
@@ -93,17 +92,17 @@ The flag `-d` stands for `daemon` mode. To check if everything worked well, open
 
 Now, open new terminals to run the demo applications from the `client` directory:
 
-    python3 demo_applications/car_fleet_1/car_1.py
-    > INFO:PR Client Logger:init: Initialising Digital Twin Client with name 'demo_car_1' on 'eu.srfg.iot-iot4cps-wp5.car1'
+    python3 demo_applications/CarFleet1/car_1.py
+    > INFO:PR Client Logger:init: Initialising Digital Twin Client with name 'demo_car_1' on 'eu.srfg.iot-iot4cps-wp5.CarFleet1'
     ....
     > The air temperature at the demo car 1 is 2.9816131778905497 °C at 2019-03-18T13:54:59.482215+00:00
 
 
-    python3 demo_applications/car_fleet_2/car_2.py
-    > INFO:PR Client Logger:init: Initialising Digital Twin Client with name 'demo_car_2' on 'eu.srfg.iot-iot4cps-wp5.car2'
+    python3 demo_applications/CarFleet2/car_2.py
+    > INFO:PR Client Logger:init: Initialising Digital Twin Client with name 'demo_car_2' on 'eu.srfg.iot-iot4cps-wp5.CarFleet2'
     ...
     > The air temperature at the demo car 2 is 2.623506013964546 °C at 2019-03-18T12:21:27.177267+00:00
-    >   -> Received new external data-point of 2019-03-18T13:54:59.482215+00:00: 'eu.srfg.iot-iot4cps-wp5.car1.car_1.Air Temperature' = 2.9816131778905497 degC.
+    >   -> Received new external data-point of 2019-03-18T13:54:59.482215+00:00: 'eu.srfg.iot-iot4cps-wp5.CarFleet1.car_1.Air Temperature' = 2.9816131778905497 degC.
     
 Then, start the Kafka Stream Apps in `demo_applications/com.github.christophschranz.iot4cps.streamhub/target/classes/com/github/christophschranz/iot4cpshub` to allow the sharing of data across the systems.
 
@@ -124,22 +123,22 @@ First, some configs have to be set in order to make the datastore work properly:
 Check the created kafka topics:
 
     kafka-topics.sh --zookeeper localhost:2181 --list
-    eu.srfg.iot-iot4cps-wp5.car1.data
-    eu.srfg.iot-iot4cps-wp5.car1.external
-    eu.srfg.iot-iot4cps-wp5.car1.logging
-    eu.srfg.iot-iot4cps-wp5.car2.data
-    eu.srfg.iot-iot4cps-wp5.car2.external
-    eu.srfg.iot-iot4cps-wp5.car2.logging
-    eu.srfg.iot-iot4cps-wp5.weather-service.data
-    eu.srfg.iot-iot4cps-wp5.weather-service.external
-    eu.srfg.iot-iot4cps-wp5.weather-service.logging
+    eu.srfg.iot-iot4cps-wp5.CarFleet1.data
+    eu.srfg.iot-iot4cps-wp5.CarFleet1.external
+    eu.srfg.iot-iot4cps-wp5.CarFleet1.logging
+    eu.srfg.iot-iot4cps-wp5.CarFleet2.data
+    eu.srfg.iot-iot4cps-wp5.CarFleet2.external
+    eu.srfg.iot-iot4cps-wp5.CarFleet2.logging
+    eu.srfg.iot-iot4cps-wp5.WeatherService.data
+    eu.srfg.iot-iot4cps-wp5.WeatherService.external
+    eu.srfg.iot-iot4cps-wp5.WeatherService.logging
     test-topic
 
 Note that kafka-topics must be created manually as explained in the [Quickstart](#quickstart).
 
 To track the traffic in real time, use the `kafka-consumer-console`: 
 
-    kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic eu.srfg.iot-iot4cps-wp5.car1.data
+    kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic eu.srfg.iot-iot4cps-wp5.CarFleet1.data
     > {"phenomenonTime": "2018-12-04T14:18:11.376306+00:00", "resultTime": "2018-12-04T14:18:11.376503+00:00", "result": 50.05934369894213, "Datastream": {"@iot.id": 2}}
 
 You can use the flag `--from-beginning` to see the whole recordings of the persistence time which are

@@ -66,8 +66,8 @@ class RegisterHelper:
 
         # Add an unique prefix to identify the instances in the GOST server
         for key, thing in instances["Things"].items():
-            if not thing["name"].startswith(self.config["system_prefix"] + "." + self.config["system_name"]):
-                thing["name"] = self.config["system_prefix"] + "." + self.config["system_name"] + "." + thing["name"]
+            if not thing["name"].startswith(self.config["system"]):
+                thing["name"] = self.config["system"] + "." + thing["name"]
 
         gost_things = requests.get(gost_url + "/v1.0/Things").json()
         gost_thing_list = [thing["name"] for thing in gost_things["value"]]
@@ -79,13 +79,13 @@ class RegisterHelper:
             if name in gost_thing_list:
                 idx = [gost_thing for gost_thing in gost_things["value"] if name == gost_thing["name"]][0]["@iot.id"]
                 uri = gost_url + "/v1.0/Things({})".format(idx)
-                self.logger.debug("register_new: Make a patch of: {}".format(json.dumps(instances["Things"][thing]["name"],
-                                                                                    indent=2)))
+                self.logger.debug("register_new: Make a patch of: {}".format(json.dumps(
+                    instances["Things"][thing]["name"], indent=2)))
                 res = requests.patch(uri, json=instances["Things"][thing])
             # POST thing
             else:
-                self.logger.debug("register_new: Make a post of: {}".format(json.dumps(instances["Things"][thing]["name"],
-                                                                                   indent=2)))
+                self.logger.debug("register_new: Make a post of: {}".format(json.dumps(
+                    instances["Things"][thing]["name"], indent=2)))
                 uri = gost_url + "/v1.0/Things"
                 res = requests.post(uri, json=instances["Things"][thing])
 
@@ -118,8 +118,8 @@ class RegisterHelper:
 
         # Add an unique prefix to identify the instances in the GOST server
         for key, sensor in instances["Sensors"].items():
-            if not sensor["name"].startswith(self.config["system_prefix"] + "." + self.config["system_name"]):
-                sensor["name"] = self.config["system_prefix"] + "." + self.config["system_name"] + "." + sensor["name"]
+            if not sensor["name"].startswith(self.config["system"]):
+                sensor["name"] = self.config["system"] + "." + sensor["name"]
 
         gost_sensors = requests.get(gost_url + "/v1.0/Sensors").json()
         gost_sensor_list = [sensor["name"] for sensor in gost_sensors["value"]]
@@ -175,9 +175,8 @@ class RegisterHelper:
 
         # Add an unique prefix to identify the instances in the GOST server
         for key, ds in instances["Datastreams"].items():
-            if not ds["ObservedProperty"]["name"].startswith(".".join([self.config["system_prefix"],
-                                                                       self.config["system_name"], ds["Thing"]])):
-                ds["ObservedProperty"]["name"] = ".".join([self.config["system_prefix"], self.config["system_name"],
+            if not ds["ObservedProperty"]["name"].startswith(".".join([self.config["system"], ds["Thing"]])):
+                ds["ObservedProperty"]["name"] = ".".join([self.config["system"],
                                                            ds["Thing"], ds["ObservedProperty"]["name"]])
 
         self.instances["Datastreams"] = dict()
@@ -233,10 +232,8 @@ class RegisterHelper:
 
         # Add an unique prefix to identify the instances in the GOST server
         for key, ds in instances["Datastreams"].items():
-            if not ds["name"].startswith(".".join([self.config["system_prefix"], self.config["system_name"],
-                                                   ds["Thing"]])):
-                ds["name"] = ".".join([self.config["system_prefix"], self.config["system_name"], ds["Thing"],
-                                       ds["name"]])
+            if not ds["name"].startswith(".".join([self.config["system"], ds["Thing"]])):
+                ds["name"] = ".".join([self.config["system"], ds["Thing"], ds["name"]])
 
         gost_datastreams = requests.get(gost_url + "/v1.0/Datastreams").json()
         gost_datastream_list = [datastream["name"] for datastream in gost_datastreams["value"]]
@@ -286,6 +283,6 @@ class RegisterHelper:
                 self.logger.warning(
                     "register_new: Problems to upsert Datastreams on instance: {}, with URI: {}, status code: {}, "
                     "payload: {}".format(name, uri, res.status_code, json.dumps(res.json(), indent=2)))
-                print(json.dumps(instances["Datastreams"][datastream]))
+                self.logger.warning(json.dumps(instances["Datastreams"][datastream]))
 
         self.instances["Datastreams"] = instances["Datastreams"]
