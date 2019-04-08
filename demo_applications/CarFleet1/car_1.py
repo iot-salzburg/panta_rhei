@@ -33,7 +33,7 @@ MAPPINGS = os.path.join(dirname, "ds-mappings.json")
 
 # Set the configs, create a new Digital Twin Instance and register file structure
 config = {"client_name": "demo_car_1",
-            # TODO will be reduced by registration id and key
+          # TODO will be reduced by registration id and key
           "system": "eu.srfg.iot-iot4cps-wp5.CarFleet1",
           "gost_servers": "localhost:8084",
           "kafka_bootstrap_servers": None,  # "localhost:9092", # kafka bootstrap server is the preferred way to connect
