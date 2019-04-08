@@ -12,13 +12,14 @@ Example on how to send data using the Digital Twin Client
 ```python3
 from client.digital_twin_client import DigitalTwinClient
 config = {"client_name": "demo_station_1",
-          "system": "eu.srfg.iot-iot4cps-wp5.car1"
-          "kafka_bootstrap_servers": "localhost:8082",
-          "gost_servers": "localhost:8084"}
+          "system": "eu.srfg.iot-iot4cps-wp5.car1",
+          "gost_servers": "localhost:8084",
+          "kafka_bootstrap_servers": None,  # "localhost:9092",
+          "kafka_rest_server": "localhost:8082"}
           
 client = DigitalTwinClient(**config)
 client.register_existing(mappings_file="ds-mappings.json")
-client.post(quantity="demo_temperature", result=23.4)
+client.produce(quantity="demo_temperature", result=23.4)
 ```
 
 ## Contents
