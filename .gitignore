@@ -112,3 +112,4 @@ setup/gost/swarm_docker-compose-with-glusterfs.yml.s*
 README.md.*
 
 demo_applications/com.github.christophschranz.iot4cps.streamhub/target
+emo_applications/com.github.christophschranz.iot4cps.streamhub/.idea
