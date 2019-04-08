@@ -22,6 +22,7 @@ class DigitalTwinClient:
         # Init logging
         self.logger = logging.getLogger("PR Client Logger")
         self.logger.setLevel(logging.INFO)
+        self.logger.setLevel(logging.INFO)
         logging.basicConfig(level='WARNING')
         self.logger.info("init: Initialising Digital Twin Client with name '{}' on '{}'".format(
             client_name, system_prefix+"."+system_name))
@@ -36,13 +37,18 @@ class DigitalTwinClient:
         # Check SensorThings connection
         self.logger.debug("init: Checking SensorThings connection")
         gost_url = "http://" + self.config["gost_servers"]
-        res = requests.get(gost_url + "/v1.0/Things")
-        if res.status_code in [200, 201, 202]:
-            self.logger.info("init: Successfully connected to GOST server {}.".format(gost_servers))
-        else:
-            self.logger.error("init: Error, couldn't connect to GOST server: {}, status code: {}, result: {}".format(
-                gost_servers, res.status_code, res.json()))
-            sys.exit(10)
+        try:
+            res = requests.get(gost_url)
+            if res.status_code in [200, 201, 202]:
+                self.logger.info("init: Successfully connected to GOST server {}.".format(gost_servers))
+            else:
+                self.logger.error("init: Error, couldn't connect to GOST server: {}, status code: {}, result: {}".format(
+                    gost_servers, res.status_code, res.json()))
+                raise ConnectionError("init: Error, couldn't connect to GOST server: {}, status code: {}, result: {}".format(
+                    gost_servers, res.status_code, res.json()))
+        except Exception as e:
+            self.logger.error("init: Error, couldn't connect to GOST server: {}".format(gost_servers))
+            raise e
 
         # Create Kafka Producer
         self.logger.debug("init: Checking Kafka connection")
@@ -58,7 +64,8 @@ class DigitalTwinClient:
         if self.mapping["logging"]["kafka-topic"] not in self.producer.list_topics().topics.keys():
             self.logger.error("init: Error, topic '{}' doesn't exist in Kafka cluster, stopping client".format(
                 self.mapping["logging"]["kafka-topic"]))
-            sys.exit(20)
+            raise confluent_kafka.KafkaException("init: Error, topic '{}' doesn't exist in Kafka cluster, stopping "
+                                                 "client".format(self.mapping["logging"]["kafka-topic"]))
             # TODO How to create a topic via the client
             # a = confluent_kafka.admin.AdminClient({'bootstrap.servers': self.config["kafka_bootstrap_servers"]})
             # a.create_topics([confluent_kafka.admin.NewTopic("test.mytopic", 2, 1)])
@@ -118,7 +125,7 @@ class DigitalTwinClient:
         # check, if the quantity is registered
         if quantity not in self.mapping.keys():
             self.logger.error("send: Quantity is not registered: {}".format(quantity))
-            sys.exit(30)
+            raise Exception("send: Quantity is not registered: {}".format(quantity))
 
         data = dict({"phenomenonTime": self.get_iso8601_time(timestamp),
                      "resultTime": datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat(),
@@ -127,11 +134,11 @@ class DigitalTwinClient:
         # check, if the type of the result is correct
         try:
             data["result"] = type_mappings[self.mapping[quantity]["observationType"]](result)
-        except ValueError:
+        except ValueError as e:
             self.logger.error("send: Error, incorrect type was recognized, result: {}, "
                               "result.type: {}, dedicated type (as registered): {}"
                               "".format(result, type(result), self.mapping[quantity]["observationType"]))
-            sys.exit(31)
+            raise e
 
         # Trigger any available delivery report callbacks from previous produce() calls
         self.producer.poll(0)
@@ -189,7 +196,8 @@ class DigitalTwinClient:
         if err is not None:
             self.logger.error("init: Kafka connection check to brokers '{}' Message delivery failed: {}".format(
                 self.config["kafka_bootstrap_servers"], err))
-            sys.exit(40)
+            raise Exception("init: Kafka connection check to brokers '{}' Message delivery failed: {}".format(
+                self.config["kafka_bootstrap_servers"], err))
         else:
             self.logger.info(
                 "init: Successfully connected to the Kafka bootstrap server: {} with topic: '{}', partitions: [{}]"

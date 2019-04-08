@@ -34,7 +34,7 @@ SUBSCRIPTIONS = os.path.join(dirname, "subscriptions.json")
 config = {"client_name": "demo_car_1",
             # TODO will be reduced by registration id
           "system_prefix": "eu.srfg.iot-iot4cps-wp5",  # only with 2 dots, alphanumeric and "-"
-          "system_name": "car1",  # will be reduced by registration id
+          "system_name": "car1",  # will be reduced by registration id, may refactor to CarFleet1
           "kafka_bootstrap_servers": "localhost:9092",
           "gost_servers": "localhost:8082"}
 client = DigitalTwinClient(**config)
