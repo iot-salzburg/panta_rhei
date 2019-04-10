@@ -3,6 +3,50 @@ version: '2'
 services:
 
   ##########################
+  ######## Apache2 #########
+  ##########################
+
+  httpd:
+    build: ./httpd
+    ports:
+      - "80:80"
+    depends_on:
+      - keycloak
+      - rest-proxy
+    networks:
+      - identity-backend
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:5.2.1
+    hostname: schema-registry
+    container_name: schema-registry
+    #ports:
+    #  - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: 'il061:2181'
+
+  ###################################
+  ######## Kafka REST Proxy #########
+  ###################################
+
+  rest-proxy:
+    image: confluentinc/cp-kafka-rest:5.2.1
+    depends_on:
+      - schema-registry
+    #ports:
+    #  - 8082:8082
+    hostname: rest-proxy
+    container_name: rest-proxy
+    environment:
+      KAFKA_REST_HOST_NAME: rest-proxy
+      KAFKA_REST_BOOTSTRAP_SERVERS: 'il061:9092,il062:9092,il063:9092'
+      KAFKA_REST_LISTENERS: "http://0.0.0.0:8082"
+      KAFKA_REST_SCHEMA_REGISTRY_URL: 'http://schema-registry:8081'
+    networks:
+      - identity-backend
+
+  ##########################
   ######## Keycloak ########
   ##########################
 
@@ -17,15 +61,17 @@ services:
       #DB_USER: keycloak
       #DB_PASSWORD: password
       #POSTGRES_PORT_5432_TCP_ADDR: keycloak-db
-      #PROXY_ADDRESS_FORWARDING: "true"
+      PROXY_ADDRESS_FORWARDING: "true"
       #_JAVA_OPTIONS: -Xmx256m -Xms128m
-    command:
+      KEYCLOAK_IMPORT: "/init/IoT4CPS-realm+users.json"
+    #command:
       #- "-b"
       #- "0.0.0.0"
-      - "-Dkeycloak.migration.action=import"
-      - "-Dkeycloak.migration.provider=dir"
-      - "-Dkeycloak.migration.dir=/init/"
-      - "-Dkeycloak.migration.strategy=IGNORE_EXISTING"
+      #- "-Dkeycloak.migration.realmName=IoT4CPS"
+      #- "-Dkeycloak.migration.action=import"
+      #- "-Dkeycloak.migration.provider=dir"
+      #- "-Dkeycloak.migration.dir=/init/"
+      #- "-Dkeycloak.migration.strategy=IGNORE_EXISTING"
     ports:
       - "8080:8080"
       # - "9999:9999" # keycloak federation port - not used in local dev setup
@@ -115,7 +161,7 @@ services:
   maildev:
     image: djfarrelly/maildev:1.0.0-rc2
     ports:
-      - "8081:80"
+      - "8025:80"
       - "25"
     networks:
       - identity-backend
