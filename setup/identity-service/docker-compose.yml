@@ -19,7 +19,7 @@ services:
   schema-registry:
     image: confluentinc/cp-schema-registry:5.2.1
     hostname: schema-registry
-    container_name: schema-registry
+    #container_name: schema-registry
     #ports:
     #  - "8081:8081"
     environment:
@@ -37,7 +37,7 @@ services:
     #ports:
     #  - 8082:8082
     hostname: rest-proxy
-    container_name: rest-proxy
+    #container_name: rest-proxy
     environment:
       KAFKA_REST_HOST_NAME: rest-proxy
       KAFKA_REST_BOOTSTRAP_SERVERS: 'il061:9092,il062:9092,il063:9092'
