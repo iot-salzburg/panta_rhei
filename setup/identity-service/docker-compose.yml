@@ -72,8 +72,8 @@ services:
       #- "-Dkeycloak.migration.provider=dir"
       #- "-Dkeycloak.migration.dir=/init/"
       #- "-Dkeycloak.migration.strategy=IGNORE_EXISTING"
-    ports:
-      - "8080:8080"
+    #ports:
+      #- "8080:8080" # we don't want to access keycloak directly.
       # - "9999:9999" # keycloak federation port - not used in local dev setup
       #- "8443:8443"
     volumes:
