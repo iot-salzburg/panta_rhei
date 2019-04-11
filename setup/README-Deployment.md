@@ -195,3 +195,32 @@ To check for more details and to stop the services stack:
 This needs a well configured `docker-compose.yml` for your specific application.
 See this compatible [MQTT-Adapter](https://github.com/iot-salzburg/dtz_mqtt-adapter) 
 for more information.
+
+
+## Keycloak
+
+Add a proxy for each instance, in Keycloak client, httpd.conf and auth_oicd.conf
+
+To start the IoT4CPS Digital Twin Stack run:
+
+    cd setup/identity-service
+    sudo bash up.sh
+    sh logs.sh
+
+
+To create the desired default topics, run:
+    
+    sh create_defaults.sh
+
+If you want to create additional topics or list the created ones, run:
+
+```bash
+docker exec -it $(docker ps |grep confluentinc/cp-enterprise-kafka | awk '{print $1}') kafka-topics --zookeeper zookeeper:2181 --create --partitions 3 --replication-factor 1 --config min.insync.replicas=1 --config cleanup.policy=compact --config retention.ms=241920000 --topic eu.srfg.iot-iot4cps-wp5.WeatherService.external
+
+# List the topics
+docker exec -it $(docker ps |grep confluentinc/cp-enterprise-kafka | awk '{print $1}') kafka-topics --zookeeper zookeeper:2181 --list
+```
+
+On clients,  194f5335-4df3-47fa-b772-0ce86be71e21 activate only `Service Accounts enabled`
+
+Get more Infos: http://localhost/auth/realms/IoT4CPS/.well-known/openid-configuration
