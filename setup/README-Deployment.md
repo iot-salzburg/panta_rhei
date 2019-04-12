@@ -224,3 +224,45 @@ docker exec -it $(docker ps |grep confluentinc/cp-enterprise-kafka | awk '{print
 On clients,  194f5335-4df3-47fa-b772-0ce86be71e21 activate only `Service Accounts enabled`
 
 Get more Infos: http://localhost/auth/realms/IoT4CPS/.well-known/openid-configuration
+
+
+Initial access token:
+eyJhbGciOiJIUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICIyODljODg5Yi0zYjhhLTQzMWYtOGVhYy05ODEwNWI2ZTg5NDEifQ.eyJqdGkiOiI2ODFmMjhkZS0wYmY4LTQ1MmItODAxMS1lNzg1MTk3OWNkM2EiLCJleHAiOjE1NTUzMjU5NjUsIm5iZiI6MCwiaWF0IjoxNTU1MDY2NzY1LCJpc3MiOiJodHRwOi8vbG9jYWxob3N0L2F1dGgvcmVhbG1zL0lvVDRDUFMiLCJhdWQiOiJodHRwOi8vbG9jYWxob3N0L2F1dGgvcmVhbG1zL0lvVDRDUFMiLCJ0eXAiOiJJbml0aWFsQWNjZXNzVG9rZW4ifQ.esOeDccS46W9nNLg7iU_B_Fn_ePIlU7pQGg8OpQ6vnY
+
+{
+	"id": "5e2aa863-0e4e-452c-b925-d4499b137b0f",
+	"clientId": "demo_car_1",
+	"surrogateAuthRequired": false,
+	"enabled": true,
+	"clientAuthenticatorType": "client-secret",
+	"secret": "342b9717-dd79-44b0-9a53-ffcf3b892666",
+	"registrationAccessToken": "eyJhbGciOiJIUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICIyODljODg5Yi0zYjhhLTQzMWYtOGVhYy05ODEwNWI2ZTg5NDEifQ.eyJqdGkiOiIyMGMzODI4Yy0wNDdhLTQ4ZmUtYTY3Zi1iOTZkNWQ1YzcxMzIiLCJleHAiOjAsIm5iZiI6MCwiaWF0IjoxNTU1MDY3NDM2LCJpc3MiOiJodHRwOi8vbG9jYWxob3N0L2F1dGgvcmVhbG1zL0lvVDRDUFMiLCJhdWQiOiJodHRwOi8vbG9jYWxob3N0L2F1dGgvcmVhbG1zL0lvVDRDUFMiLCJ0eXAiOiJSZWdpc3RyYXRpb25BY2Nlc3NUb2tlbiIsInJlZ2lzdHJhdGlvbl9hdXRoIjoiYW5vbnltb3VzIn0.CnauS0y3-qFGbhCoGz4_pZvWl-05hTjvnHd-P5BYTk0",
+	"redirectUris": [],
+	"webOrigins": [],
+	"notBefore": 0,
+	"bearerOnly": false,
+	"consentRequired": true,
+	"standardFlowEnabled": true,
+	"implicitFlowEnabled": false,
+	"directAccessGrantsEnabled": false,
+	"serviceAccountsEnabled": true,
+	"publicClient": false,
+	"frontchannelLogout": false,
+	"protocol": "openid-connect",
+	"attributes": {},
+	"authenticationFlowBindingOverrides": {},
+	"fullScopeAllowed": false,
+	"nodeReRegistrationTimeout": -1,
+	"defaultClientScopes": [
+		"web-origins",
+		"role_list",
+		"profile",
+		"roles",
+		"email"
+	],
+	"optionalClientScopes": [
+		"address",
+		"phone",
+		"offline_access"
+	]
+}
