@@ -94,14 +94,14 @@ class DigitalTwinClient:
                 else:
                     if res.status_code != 200:
                         self.logger.error("init: Error, couldn't connect to kafka-rest: {}, status code: {}, "
-                                          "result: {}".format(kafka_rest_url, res.status_code, res.json()))
+                                          .format(kafka_rest_url, res.status_code))
                     else:
                         self.logger.error("init: Error, topic '{}' doesn't exist in Kafka cluster, stopping client, "
                                           "return code {}".format(self.mapping["logging"]["kafka-topic"],
                                                                   res.status_code))
                     raise ConnectionError(
-                        "init: Error, couldn't connect to kafka-rest: {}, status code: {}, result: {}".format(
-                            kafka_rest_url, res.status_code, res.json()))
+                        "init: Error, couldn't connect to kafka-rest: {}, status code: {}".format(
+                            kafka_rest_url, res.status_code))
             except Exception as e:
                 self.logger.error("init: Error, couldn't connect to kafka-rest: {}".format(kafka_rest_url))
                 raise e
