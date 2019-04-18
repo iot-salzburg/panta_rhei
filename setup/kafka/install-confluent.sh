@@ -5,6 +5,6 @@ wget http://packages.confluent.io/archive/5.2/confluent-community-${confluent_ve
 
 tar -xvzf confluent-community-${confluent_version}-2.12.tar.gz
 rm confluent-community-${confluent_version}-2.12.tar.gz
-sudo rm -R /confluent | true
+sudo rm -R /confluent > /dev/null 2>&1 || true
 sudo mv confluent-${confluent_version} /confluent
 sudo chmod +x /confluent/bin/*

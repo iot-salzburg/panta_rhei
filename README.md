@@ -49,6 +49,7 @@ The Datastack uses Kafka **version 2.1.0** as the communication layer, the insta
 
     sudo apt-get update
     sh setup/kafka/install-confluent.sh
+    sh setup/kakfa/install-kafka-libs-2v1.sh
     export PATH=/confluent/bin:$PATH
     pip3 install -r setup/requirements.txt
 
