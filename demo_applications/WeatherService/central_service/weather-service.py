@@ -27,7 +27,7 @@ SUBSCRIPTIONS = os.path.join(dirname, "subscriptions.json")
 config = {"client_name": "weather-service-consumer",
           "system": "eu.srfg.iot-iot4cps-wp5.WeatherService",
           "gost_servers": "localhost:8084",
-          "kafka_bootstrap_servers": None,  # kafka bootstrap server is the preferred way to connect
+          "kafka_bootstrap_servers": "localhost:9092",  # kafka bootstrap server is the preferred way to connect
           "kafka_rest_server": "localhost:8082"}
 client = DigitalTwinClient(**config)
 # client.register_new(instance_file=INSTANCES)

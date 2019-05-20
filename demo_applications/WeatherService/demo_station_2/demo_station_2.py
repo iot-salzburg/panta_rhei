@@ -34,11 +34,12 @@ MAPPINGS = os.path.join(dirname, "ds-mappings.json")
 config = {"client_name": "demo_station_2",
           "system": "eu.srfg.iot-iot4cps-wp5.WeatherService",
           "gost_servers": "localhost:8084",
-          "kafka_bootstrap_servers": None,  # kafka bootstrap server is the preferred way to connect
-          "kafka_rest_server": "localhost:8082"}
+          "kafka_bootstrap_servers": "localhost:9092",  # kafka bootstrap server is the preferred way to connect
+          # "kafka_rest_server": "localhost:8082"
+          }
 client = DigitalTwinClient(**config)
-client.register_existing(mappings_file=MAPPINGS)
-# client.register_new(instance_file=INSTANCES)
+# client.register_existing(mappings_file=MAPPINGS)
+client.register_new(instance_file=INSTANCES)
 
 randomised_temp = SimulateTemperatures(t_factor=100, day_amplitude=6, year_amplitude=-6, average=3.5)
 
