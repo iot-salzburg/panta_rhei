@@ -235,7 +235,13 @@ class RegisterHelper:
             if not ds["name"].startswith(".".join([self.config["system"], ds["Thing"]])):
                 ds["name"] = ".".join([self.config["system"], ds["Thing"], ds["name"]])
 
-        gost_datastreams = requests.get(gost_url + "/v1.0/Datastreams").json()
+        res = requests.get(gost_url + "/v1.0/Datastreams")
+        if res.status_code in [200,201,202]:
+            gost_datastreams = res.json()
+        else:
+            self.logger.warning(
+                    "register: Problems in upserting Datastreams with URI: {}, status code: {}, "
+                    "payload: {}".format(uri, res.status_code, json.dumps(res.json(), indent=2)))
         gost_datastream_list = [datastream["name"] for datastream in gost_datastreams["value"]]
 
         for datastream in instances["Datastreams"].keys():
@@ -255,8 +261,8 @@ class RegisterHelper:
             # Deep patch is not supported, no Thing, Sensor or Observed property
             # PATCH thing
             if name in gost_datastream_list:
-                idx = [gost_datastreams for gost_datastreams in gost_datastreams["value"]
-                       if name == gost_datastreams["name"]][0]["@iot.id"]
+                idx = [gost_datastream for gost_datastream in gost_datastreams["value"]
+                       if name == gost_datastream["name"]][0]["@iot.id"]
                 uri = gost_url + "/v1.0/Datastreams({})".format(idx)
                 self.logger.debug("register_new: Make a patch of: {}".format(
                     json.dumps(instances["Datastreams"][datastream]["name"], indent=2)))
