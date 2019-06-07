@@ -241,7 +241,7 @@ class RegisterHelper:
         else:
             self.logger.warning(
                     "register: Problems in upserting Datastreams with URI: {}, status code: {}, "
-                    "payload: {}".format(uri, res.status_code, json.dumps(res.json(), indent=2)))
+                    "payload: {}".format(gost_url, res.status_code, json.dumps(res.json(), indent=2)))
         gost_datastream_list = [datastream["name"] for datastream in gost_datastreams["value"]]
 
         for datastream in instances["Datastreams"].keys():
