@@ -80,6 +80,7 @@ class DigitalTwinClient:
             # Create Kafka Producer
             self.producer = confluent_kafka.Producer({'bootstrap.servers': self.config["kafka_bootstrap_servers"],
                                                       'client.id': self.config["client_name"],
+
                                                       'default.topic.config': {'acks': 'all'}})
             # TODO How to create a topic via the client
             # a = confluent_kafka.admin.AdminClient({'bootstrap.servers': self.config["kafka_bootstrap_servers"]})
@@ -345,6 +346,7 @@ class DigitalTwinClient:
             # Create consumer
             conf = {'bootstrap.servers': self.config["kafka_bootstrap_servers"],
                     'session.timeout.ms': 6000,
+                    'auto.offset.reset': 'earliest',
                     'group.id': self.config["kafka_group_id"]}
             self.consumer = confluent_kafka.Consumer(**conf)
 
