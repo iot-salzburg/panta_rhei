@@ -345,6 +345,7 @@ class DigitalTwinClient:
             # Create consumer
             conf = {'bootstrap.servers': self.config["kafka_bootstrap_servers"],
                     'session.timeout.ms': 6000,
+                    'auto.offset.reset': 'earliest',
                     'group.id': self.config["kafka_group_id"]}
             self.consumer = confluent_kafka.Consumer(**conf)
 
