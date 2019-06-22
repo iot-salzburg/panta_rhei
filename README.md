@@ -73,9 +73,9 @@ Then, to test the installation:
     kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic test-topic --from-beginning
     Hello Kafka
     
-    kafka-topics.sh --zookeeper localhost:2181 --create --partitions 3 --replication-factor 1 --config min.insync.replicas=1 --config cleanup.policy=compact --config retention.ms=241920000 --topic eu.srfg.iot-iot4cps-wp5.CarFleet1.data
-    kafka-topics.sh --zookeeper localhost:2181 --create --partitions 3 --replication-factor 1 --config min.insync.replicas=1 --config cleanup.policy=compact --config retention.ms=241920000 --topic eu.srfg.iot-iot4cps-wp5.CarFleet1.external
-    kafka-topics.sh --zookeeper localhost:2181 --create --partitions 1 --replication-factor 1 --config min.insync.replicas=1 --config cleanup.policy=compact --config retention.ms=241920000 --topic eu.srfg.iot-iot4cps-wp5.CarFleet1.logging
+    kafka-topics.sh --zookeeper localhost:2181 --create --partitions 3 --replication-factor 1 --config min.insync.replicas=1 --config cleanup.policy=compact --config retention.ms=241920000 --topic at.srfg.iot-iot4cps-wp5.CarFleet1.data
+    kafka-topics.sh --zookeeper localhost:2181 --create --partitions 3 --replication-factor 1 --config min.insync.replicas=1 --config cleanup.policy=compact --config retention.ms=241920000 --topic at.srfg.iot-iot4cps-wp5.CarFleet1.external
+    kafka-topics.sh --zookeeper localhost:2181 --create --partitions 1 --replication-factor 1 --config min.insync.replicas=1 --config cleanup.policy=compact --config retention.ms=241920000 --topic at.srfg.iot-iot4cps-wp5.CarFleet1.logging
     # Create analog topics for 'CarFleet2' and 'WeatherService'
 
 Test the confluent kafka platform on [http://localhost:9021/](http://localhost:9021/)
@@ -96,16 +96,16 @@ The flag `-d` stands for `daemon` mode. To check if everything worked well, open
 Now, open new terminals to run the demo applications from the `client` directory:
 
     python3 demo_applications/CarFleet1/car_1.py
-    > INFO:PR Client Logger:init: Initialising Digital Twin Client with name 'demo_car_1' on 'eu.srfg.iot-iot4cps-wp5.CarFleet1'
+    > INFO:PR Client Logger:init: Initialising Digital Twin Client with name 'demo_car_1' on 'at.srfg.iot-iot4cps-wp5.CarFleet1'
     ....
     > The air temperature at the demo car 1 is 2.9816131778905497 °C at 2019-03-18T13:54:59.482215+00:00
 
 
     python3 demo_applications/CarFleet2/car_2.py
-    > INFO:PR Client Logger:init: Initialising Digital Twin Client with name 'demo_car_2' on 'eu.srfg.iot-iot4cps-wp5.CarFleet2'
+    > INFO:PR Client Logger:init: Initialising Digital Twin Client with name 'demo_car_2' on 'at.srfg.iot-iot4cps-wp5.CarFleet2'
     ...
     > The air temperature at the demo car 2 is 2.623506013964546 °C at 2019-03-18T12:21:27.177267+00:00
-    >   -> Received new external data-point of 2019-03-18T13:54:59.482215+00:00: 'eu.srfg.iot-iot4cps-wp5.CarFleet1.car_1.Air Temperature' = 2.9816131778905497 degC.
+    >   -> Received new external data-point of 2019-03-18T13:54:59.482215+00:00: 'at.srfg.iot-iot4cps-wp5.CarFleet1.car_1.Air Temperature' = 2.9816131778905497 degC.
     
 Then, start the Kafka Stream Apps in `demo_applications/com.github.christophschranz.iot4cps.streamhub/target/classes/com/github/christophschranz/iot4cpshub` to allow the sharing of data across the systems.
 
@@ -126,22 +126,22 @@ First, some configs have to be set in order to make the datastore work properly:
 Check the created kafka topics:
 
     kafka-topics.sh --zookeeper localhost:2181 --list
-    eu.srfg.iot-iot4cps-wp5.CarFleet1.data
-    eu.srfg.iot-iot4cps-wp5.CarFleet1.external
-    eu.srfg.iot-iot4cps-wp5.CarFleet1.logging
-    eu.srfg.iot-iot4cps-wp5.CarFleet2.data
-    eu.srfg.iot-iot4cps-wp5.CarFleet2.external
-    eu.srfg.iot-iot4cps-wp5.CarFleet2.logging
-    eu.srfg.iot-iot4cps-wp5.WeatherService.data
-    eu.srfg.iot-iot4cps-wp5.WeatherService.external
-    eu.srfg.iot-iot4cps-wp5.WeatherService.logging
+    at.srfg.iot-iot4cps-wp5.CarFleet1.data
+    at.srfg.iot-iot4cps-wp5.CarFleet1.external
+    at.srfg.iot-iot4cps-wp5.CarFleet1.logging
+    at.srfg.iot-iot4cps-wp5.CarFleet2.data
+    at.srfg.iot-iot4cps-wp5.CarFleet2.external
+    at.srfg.iot-iot4cps-wp5.CarFleet2.logging
+    at.srfg.iot-iot4cps-wp5.WeatherService.data
+    at.srfg.iot-iot4cps-wp5.WeatherService.external
+    at.srfg.iot-iot4cps-wp5.WeatherService.logging
     test-topic
 
 Note that kafka-topics must be created manually as explained in the [Quickstart](#quickstart).
 
 To track the traffic in real time, use the `kafka-consumer-console`: 
 
-    kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic eu.srfg.iot-iot4cps-wp5.CarFleet1.data
+    kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic at.srfg.iot-iot4cps-wp5.CarFleet1.data
     > {"phenomenonTime": "2018-12-04T14:18:11.376306+00:00", "resultTime": "2018-12-04T14:18:11.376503+00:00", "result": 50.05934369894213, "Datastream": {"@iot.id": 2}}
 
 You can use the flag `--from-beginning` to see the whole recordings of the persistence time which are
