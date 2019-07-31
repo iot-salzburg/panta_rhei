@@ -1,0 +1,40 @@
+version: "3.4"
+services:
+ grafana:
+    image: 127.0.0.1:5001/grafana
+    build: ./src
+    ports:
+      - 3000:3000
+    volumes:
+      - ./grafanadata:/var/lib/grafana
+#      - /mnt/glusterfs/dtz/datastack/grafanadata:/var/lib/grafana
+    networks:
+      - default
+      - elasticstack_datastack
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      ELASTICSEARCH_ENDPOINT: http://elasticsearch:9200
+#      GF_SERVER_ROOT_URL: "%(protocol)s://%(domain)s/grafana/"
+#      ELASTICSEARCH_USER: ${ES_USERNAME}
+#      ELASTICSEARCH_PASSWORD: ${ES_PASSWORD}
+      GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-simple-json-datasource
+      DBINDEX1: "[eu.dtz.data-]YYYY.MM"
+      DBINDEX2: "[nimble-]YYYY.MM"
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 3G
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+       condition: on-failure
+
+networks:
+  elasticstack_datastack:
+    external:
+      name: elasticstack_datastack

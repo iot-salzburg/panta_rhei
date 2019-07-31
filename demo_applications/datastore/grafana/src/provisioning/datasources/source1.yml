@@ -1,0 +1,16 @@
+apiVersion: 1
+
+datasources:
+- name: 'es'
+  type: 'elasticsearch'
+  access: 'proxy'
+  org_id: 1
+  url: 'http://elasticsearch:9200'
+  is_default: true
+  database: '${DBINDEX1}'
+  editable: true
+  jsonData:
+    interval: Monthly
+    timeField: "phenomenonTime"
+    esVersion: 56
+    timeInterval: '10s'
