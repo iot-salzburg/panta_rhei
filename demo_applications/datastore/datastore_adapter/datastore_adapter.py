@@ -28,7 +28,7 @@ dirname = os.path.dirname(os.path.abspath(filename))
 SUBSCRIPTIONS = os.path.join(dirname, "digital_twin_mapping/subscriptions.json")
 
 # Set the configs, create a new Digital Twin Instance and register file structure
-config = {"client_name": "datastore-adapter",
+config = {"client_name": "datastack-adapter",
           "system_name": "demo-system",
           "kafka_bootstrap_servers": "localhost:9092",  # "192.168.48.81:9092,192.168.48.82:9092,192.168.48.83:9092"
           "gost_servers": "localhost:8082"}  # "192.168.48.81:8082"
