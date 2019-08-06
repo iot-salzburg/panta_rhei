@@ -215,7 +215,7 @@ To create the desired default topics, run:
 If you want to create additional topics or list the created ones, run:
 
 ```bash
-docker exec -it $(docker ps |grep confluentinc/cp-enterprise-kafka | awk '{print $1}') kafka-topics --zookeeper zookeeper:2181 --create --partitions 3 --replication-factor 1 --config min.insync.replicas=1 --config cleanup.policy=compact --config retention.ms=241920000 --topic eu.srfg.iot-iot4cps-wp5.WeatherService.external
+docker exec -it $(docker ps |grep confluentinc/cp-enterprise-kafka | awk '{print $1}') kafka-topics --zookeeper zookeeper:2181 --create --partitions 3 --replication-factor 1 --config min.insync.replicas=1 --config cleanup.policy=compact --config retention.ms=241920000 --topic at.srfg.iot-iot4cps-wp5.WeatherService.external
 
 # List the topics
 docker exec -it $(docker ps |grep confluentinc/cp-enterprise-kafka | awk '{print $1}') kafka-topics --zookeeper zookeeper:2181 --list
