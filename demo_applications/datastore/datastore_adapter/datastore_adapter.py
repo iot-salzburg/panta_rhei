@@ -29,16 +29,16 @@ SUBSCRIPTIONS = os.path.join(dirname, "digital_twin_mapping/subscriptions.json")
 
 # Set the configs, create a new Digital Twin Instance and register file structure
 config = {"client_name": "datastack-adapter",
-          "system_name": "demo-system",
+          "system": "demo-system",
           "kafka_bootstrap_servers": "localhost:9092",  # "192.168.48.81:9092,192.168.48.82:9092,192.168.48.83:9092"
-          "gost_servers": "localhost:8082"}  # "192.168.48.81:8082"
+          "gost_servers": "localhost:8084"}  # "192.168.48.81:8082"
 client = DigitalTwinClient(**config)
 # client.register(instance_file=INSTANCES)
 client.subscribe(subscription_file=SUBSCRIPTIONS)
 
 # Init logstash logging for data
 logging.basicConfig(level='WARNING')
-loggername_metric = 'test'
+loggername_metric = config["system"] + "." + config["client_name"]
 logger_metric = logging.getLogger(loggername_metric)
 logger_metric.setLevel(logging.INFO)
 #  use default and init Logstash Handler
@@ -51,19 +51,19 @@ fan_status = False
 try:
     while True:
         # Receive all queued messages of 'demo_temperature'
-        received_quantity = client.poll(timeout=1)
-        if received_quantity is None:
-            continue
-
-        # The resolves the all meta-data for an received data-point
-        print("Received new data-point: '{}' = {} {} at {}."
-              .format(received_quantity["Datastream"]["name"],
-                      received_quantity["result"],
-                      received_quantity["Datastream"]["unitOfMeasurement"]["symbol"],
-                      received_quantity["phenomenonTime"]))
-        # To view the whole data-point in a pretty format, uncomment:
-        # print("Received new data: {}".format(json.dumps(received_quantity, indent=2)))
-        logger_metric.info('', extra=received_quantity)
+        received_quantities = client.consume(timeout=0.5)
+        for received_quantity in received_quantities:
+            # The resolves the all meta-data for an received data-point
+            print("  -> Received new external data-point at {}: '{}' = {} {}."
+                  .format(received_quantity["phenomenonTime"],
+                          received_quantity["Datastream"]["name"],
+                          received_quantity["result"],
+                          received_quantity["Datastream"]["unitOfMeasurement"]["symbol"]))
+            # To view the whole data-point in a pretty format, uncomment:
+            # print("Received new data: {}".format(json.dumps(received_quantity, indent=2)))
+            if received_quantity["result"] <= 0:
+                # print("Received new data: {}".format(json.dumps(received_quantity, indent=2)))
+                logger_metric.info('', extra=received_quantity)
 
 except KeyboardInterrupt:
     client.disconnect()
