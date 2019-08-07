@@ -19,7 +19,7 @@ RUN apt-get update \
 
 RUN set -ex \
  && buildDeps=' \
-    elasticsearch==6.3.1 \
+    "elasticsearch>=7.0.0,<8.0.0" \
 #    rpy2==2.9.4 \
  ' \
  && apt-get update \
@@ -94,7 +94,7 @@ RUN conda install --quiet --yes \
 # taking effect properly on the .local folder in the jovyan home dir.
 RUN julia -e 'import Pkg; Pkg.update()' && \
     (test $TEST_ONLY_BUILD || julia -e 'import Pkg; Pkg.add("HDF5")') && \
-    julia -e "using Pkg; pkg\"add Gadfly RDatasets DataFrames IJulia InstantiateFromURL\"; pkg\"precompile\"" && \
+    julia -e "using Pkg; pkg\"add Gadfly RDatasets DataFrames IJulia PyCall InstantiateFromURL\"; pkg\"precompile\"" && \
     # move kernelspec out of home \
     mv $HOME/.local/share/jupyter/kernels/julia* $CONDA_DIR/share/jupyter/kernels/ && \
     chmod -R go+rx $CONDA_DIR/share/jupyter && \
@@ -114,7 +114,8 @@ RUN jupyter labextension install @jupyter-widgets/jupyterlab-manager
 RUN jupyter nbextension enable spellchecker/main
 RUN jupyter nbextension enable codefolding/main
 
-# Change jupyter_notebook_config.py
+# TODO change jupyter_notebook_config.py
 COPY jupyter_notebook_config.json /home/jovyan/.jupyter/jupyter_notebook_config.json
+ADD provisioning/data /home/jovyan/data
 
 USER $NB_USER

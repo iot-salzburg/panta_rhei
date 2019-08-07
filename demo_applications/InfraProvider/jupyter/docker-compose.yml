@@ -7,33 +7,20 @@ services:
     ports:
       - 8888:8888
       - 4040:4040
+#   A volume can be mounted to store the data externally, otherwise, notebooks have to be saved
     volumes:
-#      - /mnt/glusterfs/dtz/datastack/jupyter/:/home/jovyan/
-      - ./src/data:/home/jovyan/work
+      - ./src/data:/home/jovyan/data
     environment:
       GRANT_SUDO: "yes"
       JUPYTER_ENABLE_LAB: "yes"
     # enable sudo permissions
     user:
       "root"
-#    networks:
-#      - default
-#      - elk_datastack
-    deploy:
-      placement:
-        constraints: [node.role == worker]
-      resources:
-        limits:
-          cpus: "4"
-          memory: 8G
-      replicas: 1
-      update_config:
-        parallelism: 2
-        delay: 10s
-      restart_policy:
-        condition: on-failure
+    networks:
+      - default
+      - elasticstack_datastack
 
-#networks:
-#  elk_datastack:
-#    external:
-#      name: elk_datastack
+networks:
+  elasticstack_datastack:
+    external:
+      name: elasticstack_datastack
