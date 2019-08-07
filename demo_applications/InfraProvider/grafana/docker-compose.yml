@@ -5,9 +5,9 @@ services:
     build: ./src
     ports:
       - 3000:3000
-    volumes:
-      - ./grafanadata:/var/lib/grafana
-#      - /mnt/glusterfs/dtz/datastack/grafanadata:/var/lib/grafana
+#   A volume can be mounted to store the data externally, otherwise, export the modified templatedashboard.json
+#    volumes:
+#      - ./grafanadata/dashboards:/var/lib/grafana/dashboards
     networks:
       - default
       - elasticstack_datastack
@@ -18,21 +18,7 @@ services:
 #      ELASTICSEARCH_USER: ${ES_USERNAME}
 #      ELASTICSEARCH_PASSWORD: ${ES_PASSWORD}
       GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-simple-json-datasource
-      DBINDEX1: "[eu.dtz.data-]YYYY.MM"
-      DBINDEX2: "[nimble-]YYYY.MM"
-    deploy:
-      resources:
-        limits:
-          cpus: "2"
-          memory: 3G
-      replicas: 1
-      placement:
-        constraints: [node.role == manager]
-      update_config:
-        parallelism: 1
-        delay: 10s
-      restart_policy:
-       condition: on-failure
+      DBINDEX: "[at.srfg.iot-iot4cps-wp5.infraprov.internal-]YYYY.MM"
 
 networks:
   elasticstack_datastack:
