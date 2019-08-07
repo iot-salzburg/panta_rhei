@@ -19,8 +19,6 @@ RUN grafana-cli plugins install grafana-worldmap-panel \
 
 ADD provisioning /etc/grafana/provisioning
 ADD config.ini /etc/grafana/config.ini
-#RUN mkdir -p /var/lib/grafana/dashboards
-#ADD provisioning/dashboards/templatedashboard.json /var/lib/grafana/dashboards
 
 ARG DBINDEX
 ENTRYPOINT envsubst < /etc/grafana/provisioning/datasources/source_infraprov.yml > /etc/grafana/provisioning/datasources/source_infraprov.yml \

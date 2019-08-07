@@ -110,11 +110,11 @@ RUN jupyter labextension install jupyterlab-drawio
 RUN jupyter labextension install jupyter-leaflet
 RUN jupyter labextension install @jupyterlab/plotly-extension
 RUN jupyter labextension install @jupyter-widgets/jupyterlab-manager
-RUN jupyter nbextension enable spellchecker/main
 RUN jupyter nbextension enable codefolding/main
+RUN jupyter nbextension enable spellchecker/main
 
 # TODO change jupyter_notebook_config.py
 COPY jupyter_notebook_config.json /home/jovyan/.jupyter/jupyter_notebook_config.json
-ADD provisioning/data /home/jovyan/data
+ADD provisioning/data /home/jovyan/
 
 USER $NB_USER
