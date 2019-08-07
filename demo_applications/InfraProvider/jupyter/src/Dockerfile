@@ -19,8 +19,7 @@ RUN apt-get update \
 
 RUN set -ex \
  && buildDeps=' \
-    "elasticsearch>=7.0.0,<8.0.0" \
-#    rpy2==2.9.4 \
+    elasticsearch>=7.0.0,<8.0.0 \
  ' \
  && apt-get update \
  && apt-get -y upgrade \
