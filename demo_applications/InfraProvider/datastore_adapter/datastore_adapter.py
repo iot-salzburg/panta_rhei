@@ -25,11 +25,11 @@ from client.digital_twin_client import DigitalTwinClient
 filename = inspect.getframeinfo(inspect.currentframe()).filename
 dirname = os.path.dirname(os.path.abspath(filename))
 # INSTANCES = os.path.join(dirname, "digital_twin_mapping/instances.json")
-SUBSCRIPTIONS = os.path.join(dirname, "digital_twin_mapping/subscriptions.json")
+SUBSCRIPTIONS = os.path.join(dirname, "subscriptions.json")
 
 # Set the configs, create a new Digital Twin Instance and register file structure
 config = {"client_name": "datastack-adapter",
-          "system": "demo-system",
+          "system": "at.srfg.iot-iot4cps-wp5.CarFleet1",  # TODO Change that to infraprov
           "kafka_bootstrap_servers": "localhost:9092",  # "192.168.48.81:9092,192.168.48.82:9092,192.168.48.83:9092"
           "gost_servers": "localhost:8084"}  # "192.168.48.81:8082"
 client = DigitalTwinClient(**config)
