@@ -7,6 +7,8 @@ This repository is comprised of 3 layers:
 * **Digital Twin Client** to easily access the Messaging Layer with only an hand full lines of code
 * **Demo Application** to get started as fast as possible 
 
+![Architecture](/extra/architecture.png)
+
 Example on how to send data using the Digital Twin Client
 
 ```python3
