@@ -11,6 +11,8 @@ services:
     ports:
       - "9200:9200"
       - "9300:9300"
+    env_file:
+      - ../.env
     environment:
       LS_JAVA_OPTS: "-Xmx1g -Xms1g"
       ELASTIC_PASSWORD: changeme

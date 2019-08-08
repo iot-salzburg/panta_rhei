@@ -1,7 +1,6 @@
 version: "3.4"
 services:
  grafana:
-    image: 127.0.0.1:5001/grafana
     build: ./src
     ports:
       - 3000:3000

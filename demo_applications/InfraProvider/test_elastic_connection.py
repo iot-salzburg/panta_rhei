@@ -15,8 +15,8 @@ import logging
 from logstash import TCPLogstashHandler
 
 # Set the configs, create a new Digital Twin Instance and register file structure
-config = {"client_name": "datastack-adapter",
-          "system_name": "demo-system"}
+config = {"client_name": "datastack-adapter-test",
+          "system_name": "test"}
 
 # Init logstash logging for data
 logging.basicConfig(level='WARNING')

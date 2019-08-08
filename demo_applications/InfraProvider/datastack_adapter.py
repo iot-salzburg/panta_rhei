@@ -12,7 +12,9 @@ Example:
 import os
 import sys
 import time
+import json
 import inspect
+import requests
 
 import logging
 from logstash import TCPLogstashHandler
@@ -26,10 +28,11 @@ filename = inspect.getframeinfo(inspect.currentframe()).filename
 dirname = os.path.dirname(os.path.abspath(filename))
 # INSTANCES = os.path.join(dirname, "digital_twin_mapping/instances.json")
 SUBSCRIPTIONS = os.path.join(dirname, "subscriptions.json")
+ELASTICSTACK_URLS = ["http://localhost:9200", "http://localhost:9600"]
 
 # Set the configs, create a new Digital Twin Instance and register file structure
 config = {"client_name": "datastack-adapter",
-          "system": "at.srfg.iot-iot4cps-wp5.CarFleet1",  # TODO Change that to infraprov
+          "system": "at.srfg.iot-iot4cps-wp5.InfraProv",
           "kafka_bootstrap_servers": "localhost:9092",  # "192.168.48.81:9092,192.168.48.82:9092,192.168.48.83:9092"
           "gost_servers": "localhost:8084"}  # "192.168.48.81:8082"
 client = DigitalTwinClient(**config)
@@ -47,11 +50,25 @@ logstash_handler = TCPLogstashHandler(host="localhost",
                                       version=1)
 logger_metric.addHandler(logstash_handler)
 
-fan_status = False
 try:
     while True:
+        # Check first if Elastic Search is up and running
+        connected = False
+        try:
+            if requests.get(ELASTICSTACK_URLS[0]).status_code == 200 \
+                    and requests.get(ELASTICSTACK_URLS[1]).status_code == 200:
+                connected = True
+        except requests.exceptions.ConnectionError as e:
+            print("Connection Error: {}".format(e))
+        if not connected:
+            print("Connection to Elastic Stack on URLS {} couldn't be established. Trying again in 5 s."
+                  .format(ELASTICSTACK_URLS))
+            time.sleep(5)
+            continue
+
         # Receive all queued messages of 'demo_temperature'
-        received_quantities = client.consume(timeout=0.5)
+        received_quantities = client.consume(timeout=1.0)
+
         for received_quantity in received_quantities:
             # The resolves the all meta-data for an received data-point
             print("  -> Received new external data-point at {}: '{}' = {} {}."
@@ -59,11 +76,17 @@ try:
                           received_quantity["Datastream"]["name"],
                           received_quantity["result"],
                           received_quantity["Datastream"]["unitOfMeasurement"]["symbol"]))
-            # To view the whole data-point in a pretty format, uncomment:
-            # print("Received new data: {}".format(json.dumps(received_quantity, indent=2)))
-            if received_quantity["result"] <= 0:
-                # print("Received new data: {}".format(json.dumps(received_quantity, indent=2)))
-                logger_metric.info('', extra=received_quantity)
+            data = dict({"Datastream": {"@iot.id": received_quantity["Datastream"]["@iot.id"],
+                                        "name": received_quantity["Datastream"]["name"],
+                                        "unitOfMeasurement":
+                                            received_quantity["Datastream"]["unitOfMeasurement"]["symbol"]},
+                         "phenomenonTime": received_quantity["phenomenonTime"],
+                         "resultTime": received_quantity["resultTime"],
+                         "result": received_quantity["result"]})
+
+            # Pipe the data to Logstash of the Elastic Stack
+            # logger_metric.info('', extra=data)
+            print(json.dumps(data, indent=2))
 
 except KeyboardInterrupt:
     client.disconnect()
