@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
-Demo Setting: Connected Cars
-    car1:   The connected car wants to enhance it's safety by retrieving temperature data, to warn the driver on
-            approaching slippery road sections. As each car has also temperature data that is of interest for other
-            cars, it sends this data to the the platform.
-    car2:   The connected car wants to enhance it's safety by retrieving temperature data, to warn the driver on
-            approaching slippery road sections. As each car has also temperature data that is of interest for other
-            cars, it sends this data to the the platform.
-    station1: The weather station is conducted by a local weather service provider which provides the data as a service.
-    station2: The weather station is conducted by a local weather service provider which provides the data as a service.
-    service_provider: The weather information provider offers temperature data for it's customers.
+Demo Scenario: Connected Cars
+    CarFleet:
+        The connected car wants to enhance it's safety by retrieving temperature data, to warn the driver on
+        approaching slippery road sections. As each car has also temperature data that is of interest for other
+        cars, it sends this data to the the platform.
+    InfraProv:
+        The provider of the road infrastructure wants to enhance it's road quality and therefore consumes and analyses data.
+    WeatherStation:
+        stations: The weather stations are conducted by a local weather service provider which provides the data as a service.
+        service_provider: The weather information provider offers temperature data for it's customers.
 """
 
 import os
@@ -32,15 +32,15 @@ SUBSCRIPTIONS = os.path.join(dirname, "subscriptions.json")
 MAPPINGS = os.path.join(dirname, "ds-mappings.json")
 
 # Set the configs, create a new Digital Twin Instance and register file structure
-config = {"client_name": "demo_car_1",
-          "system": "at.srfg.iot-iot4cps-wp5.CarFleet1",
+config = {"client_name": "demo_car_2",
+          "system": "at.srfg.iot-iot4cps-wp5.CarFleet",
           "gost_servers": "localhost:8084",
           "kafka_bootstrap_servers": "localhost:9092"}
 client = DigitalTwinClient(**config)
 # client.register_existing(mappings_file=MAPPINGS)
 client.register_new(instance_file=INSTANCES)  # Registering of new instances should be outsourced to the platform
 client.subscribe(subscription_file=SUBSCRIPTIONS)
-randomised_temp = SimulateTemperatures(t_factor=100, day_amplitude=4, year_amplitude=-4, average=3)
+randomised_temp = SimulateTemperatures(t_factor=100, day_amplitude=5, year_amplitude=-6, average=3.5)
 
 try:
     while True:
@@ -54,7 +54,7 @@ try:
         client.produce(quantity="temperature", result=temperature, timestamp=timestamp)
 
         # Print the temperature with the corresponding timestamp in ISO format
-        print("The air temperature at the demo car 1 is {} °C at {}".format(temperature, timestamp))
+        print("The air temperature at the demo car 2 is {} °C at {}".format(temperature, timestamp))
 
         # Receive all queued messages of the weather-service and other connected cars and calculate the minimum
         minimal_temps = list()
