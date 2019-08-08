@@ -9,7 +9,7 @@ services:
       - 4040:4040
     volumes:
       - /mnt/glusterfs/dtz/datastack/jupyter/:/home/jovyan/
-#      - ./src/data:/home/jovyan/work
+#      - ./share:/home/jovyan/work
     environment:
       GRANT_SUDO: "yes"
       JUPYTER_ENABLE_LAB: "yes"

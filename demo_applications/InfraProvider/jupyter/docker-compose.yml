@@ -9,7 +9,7 @@ services:
       - 4040:4040
 #   A volume can be mounted to store the data externally, otherwise, notebooks have to be saved
     volumes:
-      - ./src/data:/home/jovyan/data
+      - ./share:/home/jovyan/share
     environment:
       GRANT_SUDO: "yes"
       JUPYTER_ENABLE_LAB: "yes"

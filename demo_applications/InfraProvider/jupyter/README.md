@@ -24,14 +24,15 @@ from the [panta-rhei messaging system](https://github.com/iot-salzburg/dtz_datas
 
 ## Configuration
 
-Set the password in `jupyter/jupyter_notebook_config.json`. Therefore, hash your 
-password in the form: (password)(salt) using a sha1 hash generator, 
+Change the password in `jupyter/jupyter_notebook_config.json`, where the default password is
+ set to `changeme`. 
+Hash your own password in the form: (password)(salt) using a sha1 hash generator, 
 e.g. [hashgenerator.de](https://hashgenerator.de/). Then update the config file as shown below:
 
 ```json
 {
   "NotebookApp": {
-    "password": "sha1:e49e73b0eb0e:353c38d87d79527e57da1bba5f65046d0b376d95"
+    "password": "sha1:e49e73b0eb0e:e988c9f41238918b15224b75cb501d0107a028e7"
   }
 }
 ```
