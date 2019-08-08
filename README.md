@@ -1,5 +1,5 @@
 # Digital Twin Stack
-### A scalable streaming platform that enables the sharing of IoT data.
+### A scalable streaming platform that enables the flexible sharing of IoT data and provides Data Analytics functionality.
 
 This repository is comprised of 3 layers:
 * **Digital Twin Messaging Layer** which unifies [Apache Kafka](https://kafka.apache.org/)
@@ -14,7 +14,7 @@ Example on how to send data using the Digital Twin Client
 ```python3
 from client.digital_twin_client import DigitalTwinClient
 config = {"client_name": "demo_station_1",
-          "system": "eu.srfg.iot-iot4cps-wp5.car1",
+          "system": "at.srfg.iot-iot4cps-wp5.car1",
           "gost_servers": "localhost:8084",
           # Use one of the both, bootstrap server is dominating
           "kafka_bootstrap_servers": None,  # "localhost:9092", 

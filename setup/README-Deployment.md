@@ -96,23 +96,23 @@ The deployment in cluster node requires the following steps:
     We use the following **topic convention**, which allows us to use the Cluster for different 
     systems in parallel and maintain best performance for metric data even when big objects are sent. 
     
-    Topic convention: **eu.[system-name].["metric"|"string"|"object"|"logging"]**
+    Topic convention: **at.[system-name].["metric"|"string"|"object"|"logging"]**
     
-        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --create --topic eu.dtz.metric --replication-factor 2 --partitions 3 --config cleanup.policy=compact --config retention.ms=3628800000 --config retention.bytes=-1
-        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --create --topic eu.dtz.string --replication-factor 2 --partitions 3 --config cleanup.policy=compact --config retention.ms=3628800000 --config retention.bytes=-1
-        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --create --topic eu.dtz.object --replication-factor 2 --partitions 3 --config cleanup.policy=compact --config retention.ms=3628800000 --config retention.bytes=-1
-        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --create --topic eu.dtz.logging --replication-factor 1 --partitions 1 --config cleanup.policy=compact --config retention.ms=3628800000 --config retention.bytes=-1
+        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --create --topic at.dtz.metric --replication-factor 2 --partitions 3 --config cleanup.policy=compact --config retention.ms=3628800000 --config retention.bytes=-1
+        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --create --topic at.dtz.string --replication-factor 2 --partitions 3 --config cleanup.policy=compact --config retention.ms=3628800000 --config retention.bytes=-1
+        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --create --topic at.dtz.object --replication-factor 2 --partitions 3 --config cleanup.policy=compact --config retention.ms=3628800000 --config retention.bytes=-1
+        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --create --topic at.dtz.logging --replication-factor 1 --partitions 1 --config cleanup.policy=compact --config retention.ms=3628800000 --config retention.bytes=-1
      
         /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --list
-        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --describe --topic eu.dtz.metric
-        > Topic:eu.dtz.metric	PartitionCount:3	ReplicationFactor:2	Configs:retention.ms=3628800000,cleanup.policy=compact,retention.bytes=-1
-	    >     Topic: eu.dtz.metric	Partition: 0	Leader: 3	Replicas: 3,2	Isr: 3,2
-	    >     Topic: eu.dtz.metric	Partition: 1	Leader: 1	Replicas: 1,3	Isr: 1,3
-	    >     Topic: eu.dtz.metric	Partition: 2	Leader: 2	Replicas: 2,1	Isr: 2,1
+        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --describe --topic at.dtz.metric
+        > Topic:at.dtz.metric	PartitionCount:3	ReplicationFactor:2	Configs:retention.ms=3628800000,cleanup.policy=compact,retention.bytes=-1
+	    >     Topic: at.dtz.metric	Partition: 0	Leader: 3	Replicas: 3,2	Isr: 3,2
+	    >     Topic: at.dtz.metric	Partition: 1	Leader: 1	Replicas: 1,3	Isr: 1,3
+	    >     Topic: at.dtz.metric	Partition: 2	Leader: 2	Replicas: 2,1	Isr: 2,1
 
     To track the traffic in real time, use the `kafka-consumer-console`: 
 
-        /kafka/bin/kafka-console-consumer.sh --bootstrap-server 192.168.48.81:9092 --topic eu.dtz.metric
+        /kafka/bin/kafka-console-consumer.sh --bootstrap-server 192.168.48.81:9092 --topic at.dtz.metric
         > {"phenomenonTime": "2018-12-04T14:18:11.376306+00:00", "resultTime": "2018-12-04T14:18:11.376503+00:00", "result": 50.05934369894213, "Datastream": {"@iot.id": 2}}
 
     To delete topics, search for topics and then remove the desired directory:
