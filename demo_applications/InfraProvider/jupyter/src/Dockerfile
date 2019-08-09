@@ -113,7 +113,6 @@ RUN jupyter labextension install @jupyter-widgets/jupyterlab-manager
 RUN jupyter nbextension enable codefolding/main
 RUN jupyter nbextension enable spellchecker/main
 
-# TODO change jupyter_notebook_config.py
 COPY jupyter_notebook_config.json /home/jovyan/.jupyter/jupyter_notebook_config.json
 ADD provisioning/data /home/jovyan/
 

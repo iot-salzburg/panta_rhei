@@ -163,7 +163,7 @@ that ingests it into the DataStack.
 Therefore, it is important to start the StreamHub applications as noted in the next section.
    
    
-#### Streamhub - Connect the tenants
+#### Stream Hub - Connect the tenants
 
 The StreamHub application can be regarded as hub for the streamed data.
 Run the java files:

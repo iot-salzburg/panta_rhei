@@ -6,6 +6,7 @@ services:
       args:
         ELK_VERSION: $ELK_VERSION
     volumes:
+#      The line below is used to get the es-data out into the provisioning directory
 #      - ./elasticsearch/provisioning:/usr/share/elasticsearch/data
       - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
     ports:
