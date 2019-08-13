@@ -1,4 +1,5 @@
 import os
+import uuid
 import logging
 import psycopg2
 import sqlalchemy as db
@@ -10,7 +11,8 @@ from flask import Flask, render_template, flash , redirect, url_for, session, re
 # from .data import Articles
 from functools import wraps
 from passlib.hash import sha256_crypt
-from wtforms import Form, StringField, TextAreaField, PasswordField, validators
+import wtforms
+from wtforms import Form, StringField, TextField, TextAreaField, PasswordField, validators
 
 # load environment variables automatically from a .env file in the same directory
 load_dotenv()
@@ -21,90 +23,137 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI',
                                                   'postgresql+psycopg2://user:passwd@host/database')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
+app.secret_key = "changeme"
 
 def create_tables():
     # Create context, connection and metadata
     engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
-    connection = engine.connect()
+    conn = engine.connect()
     metadata = db.MetaData()
 
     # Define all entities and relations
-    app.config["users"] = db.Table(
+    app.config["tables"] = dict()
+    app.config["tables"]["users"] = db.Table(
         'users', metadata,
-        db.Column('uuid', db.CHAR(36), primary_key=True, unique=True),
+        db.Column('uuid', db.VARCHAR(12), primary_key=True, unique=True),
         db.Column('first_name', db.VARCHAR(25), nullable=False),
         db.Column('sur_name', db.VARCHAR(25), nullable=False),
         db.Column('birthdate', db.DATE, nullable=True),
-        db.Column('email', db.VARCHAR(35), nullable=False),
-        db.Column('password', db.VARCHAR(40), nullable=False)
+        db.Column('email', db.VARCHAR(35), nullable=False, unique=True),
+        db.Column('password', db.VARCHAR(80), nullable=False)
         )
-    app.config["companies"] = db.Table(
+    app.config["tables"]["companies"] = db.Table(
         'companies', metadata,
-        db.Column('uuid', db.CHAR(36), primary_key=True, unique=True),
+        db.Column('uuid', db.VARCHAR(12), primary_key=True, unique=True),
         db.Column('domain', db.VARCHAR(4), nullable=False),
         db.Column('enterprise', db.VARCHAR(15), nullable=False)
         )
-    app.config["systems"] = db.Table(
+    app.config["tables"]["systems"] = db.Table(
         'systems', metadata,
-        db.Column('uuid', db.CHAR(36), primary_key=True, unique=True),
+        db.Column('uuid', db.VARCHAR(12), primary_key=True, unique=True),
         db.Column('company_uuid', db.ForeignKey('companies.uuid')),
         db.Column('workcenter', db.VARCHAR(30), nullable=False),
         db.Column('station', db.VARCHAR(20), nullable=False)
         )
-    app.config["is_admin_of"] = db.Table(
+    app.config["tables"]["is_admin_of"] = db.Table(
         'is_admin_of', metadata,
         db.Column('user_uuid', db.ForeignKey("users.uuid"), primary_key=True),
         db.Column('company_uuid', db.ForeignKey('companies.uuid'), primary_key=True),
         db.Column('creator_uuid', db.ForeignKey("users.uuid"), nullable=False),
         db.Column('datetime', db.DateTime, nullable=True)
         )
-    app.config["is_agent_of"] = db.Table(
+    app.config["tables"]["is_agent_of"] = db.Table(
         'is_agent_of', metadata,
         db.Column('user_uuid', db.ForeignKey("users.uuid"), primary_key=True),
         db.Column('system_uuid', db.ForeignKey('systems.uuid'), primary_key=True),
         db.Column('creator_uuid', db.ForeignKey("users.uuid"), nullable=False),
         db.Column('datetime', db.DateTime, nullable=True)
         )
-    app.config["clients"] = db.Table(
+    app.config["tables"]["clients"] = db.Table(
         'clients', metadata,
         db.Column('name', db.VARCHAR(25), primary_key=True, unique=True),
+        db.Column('system_uuid', db.ForeignKey('systems.uuid'), nullable=False),
         db.Column('keyfile', db.LargeBinary, nullable=False),
         db.Column('datetime', db.DateTime, nullable=True),
-        db.Column('creator_uuid', db.ForeignKey("users.uuid"), nullable=False),
-        db.Column('system_uuid', db.ForeignKey('systems.uuid'), nullable=False)
+        db.Column('creator_uuid', db.ForeignKey("users.uuid"), nullable=False)
         )
-    app.config["gost_ds"] = db.Table(
-        'gost_ds', metadata,
-        db.Column('link', db.VARCHAR(50), primary_key=True),
-        db.Column('client_name', db.ForeignKey("clients.name"), nullable=False)
-        )
-    app.config["gost_thing"] = db.Table(
+    app.config["tables"]["gost_thing"] = db.Table(
         'gost_thing', metadata,
-        db.Column('link', db.VARCHAR(50), primary_key=True),
-        db.Column('client_name', db.ForeignKey("clients.name"), nullable=False)
+        db.Column('link', db.VARCHAR(50), nullable=False),
+        db.Column('system_uuid', db.ForeignKey("systems.uuid"), primary_key=True)
         )
-
-    emp = db.Table('emp', metadata,
-                  db.Column('Id', db.Integer()),
-                  db.Column('name', db.String(255), nullable=False),
-                  db.Column('salary', db.Float(), default=100.0),
-                  db.Column('active', db.Boolean(), default=True)
-                  )
+    app.config["tables"]["gost_ds"] = db.Table(
+        'gost_ds', metadata,
+        db.Column('link', db.VARCHAR(50), nullable=False),
+        db.Column('client_name', db.ForeignKey("clients.name"), primary_key=True),
+        db.Column('system_uuid', db.ForeignKey("systems.uuid"), primary_key=True)
+        )
 
     # Creates the tables
     metadata.create_all(engine)
-
-    #Inserting many records at ones
-    query = db.insert(emp)
-    values_list = [{'Id':'2', 'name':'ram', 'salary':80000, 'active':False},
-                   {'Id':'3', 'name':'ramesh', 'salary':70000, 'active':True}]
-    ResultProxy = connection.execute(query,values_list)
-    results = connection.execute(db.select([emp])).fetchall()
-    print(results)
-
-    # db = SQLAlchemy(app)
     app.logger.info("Created tables.")
+
+def get_uid():
+    return str(uuid.uuid4()).split("-")[-1]
+
+def insert_sample():
+    # Create context, connection and metadata
+    engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
+    conn = engine.connect()
+
+    # Inserting many records at ones in users
+    uuid_sue = get_uid()
+    uuid_stefan = get_uid()
+    uuid_peter = get_uid()
+    uuid_anna = get_uid()
+    query = db.insert(app.config["tables"]["users"])
+    values_list = [
+        {'uuid': uuid_sue,
+        'first_name':'Sue',
+        'sur_name': 'Smith',
+        'birthdate': '1967-04-01',
+        'email': 'sue.smith@gmail.com',
+        'password': '12345678'},
+       {'uuid': uuid_stefan,
+        'first_name': 'Stefan',
+        'sur_name': 'Gunnarsson',
+        'birthdate': '1967-03-01',
+        'email': 'stefan.gunnarsson@gmail.com',
+        'password': '12345678'},
+       {'uuid': uuid_peter,
+        'first_name': 'Peter',
+        'sur_name': 'Novak',
+        'birthdate': '1990-02-01',
+        'email': 'peter.novak@gmail.com',
+        'password': '12345678'},
+       {'uuid': uuid_anna,
+        'first_name': 'Anna',
+        'sur_name': 'Gruber',
+        'birthdate': '1994-01-01',
+        'email': 'anna.gruber@gmail.com',
+        'password': '12345678'}]
+    ResultProxy = conn.execute(query, values_list)
+    results = ResultProxy.fetchall()
+
+    # uuid_icecars = get_uid()
+    # uuid_iceland = get_uid()
+    # uuid_datahouse = get_uid()
+    # # Inserting many records at ones in company
+    # query = db.insert(app.config["tables"]["companies"])
+    # values_list = [
+    #     {'uuid': get_uid(),
+    #      'domain': 'cz',
+    #      'enterprise': 'icecars'},
+    #     {'uuid': get_uid(),
+    #      'domain': 'is',
+    #      'enterprise': 'iceland'},
+    #     {'uuid': get_uid(),
+    #      'domain': 'at',
+    #      'enterprise': 'datahouse'}]
+    # ResultProxy = conn.execute(query, values_list)
+    # results = ResultProxy.fetchall()
+
+    app.logger.info("Ingested data into tables.")
 
 @app.route('/')
 def index():
@@ -166,9 +215,11 @@ def article(id):
 
 # Register Form Class
 class RegisterForm(Form):
+    first_name = StringField('First Name', [validators.Length(min=1, max=50)])
     name = StringField('Name', [validators.Length(min=1, max=50)])
-    username = StringField('Username', [validators.Length(min=4, max=25)])
-    email = StringField('Email', [validators.Length(min=6, max=50)])
+    # birthdate = wtforms.DateField("Birthdate")  #, format='%Y-%m-%d')
+    # username = StringField('Username', [validators.Length(min=3, max=25)])
+    email = StringField('Email', [validators.Email(message="The given email seems to be wrong")])
     password = PasswordField('Password', [
         validators.DataRequired(),
         validators.EqualTo('confirm', message='Passwords do not match')
@@ -181,23 +232,25 @@ class RegisterForm(Form):
 def register():
     form = RegisterForm(request.form)
     if request.method == 'POST' and form.validate():
+        first_name = request.form["first_name"]  # form.name.data
         name = request.form["name"]  # form.name.data
         email = request.form["email"]  # form.email.data
-        username = request.form["username"]  # form.username.data
         password = sha256_crypt.encrypt(str(request.form["password"]))  # form.password.data))
 
         # Create cursor
-        conn = psycopg2.connect(dbname='myflaskapp', user='chris', host='localhost', password='postgres')
-        cur = conn.cursor()
+        engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
+        conn = engine.connect()
 
-        cur.execute("INSERT INTO users(name, email, username, password) "
-                    "VALUES(%s,%s,%s,%s)", (name, email, username, password))
-        conn.commit()
-        # Commit to postgres
-        cur.close()
+        query = db.insert(app.config["tables"]["users"])
+        values_list = [{'uuid': get_uid(),
+                        'first_name': first_name,
+                        'sur_name': name,
+                        'email': email,
+                        'password': password}]
+        ResultProxy = conn.execute(query, values_list)
+        # results = ResultProxy.fetchall()
 
         flash("You are now registered and can log in", "success")
-
         return redirect(url_for('login'))
 
     return render_template('register.html', form=form)
@@ -207,41 +260,41 @@ def register():
 def login():
     if request.method == 'POST':
         # Get Form Fields
-        username = request.form['username']
+        email = request.form['email']
         password_candidate = request.form['password']
 
         # Create cursor
-        conn = psycopg2.connect(dbname='myflaskapp', user='chris', host='localhost', password='postgres')
-        cur = conn.cursor()
+        engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
+        conn = engine.connect()
 
-        # Get user by username
-        cur.execute("SELECT * FROM users WHERE username = %s", [username])
-        result = cur.fetchone()
-        # Close connection
-        cur.close()
+        query = "SELECT * FROM users WHERE email = '{}'".format(email)
+        ResultProxy = conn.execute(query)
+        results = ResultProxy.fetchall()
 
-        if result is not None:
-            data = dict()
-            s = ("id", "name", "email", "username", "password")
-            for i, k in enumerate(s):
-                data[k] = result[i]
-            # Get stored hash
-            password = data['password']
+        data = list()
+        for row in results:
+            data.append({results[0].keys()[i]: row[i] for i in range(0, len(row))})
+
+        if len(data) == 0:
+            error = 'Username not found.'
+            return render_template('login.html', error=error)
+        # elif len(data) != 1:
+        #     error = 'Username was found twice. Error'
+        #     return render_template('login.html', error=error)
+        else:
+            password = data[0]['password']
 
             # Compare Passwords
             if sha256_crypt.verify(password_candidate, password):
                 # Passed
                 session['logged_in'] = True
-                session['username'] = username
+                session['email'] = email
 
                 flash('You are now logged in', 'success')
                 return redirect(url_for('dashboard'))
             else:
-                error = 'Invalid login'
+                error = 'Invalid login.'
                 return render_template('login.html', error=error)
-        else:
-            error = 'Username not found'
-            return render_template('login.html', error=error)
 
     return render_template('login.html')
 
@@ -272,18 +325,16 @@ def logout():
 @is_logged_in
 def dashboard():
     # Create cursor
-    conn = psycopg2.connect(dbname='myflaskapp', user='chris', host='localhost', password='postgres')
-    cur = conn.cursor()
+    engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
+    conn = engine.connect()
 
     # Get articles
-    cur.execute("SELECT * FROM articles;")
-    result = cur.fetchall()
-    # Close connection
-    cur.close()
+    ResultProxy = conn.execute("SELECT * FROM companies;")
+    result = ResultProxy.fetchall()
 
     if result is not None:
         data = list()
-        s = ("id", "title", "author", "body", "create_date")
+        s = ("uuid", "domain", "enterprise")
         for line in result:
             entry = dict()
             for i, k in enumerate(s):
@@ -395,6 +446,8 @@ if __name__ == '__main__':
     # Creating the tables
     create_tables()
 
-    # app.secret_key = "1234"
-    # app.run(debug=True, port=5000)
+    # Insert sample for the demo scenario
+    # insert_sample()
 
+    # app.secret_key = "1234"
+    app.run(debug=True, port=5000)
