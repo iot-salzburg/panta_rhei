@@ -1,0 +1,8 @@
+{
+  "subscribed_datastreams": [
+    "at.srfg.iot-iot4cps-wp5.CarFleet.car_1.Air Temperature",
+    "at.srfg.iot-iot4cps-wp5.CarFleet.car_2.Air Temperature",
+    "at.srfg.iot-iot4cps-wp5.WeatherService.demo_station_1.Air Temperature",
+    "at.srfg.iot-iot4cps-wp5.WeatherService.demo_station_2.Air Temperature"
+  ]
+}

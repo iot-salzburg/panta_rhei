@@ -1,0 +1,26 @@
+version: "3.4"
+services:
+# https://github.com/jupyter/docker-stacks/tree/master/all-spark-notebook
+  jupyter:
+    image: 127.0.0.1:5001/jupyter
+    build: ./src/
+    ports:
+      - 8888:8888
+      - 4040:4040
+#   A volume can be mounted to store the data externally, otherwise, notebooks have to be saved
+    volumes:
+      - ./share:/home/jovyan/share
+    environment:
+      GRANT_SUDO: "yes"
+      JUPYTER_ENABLE_LAB: "yes"
+    # enable sudo permissions
+    user:
+      "root"
+    networks:
+      - default
+      - elasticstack_datastack
+
+networks:
+  elasticstack_datastack:
+    external:
+      name: elasticstack_datastack

@@ -1,0 +1,25 @@
+version: "3.4"
+services:
+ grafana:
+    build: ./src
+    ports:
+      - 3000:3000
+#   A volume can be mounted to store the data externally, otherwise, export the modified templatedashboard.json
+#    volumes:
+#      - ./grafanadata/dashboards:/var/lib/grafana/dashboards
+    networks:
+      - default
+      - elasticstack_datastack
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      ELASTICSEARCH_ENDPOINT: http://elasticsearch:9200
+#      GF_SERVER_ROOT_URL: "%(protocol)s://%(domain)s/grafana/"
+#      ELASTICSEARCH_USER: ${ES_USERNAME}
+#      ELASTICSEARCH_PASSWORD: ${ES_PASSWORD}
+      GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-simple-json-datasource
+      DBINDEX: "[at.srfg.iot-iot4cps-wp5.infraprov.internal-]YYYY.MM"
+
+networks:
+  elasticstack_datastack:
+    external:
+      name: elasticstack_datastack

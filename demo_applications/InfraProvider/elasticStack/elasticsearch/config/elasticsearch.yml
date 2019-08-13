@@ -1,0 +1,10 @@
+# set indexes to be created
+action.auto_create_index: .security,.monitoring*,.watches,.triggered_watches,.watcher-history*,at.srfg.iot-iot4cps-wp5.*
+
+cluster.name: "docker-cluster"
+network.host: 0.0.0.0
+
+## Use single node discovery in order to disable production mode and avoid bootstrap checks
+## see https://www.elastic.co/guide/en/elasticsearch/reference/current/bootstrap-checks.html
+#
+discovery.type: single-node

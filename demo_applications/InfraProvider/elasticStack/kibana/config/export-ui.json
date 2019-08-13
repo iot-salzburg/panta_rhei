@@ -1,0 +1,489 @@
+[
+  {
+    "_id": "90b829f0-e69a-11e7-ba27-31bf9cbb9afb",
+    "_type": "dashboard",
+    "_source": {
+      "title": "IoT Lab Condition Monitoring",
+      "hits": 0,
+      "description": "Metric Visualisation for the IoT Lab's 3D printing system",
+      "panelsJSON": "[{\"col\":1,\"id\":\"e364d370-e699-11e7-ba27-31bf9cbb9afb\",\"panelIndex\":1,\"row\":1,\"size_x\":7,\"size_y\":4,\"type\":\"visualization\"},{\"col\":8,\"id\":\"4fcf9d70-e6a8-11e7-8fc0-b9f844bff27a\",\"panelIndex\":4,\"row\":1,\"size_x\":5,\"size_y\":4,\"type\":\"visualization\"},{\"col\":1,\"id\":\"2d92b040-e71f-11e7-8fc0-b9f844bff27a\",\"panelIndex\":6,\"row\":8,\"size_x\":12,\"size_y\":5,\"type\":\"visualization\"},{\"col\":4,\"id\":\"61ce0f70-e725-11e7-8fc0-b9f844bff27a\",\"panelIndex\":7,\"row\":5,\"size_x\":9,\"size_y\":3,\"type\":\"visualization\"},{\"col\":7,\"id\":\"1150c280-fcf2-11e7-a1fc-ed541294435a\",\"panelIndex\":8,\"row\":13,\"size_x\":6,\"size_y\":4,\"type\":\"visualization\"},{\"size_x\":3,\"size_y\":3,\"panelIndex\":10,\"type\":\"visualization\",\"id\":\"be4481f0-fcf4-11e7-8fc0-b9f844bff27a\",\"col\":1,\"row\":5},{\"size_x\":6,\"size_y\":4,\"panelIndex\":11,\"type\":\"visualization\",\"id\":\"16327260-fd08-11e7-8fc0-b9f844bff27a\",\"col\":1,\"row\":13},{\"size_x\":12,\"size_y\":5,\"panelIndex\":13,\"type\":\"search\",\"id\":\"885db020-fd03-11e7-a1fc-ed541294435a\",\"col\":1,\"row\":17,\"columns\":[\"Datastream.@iot.id\",\"Datastream.name\",\"logger_name\",\"result\"],\"sort\":[\"phenomenonTime\",\"desc\"]}]",
+      "optionsJSON": "{\"darkTheme\":false}",
+      "uiStateJSON": "{\"P-5\":{\"vis\":{\"defaultColors\":{\"0 - 20\":\"rgb(0,104,55)\",\"20 - 25\":\"rgb(102,189,99)\",\"25 - 30\":\"rgb(217,239,139)\",\"30 - 35\":\"rgb(254,224,139)\",\"35 - 40\":\"rgb(244,109,67)\",\"40 - 100\":\"rgb(165,0,38)\"}}},\"P-6\":{\"vis\":{\"defaultColors\":{\"1 - 15\":\"rgb(0,104,55)\",\"15 - 20\":\"rgb(26,151,80)\",\"20 - 25\":\"rgb(102,189,99)\",\"25 - 30\":\"rgb(166,217,106)\",\"30 - 40\":\"rgb(217,239,139)\",\"40 - 50\":\"rgb(255,255,190)\",\"50 - 60\":\"rgb(254,224,139)\",\"60 - 70\":\"rgb(253,174,97)\",\"70 - 80\":\"rgb(244,109,67)\",\"80 - 100\":\"rgb(214,47,39)\",\"100 - 1,000\":\"rgb(165,0,38)\"}}}}",
+      "version": 1,
+      "timeRestore": true,
+      "timeTo": "now",
+      "timeFrom": "now-7d",
+      "refreshInterval": {
+        "display": "5 seconds",
+        "pause": false,
+        "section": 1,
+        "value": 5000
+      },
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"query\":{\"language\":\"lucene\",\"query\":\"*\"},\"filter\":[],\"highlightAll\":true,\"version\":true}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "6e821200-fcf3-11e7-8fc0-b9f844bff27a",
+    "_type": "dashboard",
+    "_source": {
+      "title": "DataStream Monitoring",
+      "hits": 0,
+      "description": "Show the received data from the ELK Stack",
+      "panelsJSON": "[{\"col\":1,\"id\":\"3e04be20-e6a5-11e7-8fc0-b9f844bff27a\",\"panelIndex\":1,\"row\":7,\"size_x\":6,\"size_y\":5,\"type\":\"visualization\"},{\"col\":1,\"id\":\"149f8d70-fcf4-11e7-8fc0-b9f844bff27a\",\"panelIndex\":3,\"row\":1,\"size_x\":3,\"size_y\":3,\"type\":\"visualization\"},{\"col\":4,\"id\":\"be4481f0-fcf4-11e7-8fc0-b9f844bff27a\",\"panelIndex\":4,\"row\":1,\"size_x\":3,\"size_y\":3,\"type\":\"visualization\"},{\"col\":10,\"id\":\"010c2650-fcf5-11e7-8fc0-b9f844bff27a\",\"panelIndex\":5,\"row\":1,\"size_x\":3,\"size_y\":3,\"type\":\"visualization\"},{\"col\":7,\"id\":\"0f490440-fcf5-11e7-8fc0-b9f844bff27a\",\"panelIndex\":6,\"row\":1,\"size_x\":3,\"size_y\":3,\"type\":\"visualization\"},{\"col\":7,\"columns\":[\"Datastream.@iot.id\",\"Datastream.name\",\"logger_name\",\"result\"],\"id\":\"885db020-fd03-11e7-a1fc-ed541294435a\",\"panelIndex\":8,\"row\":4,\"size_x\":6,\"size_y\":6,\"sort\":[\"phenomenonTime\",\"desc\"],\"type\":\"search\"},{\"col\":1,\"id\":\"395205b0-fd05-11e7-8fc0-b9f844bff27a\",\"panelIndex\":9,\"row\":4,\"size_x\":3,\"size_y\":3,\"type\":\"visualization\"},{\"col\":4,\"id\":\"8ce26d90-fd06-11e7-8fc0-b9f844bff27a\",\"panelIndex\":10,\"row\":4,\"size_x\":3,\"size_y\":3,\"type\":\"visualization\"},{\"size_x\":12,\"size_y\":7,\"panelIndex\":11,\"type\":\"search\",\"id\":\"78ad1790-fcfb-11e7-8fc0-b9f844bff27a\",\"col\":1,\"row\":12,\"columns\":[\"Datastream.name\",\"result\",\"@timestamp\",\"level\",\"logger_name\",\"path\",\"Datastream.URI\"],\"sort\":[\"phenomenonTime\",\"desc\"]},{\"size_x\":6,\"size_y\":2,\"panelIndex\":12,\"type\":\"search\",\"id\":\"771e4f50-fcfd-11e7-8fc0-b9f844bff27a\",\"col\":7,\"row\":10,\"columns\":[\"Datastream.name\",\"Datastream.@iot.id\",\"result\",\"@timestamp\",\"level\"],\"sort\":[\"phenomenonTime\",\"desc\"]}]",
+      "optionsJSON": "{\"darkTheme\":false}",
+      "uiStateJSON": "{\"P-9\":{\"vis\":{\"colors\":{\"INFO\":\"#7EB26D\"},\"legendOpen\":true}}}",
+      "version": 1,
+      "timeRestore": true,
+      "timeTo": "now",
+      "timeFrom": "now-1h",
+      "refreshInterval": {
+        "display": "5 seconds",
+        "pause": false,
+        "section": 1,
+        "value": 5000
+      },
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"query\":{\"language\":\"lucene\",\"query\":\"\"},\"filter\":[],\"highlightAll\":true,\"version\":true}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "77b42480-fcee-11e7-a1fc-ed541294435a",
+    "_type": "search",
+    "_source": {
+      "title": "Filament Search",
+      "description": "",
+      "hits": 0,
+      "columns": [
+        "Datastream.@iot.id",
+        "Datastream.name",
+        "logger_name",
+        "result"
+      ],
+      "sort": [
+        "phenomenonTime",
+        "desc"
+      ],
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"d56044d0-d4d8-11e7-b1f6-552982a8a307\",\"highlightAll\":true,\"version\":true,\"query\":{\"language\":\"lucene\",\"query\":\"Filament\"},\"filter\":[]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "885db020-fd03-11e7-a1fc-ed541294435a",
+    "_type": "search",
+    "_source": {
+      "title": "3D Printer Data",
+      "description": "",
+      "hits": 0,
+      "columns": [
+        "Datastream.@iot.id",
+        "Datastream.name",
+        "logger_name",
+        "result"
+      ],
+      "sort": [
+        "phenomenonTime",
+        "desc"
+      ],
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"d56044d0-d4d8-11e7-b1f6-552982a8a307\",\"highlightAll\":true,\"version\":true,\"query\":{\"language\":\"lucene\",\"query\":\"\"},\"filter\":[{\"meta\":{\"index\":\"d56044d0-d4d8-11e7-b1f6-552982a8a307\",\"type\":\"phrases\",\"key\":\"Datastream.@iot.id\",\"value\":\"1, 2, 3, 5, 6, 8, 9\",\"params\":[\"1\",\"2\",\"3\",\"5\",\"6\",\"8\",\"9\"],\"negate\":false,\"disabled\":false,\"alias\":\"Printer Data\"},\"query\":{\"bool\":{\"should\":[{\"match_phrase\":{\"Datastream.@iot.id\":\"1\"}},{\"match_phrase\":{\"Datastream.@iot.id\":\"2\"}},{\"match_phrase\":{\"Datastream.@iot.id\":\"3\"}},{\"match_phrase\":{\"Datastream.@iot.id\":\"5\"}},{\"match_phrase\":{\"Datastream.@iot.id\":\"6\"}},{\"match_phrase\":{\"Datastream.@iot.id\":\"8\"}},{\"match_phrase\":{\"Datastream.@iot.id\":\"9\"}}],\"minimum_should_match\":1}},\"$state\":{\"store\":\"appState\"}}]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "771e4f50-fcfd-11e7-8fc0-b9f844bff27a",
+    "_type": "search",
+    "_source": {
+      "title": "nonINFO Loglevel",
+      "description": "",
+      "hits": 0,
+      "columns": [
+        "Datastream.name",
+        "Datastream.@iot.id",
+        "result",
+        "@timestamp",
+        "level"
+      ],
+      "sort": [
+        "phenomenonTime",
+        "desc"
+      ],
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"d56044d0-d4d8-11e7-b1f6-552982a8a307\",\"highlightAll\":true,\"version\":true,\"query\":{\"language\":\"lucene\",\"query\":\"level:INFO\"},\"filter\":[{\"$state\":{\"store\":\"appState\"},\"meta\":{\"alias\":\"Non-INFO level\",\"disabled\":false,\"index\":\"d56044d0-d4d8-11e7-b1f6-552982a8a307\",\"key\":\"level\",\"negate\":true,\"params\":{\"query\":\"INFO\",\"type\":\"phrase\"},\"type\":\"phrase\",\"value\":\"INFO\"},\"query\":{\"match\":{\"level\":{\"query\":\"INFO\",\"type\":\"phrase\"}}}}]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "78ad1790-fcfb-11e7-8fc0-b9f844bff27a",
+    "_type": "search",
+    "_source": {
+      "title": "All Input",
+      "description": "",
+      "hits": 0,
+      "columns": [
+        "Datastream.name",
+        "result",
+        "@timestamp",
+        "level",
+        "logger_name",
+        "path",
+        "Datastream.URI"
+      ],
+      "sort": [
+        "phenomenonTime",
+        "desc"
+      ],
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"d56044d0-d4d8-11e7-b1f6-552982a8a307\",\"highlightAll\":true,\"version\":true,\"query\":{\"query\":\"\",\"language\":\"lucene\"},\"filter\":[]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "ae63d950-e69e-11e7-8fc0-b9f844bff27a",
+    "_type": "visualization",
+    "_source": {
+      "title": "3D Printer Temperature Sensors",
+      "visState": "{\"title\":\"3D Printer Temperature Sensors\",\"type\":\"line\",\"params\":{\"type\":\"line\",\"grid\":{\"categoryLines\":true,\"style\":{\"color\":\"#eee\"},\"valueAxis\":\"ValueAxis-1\"},\"categoryAxes\":[{\"id\":\"CategoryAxis-1\",\"type\":\"category\",\"position\":\"bottom\",\"show\":true,\"style\":{},\"scale\":{\"type\":\"linear\"},\"labels\":{\"show\":true,\"truncate\":100},\"title\":{}}],\"valueAxes\":[{\"id\":\"ValueAxis-1\",\"name\":\"LeftAxis-1\",\"type\":\"value\",\"position\":\"left\",\"show\":true,\"style\":{},\"scale\":{\"type\":\"linear\",\"mode\":\"normal\",\"setYExtents\":true,\"max\":60,\"min\":0},\"labels\":{\"show\":true,\"rotate\":0,\"filter\":false,\"truncate\":100},\"title\":{\"text\":\"Average result\"}}],\"seriesParams\":[{\"show\":\"true\",\"type\":\"line\",\"mode\":\"normal\",\"data\":{\"label\":\"Average result\",\"id\":\"1\"},\"valueAxis\":\"ValueAxis-1\",\"drawLinesBetweenPoints\":true,\"showCircles\":true}],\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"bottom\",\"times\":[],\"addTimeMarker\":false},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"avg\",\"schema\":\"metric\",\"params\":{\"field\":\"result\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"phenomenonTime\",\"interval\":\"m\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"group\",\"params\":{\"field\":\"Datastream.name.keyword\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"1\"}}]}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"d56044d0-d4d8-11e7-b1f6-552982a8a307\",\"filter\":[{\"meta\":{\"index\":\"d56044d0-d4d8-11e7-b1f6-552982a8a307\",\"negate\":false,\"disabled\":false,\"alias\":\"industrial Temperature Sensors\",\"type\":\"range\",\"key\":\"Datastream.@iot.id\",\"value\":\"11 to 29\",\"params\":{\"gte\":11,\"lt\":29}},\"range\":{\"Datastream.@iot.id\":{\"gte\":11,\"lt\":29}},\"$state\":{\"store\":\"appState\"}}],\"query\":{\"query\":\"\",\"language\":\"lucene\"}}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "87b56800-e6a3-11e7-8fc0-b9f844bff27a",
+    "_type": "visualization",
+    "_source": {
+      "title": "map (empty)",
+      "visState": "{\"title\":\"map (empty)\",\"type\":\"tile_map\",\"params\":{\"mapType\":\"Scaled Circle Markers\",\"isDesaturated\":true,\"addTooltip\":true,\"heatClusterSize\":1.5,\"legendPosition\":\"bottomright\",\"mapZoom\":2,\"mapCenter\":[0,0],\"wms\":{\"enabled\":false,\"options\":{\"format\":\"image/png\",\"transparent\":true}}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"geohash_grid\",\"schema\":\"segment\",\"params\":{\"field\":\"geoip.location\",\"autoPrecision\":true,\"isFilteredByCollar\":true,\"useGeocentroid\":true,\"precision\":3}}]}",
+      "uiStateJSON": "{\"mapZoom\":5,\"mapCenter\":[46.55886030311719,16.457519531250004]}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"d56044d0-d4d8-11e7-b1f6-552982a8a307\",\"filter\":[],\"query\":{\"query\":\"\",\"language\":\"lucene\"}}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "3e04be20-e6a5-11e7-8fc0-b9f844bff27a",
+    "_type": "visualization",
+    "_source": {
+      "title": "Kafka Consumage",
+      "visState": "{\"type\":\"timelion\",\"title\":\"Kafka Consumage\",\"params\":{\"expression\":\".es(index=logstash-20*).points().label(Raw) , .es(index=logstash-20*).movingaverage(10).label(Average)\",\"interval\":\"auto\"}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "2d92b040-e71f-11e7-8fc0-b9f844bff27a",
+    "_type": "visualization",
+    "_source": {
+      "title": "3D Printer Temparature Monitoring: maximal value of the last day per sensor",
+      "visState": "{\"aggs\":[{\"enabled\":true,\"id\":\"1\",\"params\":{\"field\":\"result\"},\"schema\":\"metric\",\"type\":\"max\"},{\"enabled\":true,\"id\":\"2\",\"params\":{\"filters\":[{\"input\":{\"query\":\"Temp322, Temp321, Temp212, Temp512, Temp511, Temp 621, Temp411, Temp111, Temp112\"},\"label\":\"\"},{\"input\":{\"query\":\"Temp312, Temp421, Temp622, Temp122\"}},{\"input\":{\"query\":\"Temp311, Temp211, Temp422, Temp612, Temp611, Temp121, Temp412\"}}]},\"schema\":\"group\",\"type\":\"filters\"},{\"enabled\":true,\"id\":\"3\",\"params\":{\"filters\":[{\"input\":{\"query\":\"Temp322\"},\"label\":\"\"},{\"input\":{\"query\":\"Temp211, Temp321\"}},{\"input\":{\"query\":\"Temp312\"}},{\"input\":{\"query\":\"Temp311, Temp212\"}},{\"input\":{\"query\":\"Temp422, Temp421, Temp512\"}},{\"input\":{\"query\":\"Temp612, Temp511\"}},{\"input\":{\"query\":\"Temp611, Temp622, Temp621\"}},{\"input\":{\"query\":\"Temp121, Temp411\"}},{\"input\":{\"query\":\"Temp122\"}},{\"input\":{\"query\":\"Temp412, Temp111\"}},{\"input\":{\"query\":\"Temp112\"}}]},\"schema\":\"segment\",\"type\":\"filters\"}],\"params\":{\"addLegend\":true,\"addTooltip\":true,\"colorSchema\":\"Green to Red\",\"colorsNumber\":10,\"colorsRange\":[{\"from\":1,\"to\":15},{\"from\":15,\"to\":20},{\"from\":20,\"to\":25},{\"from\":25,\"to\":30},{\"from\":30,\"to\":40},{\"from\":40,\"to\":50},{\"from\":50,\"to\":60},{\"from\":60,\"to\":70},{\"from\":70,\"to\":80},{\"from\":80,\"to\":100},{\"from\":100,\"to\":1000}],\"enableHover\":true,\"invertColors\":false,\"legendPosition\":\"bottom\",\"percentageMode\":false,\"setColorRange\":true,\"times\":[],\"type\":\"heatmap\",\"valueAxes\":[{\"id\":\"ValueAxis-1\",\"labels\":{\"color\":\"#111\",\"rotate\":0,\"show\":true},\"scale\":{\"defaultYExtents\":false,\"type\":\"square root\"},\"show\":false,\"type\":\"value\"}]},\"title\":\"3D Printer Temparature Monitoring: maximal value of the last day per sensor\",\"type\":\"heatmap\"}",
+      "uiStateJSON": "{\"vis\":{\"defaultColors\":{\"1 - 15\":\"rgb(0,104,55)\",\"15 - 20\":\"rgb(26,151,80)\",\"20 - 25\":\"rgb(102,189,99)\",\"25 - 30\":\"rgb(166,217,106)\",\"30 - 40\":\"rgb(217,239,139)\",\"40 - 50\":\"rgb(255,255,190)\",\"50 - 60\":\"rgb(254,224,139)\",\"60 - 70\":\"rgb(253,174,97)\",\"70 - 80\":\"rgb(244,109,67)\",\"80 - 100\":\"rgb(214,47,39)\",\"100 - 1,000\":\"rgb(165,0,38)\"},\"colors\":{\"100 - 1,000\":\"#DEDAF7\"}}}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"d56044d0-d4d8-11e7-b1f6-552982a8a307\",\"filter\":[{\"meta\":{\"index\":\"d56044d0-d4d8-11e7-b1f6-552982a8a307\",\"type\":\"phrases\",\"key\":\"Datastream.name.keyword\",\"value\":\"Temp412, Temp212, Temp512, Temp112, Temp322, Temp121, Temp411, Temp211\",\"params\":[\"Temp412\",\"Temp212\",\"Temp512\",\"Temp112\",\"Temp322\",\"Temp121\",\"Temp411\",\"Temp211\"],\"negate\":false,\"disabled\":true,\"alias\":\"industrial Temperature Sensors\"},\"query\":{\"bool\":{\"should\":[{\"match_phrase\":{\"Datastream.name.keyword\":\"Temp412\"}},{\"match_phrase\":{\"Datastream.name.keyword\":\"Temp212\"}},{\"match_phrase\":{\"Datastream.name.keyword\":\"Temp512\"}},{\"match_phrase\":{\"Datastream.name.keyword\":\"Temp112\"}},{\"match_phrase\":{\"Datastream.name.keyword\":\"Temp322\"}},{\"match_phrase\":{\"Datastream.name.keyword\":\"Temp121\"}},{\"match_phrase\":{\"Datastream.name.keyword\":\"Temp411\"}},{\"match_phrase\":{\"Datastream.name.keyword\":\"Temp211\"}}],\"minimum_should_match\":1}},\"$state\":{\"store\":\"appState\"}}],\"query\":{\"query\":\"\",\"language\":\"lucene\"}}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "cb5268e0-e713-11e7-8fc0-b9f844bff27a",
+    "_type": "visualization",
+    "_source": {
+      "title": "Air Pollution, Ambient temperature: Distribution at a day",
+      "visState": "{\"title\":\"Air Pollution, Ambient temperature: Distribution at a day\",\"type\":\"histogram\",\"params\":{\"addLegend\":true,\"addTimeMarker\":false,\"addTooltip\":true,\"categoryAxes\":[{\"id\":\"CategoryAxis-1\",\"labels\":{\"rotate\":90,\"show\":true,\"truncate\":100},\"position\":\"bottom\",\"scale\":{\"type\":\"linear\"},\"show\":true,\"style\":{},\"title\":{},\"type\":\"category\"}],\"grid\":{\"categoryLines\":true,\"style\":{\"color\":\"#eee\"},\"valueAxis\":\"ValueAxis-1\"},\"legendPosition\":\"bottom\",\"orderBucketsBySum\":false,\"radiusRatio\":51,\"seriesParams\":[{\"data\":{\"id\":\"2\",\"label\":\"Average Air Quality\"},\"drawLinesBetweenPoints\":true,\"interpolate\":\"cardinal\",\"mode\":\"normal\",\"show\":true,\"showCircles\":true,\"type\":\"histogram\",\"valueAxis\":\"ValueAxis-1\"},{\"data\":{\"id\":\"4\",\"label\":\"Average ambient temperature\"},\"drawLinesBetweenPoints\":true,\"interpolate\":\"cardinal\",\"lineWidth\":4,\"mode\":\"normal\",\"show\":true,\"showCircles\":true,\"type\":\"line\",\"valueAxis\":\"ValueAxis-2\"}],\"times\":[],\"type\":\"histogram\",\"valueAxes\":[{\"id\":\"ValueAxis-1\",\"labels\":{\"filter\":false,\"rotate\":0,\"show\":true,\"truncate\":100},\"name\":\"LeftAxis-1\",\"position\":\"left\",\"scale\":{\"mode\":\"normal\",\"type\":\"linear\"},\"show\":true,\"style\":{},\"title\":{\"text\":\"Average Air Quality\"},\"type\":\"value\"},{\"id\":\"ValueAxis-2\",\"labels\":{\"filter\":false,\"rotate\":0,\"show\":true,\"truncate\":100},\"name\":\"RightAxis-1\",\"position\":\"right\",\"scale\":{\"mode\":\"normal\",\"type\":\"linear\"},\"show\":true,\"style\":{},\"title\":{\"text\":\"Average ambient temperature\"},\"type\":\"value\"}]},\"aggs\":[{\"id\":\"2\",\"enabled\":true,\"type\":\"avg\",\"schema\":\"metric\",\"params\":{\"field\":\"result\",\"customLabel\":\"Average Air Quality\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"hourOfDay\",\"size\":24,\"order\":\"asc\",\"orderBy\":\"_term\",\"customLabel\":\"hour of the Day\"}},{\"id\":\"4\",\"enabled\":true,\"type\":\"avg\",\"schema\":\"metric\",\"params\":{\"field\":\"result\",\"json\":\"\",\"customLabel\":\"Average ambient temperature\"}}]}",
+      "uiStateJSON": "{\"vis\":{\"colors\":{\"Average Air Quality\":\"#CCA300\",\"Average ambient temperature\":\"#1F78C1\"}}}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"d56044d0-d4d8-11e7-b1f6-552982a8a307\",\"filter\":[{\"meta\":{\"index\":\"d56044d0-d4d8-11e7-b1f6-552982a8a307\",\"type\":\"phrases\",\"key\":\"Datastream.name.keyword\",\"value\":\"Ambient Temperature DS, Airquality DS\",\"params\":[\"Ambient Temperature DS\",\"Airquality DS\"],\"negate\":false,\"disabled\":false,\"alias\":null},\"query\":{\"bool\":{\"should\":[{\"match_phrase\":{\"Datastream.name.keyword\":\"Ambient Temperature DS\"}},{\"match_phrase\":{\"Datastream.name.keyword\":\"Airquality DS\"}}],\"minimum_should_match\":1}},\"$state\":{\"store\":\"appState\"}}],\"query\":{\"language\":\"lucene\",\"query\":\"*\"}}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "226e63c0-e6ad-11e7-8fc0-b9f844bff27a",
+    "_type": "visualization",
+    "_source": {
+      "title": "Temperature Field on Printing Platform",
+      "visState": "{\"title\":\"Temperature Field on Printing Platform\",\"type\":\"heatmap\",\"params\":{\"type\":\"heatmap\",\"addTooltip\":true,\"addLegend\":true,\"enableHover\":false,\"legendPosition\":\"right\",\"times\":[],\"colorsNumber\":5,\"colorSchema\":\"Green to Red\",\"setColorRange\":true,\"colorsRange\":[{\"from\":0,\"to\":20},{\"from\":20,\"to\":25},{\"from\":25,\"to\":30},{\"from\":30,\"to\":35},{\"from\":35,\"to\":40},{\"from\":40,\"to\":100}],\"invertColors\":false,\"percentageMode\":false,\"valueAxes\":[{\"show\":false,\"id\":\"ValueAxis-1\",\"type\":\"value\",\"scale\":{\"type\":\"linear\",\"defaultYExtents\":false},\"labels\":{\"show\":true,\"rotate\":0,\"color\":\"#555\"}}]},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"avg\",\"schema\":\"metric\",\"params\":{\"field\":\"result\",\"customLabel\":\"Average Temperature\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"filters\",\"schema\":\"segment\",\"params\":{\"filters\":[{\"input\":{\"query\":\"Temp512, Temp422, Temp421\"},\"label\":\"\"},{\"input\":{\"query\":\"Temp511, Temp612, Temp421\"}},{\"input\":{\"query\":\"Temp621 Temp611, Temp622\"}}]}},{\"id\":\"3\",\"enabled\":true,\"type\":\"filters\",\"schema\":\"group\",\"params\":{\"filters\":[{\"input\":{\"query\":\"Temp512, Temp511, Temp621\"},\"label\":\"\"},{\"input\":{\"query\":\"Temp421, Temp622\"}},{\"input\":{\"query\":\"Temp422, Temp612, Temp611\"}}]}}]}",
+      "uiStateJSON": "{\"vis\":{\"defaultColors\":{\"0 - 20\":\"rgb(0,104,55)\",\"20 - 25\":\"rgb(102,189,99)\",\"25 - 30\":\"rgb(217,239,139)\",\"30 - 35\":\"rgb(254,224,139)\",\"35 - 40\":\"rgb(244,109,67)\",\"40 - 100\":\"rgb(165,0,38)\"},\"legendOpen\":true}}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"d56044d0-d4d8-11e7-b1f6-552982a8a307\",\"filter\":[{\"meta\":{\"index\":\"d56044d0-d4d8-11e7-b1f6-552982a8a307\",\"type\":\"phrases\",\"key\":\"Datastream.name.keyword\",\"value\":\"Temp512, Temp421, Temp511, Temp621, Temp622, Temp422, Temp612, Temp611\",\"params\":[\"Temp512\",\"Temp421\",\"Temp511\",\"Temp621\",\"Temp622\",\"Temp422\",\"Temp612\",\"Temp611\"],\"negate\":false,\"disabled\":false,\"alias\":null},\"query\":{\"bool\":{\"should\":[{\"match_phrase\":{\"Datastream.name.keyword\":\"Temp512\"}},{\"match_phrase\":{\"Datastream.name.keyword\":\"Temp421\"}},{\"match_phrase\":{\"Datastream.name.keyword\":\"Temp511\"}},{\"match_phrase\":{\"Datastream.name.keyword\":\"Temp621\"}},{\"match_phrase\":{\"Datastream.name.keyword\":\"Temp622\"}},{\"match_phrase\":{\"Datastream.name.keyword\":\"Temp422\"}},{\"match_phrase\":{\"Datastream.name.keyword\":\"Temp612\"}},{\"match_phrase\":{\"Datastream.name.keyword\":\"Temp611\"}}],\"minimum_should_match\":1}},\"$state\":{\"store\":\"appState\"}}],\"query\":{\"query\":\"\",\"language\":\"lucene\"}}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "19bb5f20-e71c-11e7-8fc0-b9f844bff27a",
+    "_type": "visualization",
+    "_source": {
+      "title": "Air Pollution Histogram",
+      "visState": "{\"title\":\"Air Pollution Histogram\",\"type\":\"line\",\"params\":{\"addLegend\":true,\"addTimeMarker\":false,\"addTooltip\":true,\"categoryAxes\":[{\"id\":\"CategoryAxis-1\",\"labels\":{\"show\":true,\"truncate\":100},\"position\":\"bottom\",\"scale\":{\"type\":\"linear\"},\"show\":true,\"style\":{},\"title\":{},\"type\":\"category\"}],\"grid\":{\"categoryLines\":true,\"style\":{\"color\":\"#eee\"},\"valueAxis\":\"ValueAxis-1\"},\"legendPosition\":\"bottom\",\"seriesParams\":[{\"data\":{\"id\":\"1\",\"label\":\"Count of value\"},\"drawLinesBetweenPoints\":true,\"mode\":\"stacked\",\"show\":\"true\",\"showCircles\":true,\"type\":\"area\",\"valueAxis\":\"ValueAxis-1\"}],\"times\":[],\"type\":\"line\",\"valueAxes\":[{\"id\":\"ValueAxis-1\",\"labels\":{\"filter\":false,\"rotate\":0,\"show\":true,\"truncate\":100},\"name\":\"LeftAxis-1\",\"position\":\"left\",\"scale\":{\"mode\":\"normal\",\"type\":\"linear\"},\"show\":true,\"style\":{},\"title\":{\"text\":\"Count of value\"},\"type\":\"value\"}]},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{\"customLabel\":\"Count of value\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"result\",\"interval\":20,\"min_doc_count\":1,\"extended_bounds\":{\"max\":1600,\"min\":0},\"customLabel\":\"Air Pollution\"}}]}",
+      "uiStateJSON": "{\"vis\":{\"colors\":{\"Frquency\":\"#E5AC0E\",\"Count of value\":\"#967302\"}}}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"d56044d0-d4d8-11e7-b1f6-552982a8a307\",\"filter\":[{\"$state\":{\"store\":\"appState\"},\"meta\":{\"alias\":null,\"disabled\":false,\"index\":\"d56044d0-d4d8-11e7-b1f6-552982a8a307\",\"key\":\"Datastream.name.keyword\",\"negate\":false,\"params\":{\"query\":\"Airquality DS\",\"type\":\"phrase\"},\"type\":\"phrase\",\"value\":\"Airquality DS\"},\"query\":{\"match\":{\"Datastream.name.keyword\":{\"query\":\"Airquality DS\",\"type\":\"phrase\"}}}}],\"query\":{\"language\":\"lucene\",\"query\":\"\"}}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "73185370-e730-11e7-8fc0-b9f844bff27a",
+    "_type": "visualization",
+    "_source": {
+      "title": "Filament Usage and Skids",
+      "visState": "{\"title\":\"Filament Usage and Skids\",\"type\":\"line\",\"params\":{\"type\":\"line\",\"grid\":{\"categoryLines\":true,\"style\":{\"color\":\"#eee\"},\"valueAxis\":\"ValueAxis-1\"},\"categoryAxes\":[{\"id\":\"CategoryAxis-1\",\"type\":\"category\",\"position\":\"bottom\",\"show\":true,\"style\":{},\"scale\":{\"type\":\"linear\"},\"labels\":{\"show\":true,\"truncate\":100},\"title\":{}}],\"valueAxes\":[{\"id\":\"ValueAxis-1\",\"name\":\"LeftAxis-1\",\"type\":\"value\",\"position\":\"left\",\"show\":true,\"style\":{},\"scale\":{\"type\":\"linear\",\"mode\":\"normal\"},\"labels\":{\"show\":true,\"rotate\":0,\"filter\":false,\"truncate\":100},\"title\":{\"text\":\"Average result\"}}],\"seriesParams\":[{\"show\":\"true\",\"type\":\"area\",\"mode\":\"normal\",\"data\":{\"label\":\"Average result\",\"id\":\"1\"},\"valueAxis\":\"ValueAxis-1\",\"drawLinesBetweenPoints\":true,\"showCircles\":true}],\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"bottom\",\"times\":[],\"addTimeMarker\":false},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"avg\",\"schema\":\"metric\",\"params\":{\"field\":\"result\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"phenomenonTime\",\"interval\":\"auto\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"split\",\"params\":{\"field\":\"Datastream.name.keyword\",\"size\":5,\"order\":\"asc\",\"orderBy\":\"_term\",\"row\":true}}]}",
+      "uiStateJSON": "{\"vis\":{\"colors\":{\"Average result\":\"#508642\"}}}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"d56044d0-d4d8-11e7-b1f6-552982a8a307\",\"filter\":[{\"meta\":{\"index\":\"d56044d0-d4d8-11e7-b1f6-552982a8a307\",\"type\":\"phrases\",\"key\":\"Datastream.name.keyword\",\"value\":\"Filament Usage DS, Skid Count DS\",\"params\":[\"Filament Usage DS\",\"Skid Count DS\"],\"negate\":false,\"disabled\":false,\"alias\":null},\"query\":{\"bool\":{\"should\":[{\"match_phrase\":{\"Datastream.name.keyword\":\"Filament Usage DS\"}},{\"match_phrase\":{\"Datastream.name.keyword\":\"Skid Count DS\"}}],\"minimum_should_match\":1}},\"$state\":{\"store\":\"appState\"}}],\"query\":{\"query\":\"*\",\"language\":\"lucene\"}}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "4fcf9d70-e6a8-11e7-8fc0-b9f844bff27a",
+    "_type": "visualization",
+    "_source": {
+      "title": "Air Pollution: Distribution on a day",
+      "visState": "{\"title\":\"Air Pollution: Distribution on a day\",\"type\":\"histogram\",\"params\":{\"type\":\"histogram\",\"grid\":{\"categoryLines\":false,\"style\":{\"color\":\"#eee\"},\"valueAxis\":\"ValueAxis-1\"},\"categoryAxes\":[{\"id\":\"CategoryAxis-1\",\"type\":\"category\",\"position\":\"bottom\",\"show\":true,\"style\":{},\"scale\":{\"type\":\"linear\"},\"labels\":{\"show\":true,\"truncate\":100},\"title\":{}}],\"valueAxes\":[{\"id\":\"ValueAxis-1\",\"name\":\"LeftAxis-1\",\"type\":\"value\",\"position\":\"left\",\"show\":true,\"style\":{},\"scale\":{\"type\":\"linear\",\"mode\":\"normal\"},\"labels\":{\"show\":true,\"rotate\":0,\"filter\":false,\"truncate\":100},\"title\":{\"text\":\"Average Air Quality\"}}],\"seriesParams\":[{\"show\":true,\"mode\":\"stacked\",\"type\":\"histogram\",\"drawLinesBetweenPoints\":true,\"showCircles\":true,\"data\":{\"id\":\"2\",\"label\":\"Average Air Quality\"},\"valueAxis\":\"ValueAxis-1\"}],\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"bottom\",\"times\":[],\"addTimeMarker\":false,\"orderBucketsBySum\":false},\"aggs\":[{\"id\":\"2\",\"enabled\":true,\"type\":\"avg\",\"schema\":\"metric\",\"params\":{\"field\":\"result\",\"customLabel\":\"Average Air Quality\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"hourOfDay\",\"size\":24,\"order\":\"asc\",\"orderBy\":\"_term\",\"customLabel\":\"hour of the Day\"}}]}",
+      "uiStateJSON": "{\"vis\":{\"colors\":{\"Average Air Quality\":\"#CCA300\"}}}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"d56044d0-d4d8-11e7-b1f6-552982a8a307\",\"filter\":[],\"query\":{\"language\":\"lucene\",\"query\":\"Datastream.@iot.name =Airquality DS\"}}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "61ce0f70-e725-11e7-8fc0-b9f844bff27a",
+    "_type": "visualization",
+    "_source": {
+      "title": "3D Printer Temparature Monitoring: Legend",
+      "visState": "{\"title\":\"3D Printer Temparature Monitoring: Legend\",\"type\":\"markdown\",\"params\":{\"fontSize\":12,\"markdown\":\"## Temperature Field Measurement of the 3D Printer, Legend:\\n\\n\\n| **Stepper Motor** | | | **Left Wall** | | | | | | | | | | **Build Platform** | | | | | | | | | | **Right Wall** | | | | **Stepper Motor** |\\n|--------|---|---|-------------|---|---|---|---|---|---|---|---|---|--------------------------|---|---|---|---|---|---|---|---|---|---|---------------|---|---|------------|\\n\\n\\n\\n| y-Axis |   | upper back  |         | bottom back  |   | left back    | middle back  | right back    |   | bottom back  |         | upper back  |   | x-Axis |\\n|--------|---|-------------|---------|--------------|---|--------------|--------------|---------------|---|--------------|---------|-------------|---|--------|\\n|        |   |             | central |              |   | central left |              | central right |   |              | central |             |   |        |\\n|        |   | upper front |         | bottom front |   | left front   | middle front | right front   |   | bottom front |         | upper front |   |        |\\n\\n\\nMapping is defined [here](https://secure.salzburgresearch.at/wiki/display/IM/CM+der+Temperatur+am+3D-Drucker+-+Messfeld).\"},\"aggs\":[]}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "1150c280-fcf2-11e7-a1fc-ed541294435a",
+    "_type": "visualization",
+    "_source": {
+      "title": "Filament Usage & Skids",
+      "visState": "{\"title\":\"Filament Usage & Skids\",\"type\":\"line\",\"params\":{\"addLegend\":true,\"addTimeMarker\":false,\"addTooltip\":true,\"categoryAxes\":[{\"id\":\"CategoryAxis-1\",\"labels\":{\"show\":true,\"truncate\":100},\"position\":\"bottom\",\"scale\":{\"type\":\"linear\"},\"show\":true,\"style\":{},\"title\":{},\"type\":\"category\"}],\"grid\":{\"categoryLines\":true,\"style\":{\"color\":\"#eee\"},\"valueAxis\":\"ValueAxis-1\"},\"legendPosition\":\"bottom\",\"seriesParams\":[{\"data\":{\"id\":\"1\",\"label\":\"Filament Usage in mm³\"},\"drawLinesBetweenPoints\":true,\"interpolate\":\"linear\",\"mode\":\"normal\",\"show\":\"true\",\"showCircles\":true,\"type\":\"line\",\"valueAxis\":\"ValueAxis-1\",\"lineWidth\":3.5},{\"data\":{\"id\":\"3\",\"label\":\"Min result\"},\"drawLinesBetweenPoints\":true,\"mode\":\"normal\",\"show\":true,\"showCircles\":true,\"type\":\"area\",\"valueAxis\":\"ValueAxis-2\",\"interpolate\":\"linear\"}],\"times\":[],\"type\":\"line\",\"valueAxes\":[{\"id\":\"ValueAxis-1\",\"labels\":{\"filter\":false,\"rotate\":0,\"show\":true,\"truncate\":100},\"name\":\"LeftAxis-1\",\"position\":\"left\",\"scale\":{\"mode\":\"normal\",\"type\":\"linear\"},\"show\":true,\"style\":{},\"title\":{\"text\":\"Filament Usage in mm³\"},\"type\":\"value\"},{\"id\":\"ValueAxis-2\",\"labels\":{\"filter\":false,\"rotate\":0,\"show\":true,\"truncate\":100},\"name\":\"RightAxis-1\",\"position\":\"right\",\"scale\":{\"mode\":\"normal\",\"type\":\"square root\",\"defaultYExtents\":false,\"setYExtents\":true,\"min\":0,\"max\":200},\"show\":true,\"style\":{},\"title\":{\"text\":\"Min result\"},\"type\":\"value\"}]},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"max\",\"schema\":\"metric\",\"params\":{\"field\":\"result\",\"customLabel\":\"Filament Usage in mm³\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"phenomenonTime\",\"interval\":\"m\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"enabled\":true,\"type\":\"min\",\"schema\":\"metric\",\"params\":{\"field\":\"result\"}}]}",
+      "uiStateJSON": "{\"vis\":{\"colors\":{\"Count\":\"#F29191\",\"Filament Skid-Rate (1/m)\":\"#E24D42\",\"50th percentile of Filament Usage in m\":\"#629E51\",\"Filament Usage in mm³\":\"#7EB26D\",\"Skid Rate in 1/m\":\"#EA6460\",\"Occured Skids as SkidRate in 1/m\":\"#E24D42\",\"Min result\":\"#EA6460\"},\"legendOpen\":true}}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"d56044d0-d4d8-11e7-b1f6-552982a8a307\",\"filter\":[{\"meta\":{\"index\":\"d56044d0-d4d8-11e7-b1f6-552982a8a307\",\"type\":\"phrases\",\"key\":\"Datastream.@iot.id\",\"value\":\"9, 2\",\"params\":[\"9\",\"2\"],\"negate\":false,\"disabled\":false,\"alias\":null},\"query\":{\"bool\":{\"should\":[{\"match_phrase\":{\"Datastream.@iot.id\":\"9\"}},{\"match_phrase\":{\"Datastream.@iot.id\":\"2\"}}],\"minimum_should_match\":1}},\"$state\":{\"store\":\"appState\"}}],\"query\":{\"query\":\"\",\"language\":\"lucene\"}}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "e364d370-e699-11e7-ba27-31bf9cbb9afb",
+    "_type": "visualization",
+    "_source": {
+      "title": "Air Pollution timeline: Minimum, Median and Maximum Values",
+      "visState": "{\"title\":\"Air Pollution timeline: Minimum, Median and Maximum Values\",\"type\":\"histogram\",\"params\":{\"type\":\"histogram\",\"grid\":{\"categoryLines\":true,\"style\":{\"color\":\"#eee\"},\"valueAxis\":\"ValueAxis-1\"},\"categoryAxes\":[{\"id\":\"CategoryAxis-1\",\"type\":\"category\",\"position\":\"bottom\",\"show\":true,\"style\":{},\"scale\":{\"type\":\"linear\"},\"labels\":{\"show\":true,\"truncate\":100},\"title\":{}}],\"valueAxes\":[{\"id\":\"ValueAxis-1\",\"name\":\"LeftAxis-1\",\"type\":\"value\",\"position\":\"left\",\"show\":true,\"style\":{},\"scale\":{\"type\":\"linear\",\"mode\":\"normal\"},\"labels\":{\"show\":true,\"rotate\":0,\"filter\":false,\"truncate\":100},\"title\":{\"text\":\"Air Quality\"}}],\"seriesParams\":[{\"show\":\"true\",\"type\":\"line\",\"mode\":\"stacked\",\"data\":{\"label\":\"Max value\",\"id\":\"1\"},\"valueAxis\":\"ValueAxis-1\",\"drawLinesBetweenPoints\":true,\"showCircles\":true,\"interpolate\":\"cardinal\",\"lineWidth\":1.5},{\"show\":true,\"mode\":\"stacked\",\"type\":\"area\",\"drawLinesBetweenPoints\":true,\"showCircles\":true,\"data\":{\"id\":\"3\",\"label\":\"Median result\"},\"valueAxis\":\"ValueAxis-1\",\"interpolate\":\"cardinal\",\"lineWidth\":2.5},{\"show\":true,\"mode\":\"stacked\",\"type\":\"area\",\"drawLinesBetweenPoints\":true,\"showCircles\":true,\"data\":{\"id\":\"4\",\"label\":\"Min value\"},\"valueAxis\":\"ValueAxis-1\",\"interpolate\":\"cardinal\",\"lineWidth\":1.5}],\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"bottom\",\"times\":[],\"addTimeMarker\":true,\"radiusRatio\":53},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"max\",\"schema\":\"metric\",\"params\":{\"field\":\"result\",\"customLabel\":\"Max value\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"phenomenonTime\",\"interval\":\"auto\",\"customInterval\":\"10m\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"enabled\":true,\"type\":\"median\",\"schema\":\"metric\",\"params\":{\"field\":\"result\",\"percents\":[50]}},{\"id\":\"4\",\"enabled\":true,\"type\":\"min\",\"schema\":\"metric\",\"params\":{\"field\":\"result\",\"customLabel\":\"Min value\"}}]}",
+      "uiStateJSON": "{\"vis\":{\"colors\":{\"Min result\":\"#E24D42\",\"Max result\":\"#70DBED\",\"50th percentile of result\":\"#F2C96D\",\"Min value\":\"#BF1B00\"},\"legendOpen\":true}}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"d56044d0-d4d8-11e7-b1f6-552982a8a307\",\"filter\":[],\"query\":{\"query\":\"Datastream.@iot.id=7\",\"language\":\"lucene\"}}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "149f8d70-fcf4-11e7-8fc0-b9f844bff27a",
+    "_type": "visualization",
+    "_source": {
+      "title": "Pie Chart, Data Input",
+      "visState": "{\"title\":\"Pie Chart, Data Input\",\"type\":\"pie\",\"params\":{\"type\":\"pie\",\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"isDonut\":true},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{\"customLabel\":\"Data Input Count for each Channel\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"range\",\"schema\":\"segment\",\"params\":{\"field\":\"Datastream.@iot.id\",\"ranges\":[{\"from\":1,\"to\":1},{\"from\":1,\"to\":2},{\"from\":2,\"to\":3},{\"from\":3,\"to\":4},{\"from\":4,\"to\":5},{\"from\":5,\"to\":6},{\"from\":6,\"to\":7},{\"from\":7,\"to\":8},{\"from\":8,\"to\":9},{\"from\":10,\"to\":30},{\"from\":30}]}}]}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"d56044d0-d4d8-11e7-b1f6-552982a8a307\",\"filter\":[],\"query\":{\"query\":\"\",\"language\":\"lucene\"}}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "010c2650-fcf5-11e7-8fc0-b9f844bff27a",
+    "_type": "visualization",
+    "_source": {
+      "title": "Pie Chart, Hosts",
+      "visState": "{\"title\":\"Pie Chart, Hosts\",\"type\":\"pie\",\"params\":{\"type\":\"pie\",\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"isDonut\":true},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{\"customLabel\":\"Data Input Count for each Channel\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"significant_terms\",\"schema\":\"segment\",\"params\":{\"field\":\"host.keyword\",\"size\":10}}]}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"d56044d0-d4d8-11e7-b1f6-552982a8a307\",\"filter\":[],\"query\":{\"query\":\"\",\"language\":\"lucene\"}}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "8ce26d90-fd06-11e7-8fc0-b9f844bff27a",
+    "_type": "visualization",
+    "_source": {
+      "title": "Pie Chart, Path of Sender",
+      "visState": "{\"title\":\"Pie Chart, Path of Sender\",\"type\":\"pie\",\"params\":{\"type\":\"pie\",\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"isDonut\":true},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{\"customLabel\":\"Data Input Count for each Channel\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"path.keyword\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"1\"}}]}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"d56044d0-d4d8-11e7-b1f6-552982a8a307\",\"filter\":[],\"query\":{\"language\":\"lucene\",\"query\":\"\"}}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "be4481f0-fcf4-11e7-8fc0-b9f844bff27a",
+    "_type": "visualization",
+    "_source": {
+      "title": "Pie Chart, Data Input with Keywords",
+      "visState": "{\"title\":\"Pie Chart, Data Input with Keywords\",\"type\":\"pie\",\"params\":{\"type\":\"pie\",\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"isDonut\":true},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{\"customLabel\":\"Data Input Count for each Channel\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"significant_terms\",\"schema\":\"segment\",\"params\":{\"field\":\"Datastream.name.keyword\",\"size\":25}}]}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"d56044d0-d4d8-11e7-b1f6-552982a8a307\",\"filter\":[],\"query\":{\"query\":\"\",\"language\":\"lucene\"}}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "0f490440-fcf5-11e7-8fc0-b9f844bff27a",
+    "_type": "visualization",
+    "_source": {
+      "title": "Pie Chart, Logger Name",
+      "visState": "{\"title\":\"Pie Chart, Logger Name\",\"type\":\"pie\",\"params\":{\"type\":\"pie\",\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"isDonut\":true},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{\"customLabel\":\"Data Input Count for each Channel\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"logger_name.keyword\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"1\"}}]}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"d56044d0-d4d8-11e7-b1f6-552982a8a307\",\"filter\":[],\"query\":{\"query\":\"\",\"language\":\"lucene\"}}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "395205b0-fd05-11e7-8fc0-b9f844bff27a",
+    "_type": "visualization",
+    "_source": {
+      "title": "Pie Chart, Level",
+      "visState": "{\"title\":\"Pie Chart, Level\",\"type\":\"pie\",\"params\":{\"type\":\"pie\",\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"isDonut\":true},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{\"customLabel\":\"Data Input Count for each Channel\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"level.keyword\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"1\"}}]}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"d56044d0-d4d8-11e7-b1f6-552982a8a307\",\"filter\":[],\"query\":{\"language\":\"lucene\",\"query\":\"\"}}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "16327260-fd08-11e7-8fc0-b9f844bff27a",
+    "_type": "visualization",
+    "_source": {
+      "title": "3D Printer internal Temperatures",
+      "visState": "{\"title\":\"3D Printer internal Temperatures\",\"type\":\"line\",\"params\":{\"type\":\"line\",\"grid\":{\"categoryLines\":true,\"style\":{\"color\":\"#eee\"},\"valueAxis\":\"ValueAxis-1\"},\"categoryAxes\":[{\"id\":\"CategoryAxis-1\",\"type\":\"category\",\"position\":\"bottom\",\"show\":true,\"style\":{},\"scale\":{\"type\":\"linear\"},\"labels\":{\"show\":true,\"truncate\":100},\"title\":{}}],\"valueAxes\":[{\"id\":\"ValueAxis-1\",\"name\":\"LeftAxis-1\",\"type\":\"value\",\"position\":\"left\",\"show\":true,\"style\":{},\"scale\":{\"type\":\"linear\",\"mode\":\"normal\"},\"labels\":{\"show\":true,\"rotate\":0,\"filter\":false,\"truncate\":100},\"title\":{\"text\":\"Temperature in °C\"}}],\"seriesParams\":[{\"show\":\"true\",\"type\":\"line\",\"mode\":\"normal\",\"data\":{\"label\":\"Nozzle Temperature\",\"id\":\"1\"},\"valueAxis\":\"ValueAxis-1\",\"drawLinesBetweenPoints\":true,\"showCircles\":true,\"lineWidth\":3.5},{\"show\":true,\"mode\":\"normal\",\"type\":\"line\",\"drawLinesBetweenPoints\":true,\"showCircles\":true,\"lineWidth\":3.5,\"data\":{\"id\":\"3\",\"label\":\"Printing Platform Temperature\"},\"valueAxis\":\"ValueAxis-1\"}],\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"bottom\",\"times\":[],\"addTimeMarker\":true},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"max\",\"schema\":\"metric\",\"params\":{\"field\":\"result\",\"customLabel\":\"Nozzle Temperature\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"phenomenonTime\",\"interval\":\"auto\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"enabled\":true,\"type\":\"min\",\"schema\":\"metric\",\"params\":{\"field\":\"result\",\"customLabel\":\"Printing Platform Temperature\"}}]}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"d56044d0-d4d8-11e7-b1f6-552982a8a307\",\"filter\":[{\"meta\":{\"index\":\"d56044d0-d4d8-11e7-b1f6-552982a8a307\",\"type\":\"phrases\",\"key\":\"Datastream.name.keyword\",\"value\":\"Nozzle Temperature DS, Bed Temperature DS\",\"params\":[\"Nozzle Temperature DS\",\"Bed Temperature DS\"],\"negate\":false,\"disabled\":false,\"alias\":\"3D Printer internal Temperatures\"},\"query\":{\"bool\":{\"should\":[{\"match_phrase\":{\"Datastream.name.keyword\":\"Nozzle Temperature DS\"}},{\"match_phrase\":{\"Datastream.name.keyword\":\"Bed Temperature DS\"}}],\"minimum_should_match\":1}},\"$state\":{\"store\":\"appState\"}}],\"query\":{\"query\":\"\",\"language\":\"lucene\"}}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  }
+]

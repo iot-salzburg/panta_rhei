@@ -6,8 +6,9 @@ After=network.target
 User=iotdev
 Group=iotdev
 WorkingDirectory=/kafka
-ExecStart=/kafka/bin/kafka-server-start.sh /kafka/config/il08[k].properties
+ExecStart=/kafka/bin/kafka-server-start.sh /kafka/config/server.properties
 ExecReload=/kafka/bin/kafka-server-stop.sh
+Restart=always
 
 [Install]
 WantedBy=multi-user.target

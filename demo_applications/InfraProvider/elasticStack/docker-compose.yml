@@ -1,0 +1,66 @@
+version: "3.4"
+services:
+  elasticsearch:
+    build:
+      context: ./elasticsearch/
+      args:
+        ELK_VERSION: $ELK_VERSION
+    volumes:
+#      The line below is used to get the es-data out into the provisioning directory
+#      - ./elasticsearch/provisioning:/usr/share/elasticsearch/data
+      - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    env_file:
+      - ../.env
+    environment:
+      LS_JAVA_OPTS: "-Xmx1g -Xms1g"
+      ELASTIC_PASSWORD: changeme
+    healthcheck:
+      test: "exit 0"
+      interval: 1m00s
+      timeout: 10s
+      retries: 3
+    networks:
+      - default
+      - datastack
+
+  logstash:
+    build:
+      context: logstash/
+      args:
+        ELK_VERSION: $ELK_VERSION
+    volumes:
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+    ports:
+      - "5000:5000"
+      - "9600:9600"
+    environment:
+      LS_JAVA_OPTS: "-Xmx512m -Xms512m"
+    networks:
+      - default
+      - datastack
+    depends_on:
+      - elasticsearch
+
+  kibana:
+    build:
+      context: kibana/
+      args:
+        ELK_VERSION: $ELK_VERSION
+    volumes:
+      - ./kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
+    ports:
+      - "5601:5601"
+    networks:
+      - default
+      - datastack
+    depends_on:
+      - elasticsearch
+
+networks:
+  datastack:
+    driver: overlay
+    attachable: true

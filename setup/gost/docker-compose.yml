@@ -29,7 +29,7 @@ services:
     image: geodan/gost-dashboard
     restart: always
     ports:  # use port 8080 for internal requests
-      - 8084:8080
+      - 8082:8080
     depends_on:
       - gost
 
