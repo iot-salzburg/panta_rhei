@@ -1,4 +1,10 @@
 sqlalchemy==1.3.6
 psycopg2==2.8.3
-flask-rest-jsonapi==0.30.1
-flask-sqlalchemy==2.4.0
+Flask==1.0.3
+Flask-Migrate==1.8.0
+Flask-REST-JSONAPI==0.30.1
+Flask-Script==2.0.6
+Flask-SQLAlchemy==2.4.0
+Flask-WTF==0.14.2
+passlib==1.7.1
+python-dotenv==0.10.3

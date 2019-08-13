@@ -8,6 +8,7 @@
 -- replace: VARCHAR2 VARCHAR
 -- replace: CREATE TABLE CREATE TABLE IF NOT EXISTS
 -- add:
+
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE user iot4cps;
 ALTER USER iot4cps PASSWORD 'iot4cps';
