@@ -7,7 +7,7 @@ services:
   ##########################
 
   httpd:
-    build: ./httpd
+    build: httpd
     ports:
       - "80:80"
     depends_on:
