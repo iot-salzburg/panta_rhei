@@ -3,6 +3,7 @@ import uuid
 import logging
 import psycopg2
 import sqlalchemy as db
+from sqlalchemy import exc as sqlalchemy_exc
 
 from dotenv import load_dotenv
 from flask_sqlalchemy import SQLAlchemy
@@ -24,6 +25,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI',
                                                   'postgresql+psycopg2://user:passwd@host/database')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = "changeme"
+
 
 def create_tables():
     # Create context, connection and metadata
@@ -93,8 +95,10 @@ def create_tables():
     metadata.create_all(engine)
     app.logger.info("Created tables.")
 
+
 def get_uid():
     return str(uuid.uuid4()).split("-")[-1]
+
 
 def insert_sample():
     # Create context, connection and metadata
@@ -155,6 +159,7 @@ def insert_sample():
 
     app.logger.info("Ingested data into tables.")
 
+
 @app.route('/')
 def index():
     return render_template('home.html')
@@ -212,13 +217,11 @@ def article(id):
             # print(data)
         return render_template("article.html", article=entry)
 
-
 # Register Form Class
 class RegisterForm(Form):
     first_name = StringField('First Name', [validators.Length(min=1, max=50)])
     name = StringField('Name', [validators.Length(min=1, max=50)])
-    # birthdate = wtforms.DateField("Birthdate")  #, format='%Y-%m-%d')
-    # username = StringField('Username', [validators.Length(min=3, max=25)])
+    birthdate = wtforms.DateField("Birthdate", format='%Y-%m-%d')
     email = StringField('Email', [validators.Email(message="The given email seems to be wrong")])
     password = PasswordField('Password', [
         validators.DataRequired(),
@@ -232,26 +235,25 @@ class RegisterForm(Form):
 def register():
     form = RegisterForm(request.form)
     if request.method == 'POST' and form.validate():
-        first_name = request.form["first_name"]  # form.name.data
-        name = request.form["name"]  # form.name.data
-        email = request.form["email"]  # form.email.data
-        password = sha256_crypt.encrypt(str(request.form["password"]))  # form.password.data))
-
         # Create cursor
         engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
         conn = engine.connect()
 
         query = db.insert(app.config["tables"]["users"])
         values_list = [{'uuid': get_uid(),
-                        'first_name': first_name,
-                        'sur_name': name,
-                        'email': email,
-                        'password': password}]
-        ResultProxy = conn.execute(query, values_list)
-        # results = ResultProxy.fetchall()
+                        'first_name': request.form["first_name"],
+                        'sur_name': request.form["name"],
+                        'birthdate': request.form["birthdate"],
+                        'email': request.form["email"],
+                        'password': sha256_crypt.encrypt(str(request.form["password"]))}]
+        try:
+            ResultProxy = conn.execute(query, values_list)
+            flash("You are now registered and can log in", "success")
+            return redirect(url_for('login'))
 
-        flash("You are now registered and can log in", "success")
-        return redirect(url_for('login'))
+        except sqlalchemy_exc.IntegrityError:
+            flash("You are already registered with this email. Please log in", "danger")
+            return render_template('register.html', form=form)
 
     return render_template('register.html', form=form)
 
@@ -306,7 +308,7 @@ def is_logged_in(f):
         if 'logged_in' in session:
             return f(*args, **kwargs)
         else:
-            flash("Unauthorized, Please login", "danger")
+            flash("Unauthorized. Please login", "danger")
             return redirect(url_for("login"))
 
     return wrap

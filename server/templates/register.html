@@ -1,6 +1,7 @@
- {% extends 'layout.html' %}
+{% extends 'layout.html' %}
 
 {% block body %}
+
     <h1>Register</h1>
     <br>
     {% from "includes/_formhelpers.html" import render_field %}
@@ -12,6 +13,31 @@
         <div class="form-group">
             {{render_field(form.name, class_="form-control")}}
         </div>
+
+        <div class="form-group">
+            <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" rel="stylesheet">
+            <script src="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
+            <script type='text/javascript' src='//code.jquery.com/jquery-1.8.3.js'></script>
+
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.5.0/css/bootstrap-datepicker3.min.css">
+            <script type='text/javascript' src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.5.0/js/bootstrap-datepicker.min.js"></script>
+            <script type='text/javascript'>
+                $(function(){
+                    $('.input-group.date').datepicker({
+                        calendarWeeks: true,
+                        todayHighlight: true,
+                        autoclose: true,
+                        format: 'yyyy-mm-dd',
+                        startDate: '-9y'
+                    });
+                });
+            </script>
+            <div class="input-group date">
+            {{render_field(form.birthdate, class_="input-group date")}}
+                <span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
+            </div>
+        </div>
+
         <div class="form-group">
             {{render_field(form.email, class_="form-control")}}
         </div>
@@ -28,6 +54,4 @@
     </form>
 
 {% endblock %}
-
-
 
