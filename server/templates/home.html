@@ -2,12 +2,57 @@
 
 {% block body %}
     <div class="jumbotron text-center">
-        <h1>Welcome to FlaskApp</h1>
-        <p class="lead"> This application is build on the Python Flask framework.</p>
+        <h1>Digital Twin Platform</h1>
+        <p class="lead" >
+        <h4>Project IoT4CPS enables to share IoT data incredibly easy even in complex streaming networks and also
+            provides data analytics functionality.
+        <br>
+        Everything, open source.</h4>
+
+        <br>
+        This website handles the management for Users, Companies, Systems, Clients, Things and Datastreams
+        for the underlying streamed data network.
+        <br>
+        <br>
+
+        <div class="list-group">
+          <a href="#" class="list-group-item list-group-item-action flex-column align-items-start">
+            <div class="d-flex w-100 justify-content-between">
+              <h5 class="mb-1">Digital Twin Messaging Layer</h5>
+            </div>
+            <p class="mb-1">The Digital Twin Messaging Layer unifies the strengths of Apache Kafka and SensorThings.</p>
+          </a>
+          <a href="#" class="list-group-item list-group-item-action flex-column align-items-start">
+            <div class="d-flex w-100 justify-content-between">
+              <h5 class="mb-1">Digital Twin Client</h5>
+            </div>
+            <p class="mb-1">The Digital Twin Client accesses the Messaging Layer easily with only an hand full lines of code.</p>
+          </a>
+          <a href="#" class="list-group-item list-group-item-action flex-column align-items-start">
+            <div class="d-flex w-100 justify-content-between">
+              <h5 class="mb-1">Demo Applications</h5>
+            </div>
+            <p class="mb-1">Demo Applications helps you to get started as fast as possible.</p>
+          </a>
+        </div>
+    </p>
+    <br>
     {% if session.logged_in == NULL %}
+        <p class="lead">
+            Get started now!
+        </p>
       <a href="/register" class="btn btn-primary btn-lg">Register</a>
       <a href="/login" class="btn btn-success btn-lg">Login</a>
     {% endif %}
+
+        <br>
+        <br>
+        <br>
+        <h4>Source:</h4>
+        <p class="lead" >
+            The source code is permissive open source and can be found on
+            <a href="https://git-service.ait.ac.at/im-IoT4CPS/WP5-lifecycle-mgmt">Gitlab</a>.
+        </p>
   </div>
 
 
