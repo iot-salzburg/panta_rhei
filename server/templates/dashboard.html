@@ -1,7 +1,7 @@
 {% extends 'layout.html' %}
 
 {% block body %}
-  <h1>Dashboard <small> Welcome {{session.username}}</small></h1>
+  <h1>Dashboard <small> Welcome {{session.first_name}} {{session.sur_name}}</small></h1>
   <a class="btn btn-success" href="/add_article"> Add Article</a>
   <hr>
   <table class="table table-striped">

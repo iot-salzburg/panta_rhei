@@ -1,5 +1,6 @@
 import os
 import uuid
+import json
 import logging
 import psycopg2
 import sqlalchemy as db
@@ -26,17 +27,23 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI',
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = "changeme"
 
+def get_datetime():
+    import pytz
+    from dateutil import tz
+    from datetime import datetime
+    dt = datetime.utcnow().replace(microsecond=0).replace(tzinfo=pytz.UTC).astimezone(tz.gettz('Europe/Vienna'))
+    return dt.isoformat()
 
 def create_tables():
     # Create context, connection and metadata
     engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
     conn = engine.connect()
-    metadata = db.MetaData()
+    app.config['metadata'] = db.MetaData()
 
     # Define all entities and relations
     app.config["tables"] = dict()
     app.config["tables"]["users"] = db.Table(
-        'users', metadata,
+        'users', app.config['metadata'],
         db.Column('uuid', db.VARCHAR(12), primary_key=True, unique=True),
         db.Column('first_name', db.VARCHAR(25), nullable=False),
         db.Column('sur_name', db.VARCHAR(25), nullable=False),
@@ -45,34 +52,34 @@ def create_tables():
         db.Column('password', db.VARCHAR(80), nullable=False)
         )
     app.config["tables"]["companies"] = db.Table(
-        'companies', metadata,
+        'companies', app.config['metadata'],
         db.Column('uuid', db.VARCHAR(12), primary_key=True, unique=True),
         db.Column('domain', db.VARCHAR(4), nullable=False),
         db.Column('enterprise', db.VARCHAR(15), nullable=False)
         )
     app.config["tables"]["systems"] = db.Table(
-        'systems', metadata,
+        'systems', app.config['metadata'],
         db.Column('uuid', db.VARCHAR(12), primary_key=True, unique=True),
         db.Column('company_uuid', db.ForeignKey('companies.uuid')),
         db.Column('workcenter', db.VARCHAR(30), nullable=False),
         db.Column('station', db.VARCHAR(20), nullable=False)
         )
     app.config["tables"]["is_admin_of"] = db.Table(
-        'is_admin_of', metadata,
+        'is_admin_of', app.config['metadata'],
         db.Column('user_uuid', db.ForeignKey("users.uuid"), primary_key=True),
         db.Column('company_uuid', db.ForeignKey('companies.uuid'), primary_key=True),
         db.Column('creator_uuid', db.ForeignKey("users.uuid"), nullable=False),
         db.Column('datetime', db.DateTime, nullable=True)
         )
     app.config["tables"]["is_agent_of"] = db.Table(
-        'is_agent_of', metadata,
+        'is_agent_of', app.config['metadata'],
         db.Column('user_uuid', db.ForeignKey("users.uuid"), primary_key=True),
         db.Column('system_uuid', db.ForeignKey('systems.uuid'), primary_key=True),
         db.Column('creator_uuid', db.ForeignKey("users.uuid"), nullable=False),
         db.Column('datetime', db.DateTime, nullable=True)
         )
     app.config["tables"]["clients"] = db.Table(
-        'clients', metadata,
+        'clients', app.config['metadata'],
         db.Column('name', db.VARCHAR(25), primary_key=True, unique=True),
         db.Column('system_uuid', db.ForeignKey('systems.uuid'), nullable=False),
         db.Column('keyfile', db.LargeBinary, nullable=False),
@@ -80,19 +87,19 @@ def create_tables():
         db.Column('creator_uuid', db.ForeignKey("users.uuid"), nullable=False)
         )
     app.config["tables"]["gost_thing"] = db.Table(
-        'gost_thing', metadata,
+        'gost_thing', app.config['metadata'],
         db.Column('link', db.VARCHAR(50), nullable=False),
         db.Column('system_uuid', db.ForeignKey("systems.uuid"), primary_key=True)
         )
     app.config["tables"]["gost_ds"] = db.Table(
-        'gost_ds', metadata,
+        'gost_ds', app.config['metadata'],
         db.Column('link', db.VARCHAR(50), nullable=False),
         db.Column('client_name', db.ForeignKey("clients.name"), primary_key=True),
         db.Column('system_uuid', db.ForeignKey("systems.uuid"), primary_key=True)
         )
 
     # Creates the tables
-    metadata.create_all(engine)
+    app.config['metadata'].create_all(engine)
     app.logger.info("Created tables.")
 
 
@@ -105,11 +112,16 @@ def insert_sample():
     engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
     conn = engine.connect()
 
+    # Drop Tables befor ingestions
+    for tbl in reversed(app.config['metadata'].sorted_tables):
+        engine.execute(tbl.delete())
+
     # Inserting many records at ones in users
     uuid_sue = get_uid()
     uuid_stefan = get_uid()
     uuid_peter = get_uid()
     uuid_anna = get_uid()
+    uuid_chris = get_uid()
     query = db.insert(app.config["tables"]["users"])
     values_list = [
         {'uuid': uuid_sue,
@@ -135,27 +147,48 @@ def insert_sample():
         'sur_name': 'Gruber',
         'birthdate': '1994-01-01',
         'email': 'anna.gruber@gmail.com',
-        'password': '12345678'}]
+        'password': '12345678'},
+       {'uuid': uuid_chris,
+        'first_name': 'Chris',
+        'sur_name': 'Schranz',
+        'birthdate': '1993-04-23',
+        'email': 'christoph.s.23@gmx.at',
+        'password': sha256_crypt.encrypt('asdf')}]
     ResultProxy = conn.execute(query, values_list)
-    results = ResultProxy.fetchall()
 
-    # uuid_icecars = get_uid()
-    # uuid_iceland = get_uid()
-    # uuid_datahouse = get_uid()
-    # # Inserting many records at ones in company
-    # query = db.insert(app.config["tables"]["companies"])
-    # values_list = [
-    #     {'uuid': get_uid(),
-    #      'domain': 'cz',
-    #      'enterprise': 'icecars'},
-    #     {'uuid': get_uid(),
-    #      'domain': 'is',
-    #      'enterprise': 'iceland'},
-    #     {'uuid': get_uid(),
-    #      'domain': 'at',
-    #      'enterprise': 'datahouse'}]
-    # ResultProxy = conn.execute(query, values_list)
-    # results = ResultProxy.fetchall()
+    # Insert companies
+    uuid_icecars = get_uid()
+    uuid_iceland = get_uid()
+    uuid_datahouse = get_uid()
+    query = db.insert(app.config["tables"]["companies"])
+    values_list = [
+        {'uuid': uuid_icecars,
+         'domain': 'cz',
+         'enterprise': 'icecars'},
+        {'uuid': uuid_iceland,
+         'domain': 'is',
+         'enterprise': 'iceland'},
+        {'uuid': uuid_datahouse,
+         'domain': 'at',
+         'enterprise': 'datahouse'}]
+    ResultProxy = conn.execute(query, values_list)
+
+
+    # Insert is_admin_of
+    # try:
+    query = db.insert(app.config["tables"]["is_admin_of"])
+    values_list = [
+        {'user_uuid': uuid_sue,
+         'company_uuid': uuid_icecars,
+         'creator_uuid': uuid_sue},
+        {'user_uuid': uuid_stefan,
+         'company_uuid': uuid_iceland,
+         'creator_uuid': uuid_stefan},
+        {'user_uuid': uuid_anna,
+         'company_uuid': uuid_datahouse,
+         'creator_uuid': uuid_anna}]
+    ResultProxy = conn.execute(query, values_list)
+
 
     app.logger.info("Ingested data into tables.")
 
@@ -217,7 +250,7 @@ def article(id):
             # print(data)
         return render_template("article.html", article=entry)
 
-# Register Form Class
+# Register Form Class for the users
 class RegisterForm(Form):
     first_name = StringField('First Name', [validators.Length(min=1, max=50)])
     name = StringField('Name', [validators.Length(min=1, max=50)])
@@ -278,7 +311,7 @@ def login():
             data.append({results[0].keys()[i]: row[i] for i in range(0, len(row))})
 
         if len(data) == 0:
-            error = 'Username not found.'
+            error = 'Email not found.'
             return render_template('login.html', error=error)
         # elif len(data) != 1:
         #     error = 'Username was found twice. Error'
@@ -291,6 +324,9 @@ def login():
                 # Passed
                 session['logged_in'] = True
                 session['email'] = email
+                session['user_uuid'] = data[0]['uuid']
+                session['first_name'] = data[0]['first_name']
+                session['sur_name'] = data[0]['sur_name']
 
                 flash('You are now logged in', 'success')
                 return redirect(url_for('dashboard'))
@@ -355,6 +391,112 @@ class ArticleForm(Form):
     body = TextAreaField('Body', [validators.Length(min=30)])
 
 
+# Article Form Class for the Company
+class CompanyForm(Form):
+    domain = StringField('Domain', [validators.Length(min=1, max=5)])
+    enterprise = StringField('Enterprise', [validators.Length(min=4, max=15)])
+
+
+@app.route('/companies')
+@is_logged_in
+def show_all_companies():
+    # Get Form Fields
+    user_uuid = session['user_uuid']
+    # user_uuid = "b0b793502753"
+    # print("Current user uuid: {}".format(user_uuid))
+    # Create cursor
+    engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
+    conn = engine.connect()
+
+    query = """SELECT company_uuid, domain, enterprise, creator.email AS contact_mail
+    FROM companies AS com 
+    INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
+    INNER JOIN users as admin ON admin.uuid=aof.user_uuid
+    INNER JOIN users as creator ON creator.uuid=aof.creator_uuid
+    WHERE admin.uuid='{}';""".format(user_uuid)
+    ResultProxy = conn.execute(query)
+    companies = [dict(c.items()) for c in ResultProxy.fetchall()]
+    # print("Fetched companies: {}".format(companies))
+
+    return render_template("companies.html", companies=companies)
+
+# Add company
+@app.route("/add_company", methods=["GET", "POST"])
+@is_logged_in
+def add_company():
+    form = CompanyForm(request.form)
+    form.enterprise.label = "Enterprise shortname"
+    if request.method == 'POST' and form.validate():
+
+        # Create cursor
+        engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
+        conn = engine.connect()
+
+        # Create company
+        company_uuid = get_uid()
+        query = db.insert(app.config["tables"]["companies"])
+        values_list = [{'uuid': company_uuid,
+                        'domain': form.domain.data,
+                        'enterprise': form.enterprise.data}]
+        ResultProxy = conn.execute(query, values_list)
+
+        # Create new is_admin_of instance
+        query = db.insert(app.config["tables"]["is_admin_of"])
+        values_list = [{'user_uuid': session['user_uuid'],
+                        'company_uuid': company_uuid,
+                        'creator_uuid': session['user_uuid'],
+                        'datetime': get_datetime()}]
+        try:
+            ResultProxy = conn.execute(query, values_list)
+            flash("The company {} was created.".format(form.enterprise.data), "success")
+            return redirect(url_for('show_all_companies'))
+
+        except sqlalchemy_exc.IntegrityError:
+            flash("You are already registered with this email. Please log in", "danger")
+            return render_template('login.html')
+
+    return render_template('add_company.html', form=form)
+
+
+# Delete company
+@app.route("/delete_company/<string:uuid>", methods=["GET"])
+@is_logged_in
+def delete_company(uuid):
+    user_uuid = session['user_uuid']
+
+    # Create cursor
+    engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
+    conn = engine.connect()
+
+    # Check if you are admin of this company
+    query = """SELECT company_uuid, domain, enterprise, creator.email AS contact_mail
+        FROM companies AS com 
+        INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
+        INNER JOIN users as admin ON admin.uuid=aof.user_uuid
+        INNER JOIN users as creator ON creator.uuid=aof.creator_uuid
+        WHERE admin.uuid='{}';""".format(user_uuid)
+    ResultProxy = conn.execute(query)
+    company = [dict(c.items()) for c in ResultProxy.fetchall() if c["company_uuid"] == uuid][0]
+
+    if uuid in company["company_uuid"]:
+        # Delete new is_admin_of instance
+        query = """DELETE FROM is_admin_of
+            WHERE company_uuid='{}';""".format(uuid)
+        ResultProxy = conn.execute(query)
+
+        # Delete company
+        query = """DELETE FROM companies
+            WHERE uuid='{}';""".format(uuid)
+        ResultProxy = conn.execute(query)
+
+        flash("The company {} was deleted.".format(company["enterprise"]), "success")
+        return redirect(url_for('show_all_companies'))
+
+    else:
+        flash("You are not permitted to delete this company", "danger")
+        return redirect(url_for('show_all_companies'))
+
+
 # Add article
 @app.route("/add_article", methods=["GET", "POST"])
 @is_logged_in
@@ -410,9 +552,9 @@ def edit_article(id):
         title = request.form['title']
         body = request.form['body']
 
-        # insert article
-        cur.execute("UPDATE articles SET title=%s, body=%s WHERE id=%s", (title,body,id))
-        conn.commit()
+        # # insert article
+        # cur.execute("UPDATE articles SET title=%s, body=%s WHERE id=%s", (title,body,id))
+        # conn.commit()
 
         # Close connection
         cur.close()

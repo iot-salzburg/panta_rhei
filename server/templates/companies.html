@@ -1,0 +1,34 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+<!--  <h1>Dashboard <small> Welcome {{session.first_name}} {{session.sur_name}}</small></h1>-->
+  <h1> <small> List of dedicated companies </small></h1>
+  <hr>
+  <table class="table table-striped">
+    <tr>
+      <th>uuid</th>
+      <th>Domain</th>
+      <th>Enterprise</th>
+      <th>Contact</th>
+<!--      <th></th>-->
+      <th></th>
+    </tr>
+      {% for company in companies %}
+      <tr>
+        <td>{{company.company_uuid}}</td>
+        <td>{{company.domain}}</td>
+        <td>{{company.enterprise}}</td>
+        <td>{{company.contact_mail}}</td>
+<!--        <td><a href="edit_article/{{company.id}}" class="btn btn-default pull-right">Edit</a></td>-->
+        <td>
+<!--          <form action="{{url_for('delete_company', uuid=company.uuid)}}" method="post">-->
+<!--            <input type="hidden" name="_method" value="DELETE">-->
+<!--            <input type="submit" value="Delete" class="btn btn-danger">-->
+<!--          </form>-->
+            <a class="btn btn-danger" href="/delete_company/{{company.company_uuid}}"> delete</a>
+        </td>
+      </tr>
+    {% endfor %}
+  </table>
+  <a class="btn btn-success" href="/add_company"> Add Company</a>
+{% endblock %}
