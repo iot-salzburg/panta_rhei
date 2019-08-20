@@ -9,17 +9,18 @@
       <th>uuid</th>
       <th>Domain</th>
       <th>Enterprise</th>
-      <th>Contact</th>
-<!--      <th></th>-->
+<!--      <th>Contact</th>-->
+      <th></th>
       <th></th>
     </tr>
       {% for company in companies %}
       <tr>
-        <td>{{company.company_uuid}}</td>
-        <td>{{company.domain}}</td>
-        <td>{{company.enterprise}}</td>
-        <td>{{company.contact_mail}}</td>
-<!--        <td><a href="edit_article/{{company.id}}" class="btn btn-default pull-right">Edit</a></td>-->
+        <td><a href="show_company/{{company.company_uuid}}" class="btn btn-block">{{company.company_uuid}}</a></td>
+        <td><a href="show_company/{{company.company_uuid}}" class="btn btn-block">{{company.domain}}</a></td>
+        <td><a href="show_company/{{company.company_uuid}}" class="btn btn-block">{{company.enterprise}}</a></td>
+<!--        <td>{{company.contact_mail}}</td>-->
+        <td><a href="show_company/{{company.company_uuid}}" class="btn btn-info">manage admins</a></td>
+<!--        <td><a href="add_admin_company/{{company.company_uuid}}" class="btn btn-primary">add admin</a></td>-->
         <td>
 <!--          <form action="{{url_for('company.delete_company', uuid=company.uuid)}}" method="post">-->
 <!--            <input type="hidden" name="_method" value="DELETE">-->

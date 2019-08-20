@@ -51,6 +51,36 @@ def show_all_companies():
 
     return render_template("/companies/companies.html", companies=companies)
 
+
+@company.route('/show_company/<string:company_uuid>')
+@is_logged_in
+def show_company(company_uuid):
+    # Get Form Fields
+    user_uuid = session['user_uuid']
+
+    # Create cursor
+    engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
+    conn = engine.connect()
+
+    query = """SELECT domain, enterprise, admin.uuid AS admin_uuid, admin.first_name, admin.sur_name, admin.email 
+    FROM companies AS com 
+    INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
+    INNER JOIN users as admin ON admin.uuid=aof.user_uuid 
+    INNER JOIN users as creator ON creator.uuid=aof.creator_uuid 
+    WHERE company_uuid='{}';""".format(company_uuid)
+    ResultProxy = conn.execute(query)
+    admins = [dict(c.items()) for c in ResultProxy.fetchall()]
+    print("Fetched admins: {}".format(admins))
+
+    if user_uuid not in [c["admin_uuid"] for c in admins]:
+        flash("You are not permitted to add an admin for this company", "danger")
+        return redirect(url_for('company.show_all_companies'))
+
+    # if not, admins has at least one item
+    return render_template("/companies/show_company.html", admins=admins, company_uuid=company_uuid,
+                           domain=admins[0]["domain"], enterprise=admins[0]["enterprise"])
+
+
 # Add company
 @company.route("/add_company", methods=["GET", "POST"])
 @is_logged_in
@@ -107,9 +137,13 @@ def delete_company(uuid):
         INNER JOIN users as creator ON creator.uuid=aof.creator_uuid
         WHERE admin.uuid='{}';""".format(user_uuid)
     ResultProxy = conn.execute(query)
-    company = [dict(c.items()) for c in ResultProxy.fetchall() if c["company_uuid"] == uuid][0]
+    permitted_companies = [dict(c.items()) for c in ResultProxy.fetchall() if c["company_uuid"] == uuid]
 
-    if uuid in company["company_uuid"]:
+    if permitted_companies == list():
+        flash("You are not permitted to delete this company", "danger")
+        return redirect(url_for('company.show_all_companies'))
+    else:
+        selected_company = permitted_companies[0]
         # Delete new is_admin_of instance
         query = """DELETE FROM is_admin_of
             WHERE company_uuid='{}';""".format(uuid)
@@ -120,9 +154,72 @@ def delete_company(uuid):
             WHERE uuid='{}';""".format(uuid)
         ResultProxy = conn.execute(query)
 
-        flash("The company {} was deleted.".format(company["enterprise"]), "success")
+        flash("The company {} was deleted.".format(selected_company["enterprise"]), "success")
+        return redirect(url_for('company.show_all_companies'))
+
+
+# Add admin for company
+class AdminForm(Form):
+    email = StringField('Email', [validators.Email(message="The given email seems to be wrong")])
+
+
+@company.route("/add_admin_company/<company_uuid>", methods=["GET", "POST"])
+@is_logged_in
+def add_admin_company(company_uuid):
+    form = AdminForm(request.form)
+    user_uuid = session['user_uuid']
+
+    # Create cursor
+    engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
+    conn = engine.connect()
+
+    # Check if you are admin of this company
+    query = """SELECT company_uuid, domain, enterprise, creator.email AS contact_mail
+            FROM companies AS com 
+            INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
+            INNER JOIN users as admin ON admin.uuid=aof.user_uuid
+            INNER JOIN users as creator ON creator.uuid=aof.creator_uuid
+            WHERE admin.uuid='{}' 
+            AND com.uuid='{}';""".format(user_uuid, company_uuid)
+    ResultProxy = conn.execute(query)
+    permitted_companies = [dict(c.items()) for c in ResultProxy.fetchall() if c["company_uuid"] == company_uuid]
+
+    if permitted_companies == list():
+        flash("You are not permitted to add an admin for this company", "danger")
         return redirect(url_for('company.show_all_companies'))
 
     else:
-        flash("You are not permitted to delete this company", "danger")
-        return redirect(url_for('company.show_all_companies'))
+        selected_company = permitted_companies[0]
+
+        domain = selected_company["domain"]
+        enterprise = selected_company["enterprise"]
+
+        if request.method == 'POST' and form.validate():
+            email = form.email.data
+
+            # Create cursor
+            engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
+            conn = engine.connect()
+
+            # Check if the user is registered
+            query = """SELECT * FROM users WHERE email='{}';""".format(email)
+            ResultProxy = conn.execute(query)
+            found_users = [dict(c.items()) for c in ResultProxy.fetchall()]
+
+            if found_users == list():
+                flash("No user was found with this email address.", "danger")
+                return render_template('/companies/add_admin_company.html', form=form, domain=domain,
+                                       enterprise=enterprise)
+            user = found_users[0]
+            # Create new is_admin_of instance
+            query = db.insert(app.config["tables"]["is_admin_of"])
+            values_list = [{'user_uuid': user["uuid"],
+                            'company_uuid': selected_company["company_uuid"],
+                            'creator_uuid': user_uuid,
+                            'datetime': get_datetime()}]
+
+            ResultProxy = conn.execute(query, values_list)
+            flash("The user {} was added to {}.{} as an admin.".format(form.email.data, domain, enterprise), "success")
+            return redirect(url_for('company.show_company', company_uuid=selected_company["company_uuid"]))
+
+        return render_template('/companies/add_admin_company.html', form=form, domain=domain, enterprise=enterprise)
