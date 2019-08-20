@@ -12,36 +12,14 @@ from flask import Blueprint, Flask, render_template, flash , redirect, url_for, 
 
 # from .data import Articles
 from functools import wraps
-from passlib.hash import sha256_crypt
-import wtforms
+
 from wtforms import Form, StringField, TextField, TextAreaField, PasswordField, validators
 from flask import current_app as app
 
+from .useful_functions import get_datetime, get_uid, is_logged_in
+
 # print("current app: {}".format(app.config))
-company = Blueprint('company', __name__) #, url_prefix='/comp')
-
-def get_uid():
-    return str(uuid.uuid4()).split("-")[-1]
-
-
-def get_datetime():
-    import pytz
-    from dateutil import tz
-    from datetime import datetime
-    dt = datetime.utcnow().replace(microsecond=0).replace(tzinfo=pytz.UTC).astimezone(tz.gettz('Europe/Vienna'))
-    return dt.isoformat()
-
-
-# Check if user is logged in
-def is_logged_in(f):
-    @wraps(f)
-    def wrap(*args, **kwargs):
-        if 'logged_in' in session:
-            return f(*args, **kwargs)
-        else:
-            flash("Unauthorized. Please login", "danger")
-            return redirect(url_for("login"))
-    return wrap
+company = Blueprint('company', __name__)  # url_prefix='/comp')
 
 
 # Article Form Class for the Company
