@@ -14,32 +14,32 @@
             {{render_field(form.name, class_="form-control")}}
         </div>
 
-        <div class="form-group">
-            <link href="https://stackpath.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.css" rel="stylesheet">
-<!--<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">&lt;!&ndash;            <script src="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>&ndash;&gt;-->
-            <script type='text/javascript' src='//code.jquery.com/jquery-3.4.1.js'></script>
+<!--        <div class="form-group">-->
+<!--            <link href="https://stackpath.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.css" rel="stylesheet">-->
+<!--&lt;!&ndash;<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">&lt;!&ndash;            <script src="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>&ndash;&gt;&ndash;&gt;-->
+<!--            <script type='text/javascript' src='//code.jquery.com/jquery-3.4.1.js'></script>-->
 
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.css">
-            <script type='text/javascript' src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.js"></script>
-            <script type='text/javascript'>
-                $(function(){
-                    $('.input-group.date').datepicker({
-                        todayHighlight: true,
-                        // beforeShowDay:  new Date(1990, 0, 1),
-                        defaultDate: new Date(1990, 0, 1),
-                        autoclose: true,
-                        format: 'yyyy-mm-dd',
-                        viewMode: 'decades',
-                        showOtherMonths: true,
-                        maxDate: '-1y' //The maximum date is 1 year ago
-                    });
-                });
-            </script>
-            <div class="input-group date">
-            {{render_field(form.birthdate, class_="input-group date")}}
-                <span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
-            </div>
-        </div>
+<!--            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.css">-->
+<!--            <script type='text/javascript' src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.js"></script>-->
+<!--            <script type='text/javascript'>-->
+<!--                $(function(){-->
+<!--                    $('.input-group.date').datepicker({-->
+<!--                        todayHighlight: true,-->
+<!--                        // beforeShowDay:  new Date(1990, 0, 1),-->
+<!--                        defaultDate: new Date(1990, 0, 1),-->
+<!--                        autoclose: true,-->
+<!--                        format: 'yyyy-mm-dd',-->
+<!--                        viewMode: 'decades',-->
+<!--                        showOtherMonths: true,-->
+<!--                        maxDate: '-1y' //The maximum date is 1 year ago-->
+<!--                    });-->
+<!--                });-->
+<!--            </script>-->
+<!--            <div class="input-group date">-->
+<!--            {{render_field(form.birthdate, class_="input-group date")}}-->
+<!--                <span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>-->
+<!--            </div>-->
+<!--        </div>-->
 
         <div class="form-group">
             {{render_field(form.email, class_="form-control")}}

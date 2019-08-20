@@ -8,7 +8,7 @@ from sqlalchemy import exc as sqlalchemy_exc
 
 from dotenv import load_dotenv
 from flask_sqlalchemy import SQLAlchemy
-from flask import Flask, render_template, flash , redirect, url_for, session, request
+from flask import Blueprint, Flask, render_template, flash , redirect, url_for, session, request
 
 # from .data import Articles
 from functools import wraps
@@ -19,13 +19,13 @@ from wtforms import Form, StringField, TextField, TextAreaField, PasswordField, 
 # load environment variables automatically from a .env file in the same directory
 load_dotenv()
 
+# Create Flask app and load configs
 app = Flask(__name__)
+# app.config.from_object('config')
+app.config.from_envvar('APP_CONFIG_FILE')
 
-# Set up SQLAlchemy
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI',
-                                                  'postgresql+psycopg2://user:passwd@host/database')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.secret_key = "changeme"
+from server.views.company import company
+app.register_blueprint(company)  # url_prefix='/comp')
 
 
 def get_datetime():
@@ -34,6 +34,11 @@ def get_datetime():
     from datetime import datetime
     dt = datetime.utcnow().replace(microsecond=0).replace(tzinfo=pytz.UTC).astimezone(tz.gettz('Europe/Vienna'))
     return dt.isoformat()
+
+
+def get_uid():
+    return str(uuid.uuid4()).split("-")[-1]
+
 
 def create_tables():
     # Create context, connection and metadata
@@ -102,10 +107,6 @@ def create_tables():
     # Creates the tables
     app.config['metadata'].create_all(engine)
     app.logger.info("Created tables.")
-
-
-def get_uid():
-    return str(uuid.uuid4()).split("-")[-1]
 
 
 def insert_sample():
@@ -231,7 +232,7 @@ def register():
         values_list = [{'uuid': get_uid(),
                         'first_name': request.form["first_name"],
                         'sur_name': request.form["name"],
-                        'birthdate': request.form["birthdate"],
+                        'birthdate': request.form.get("birthdate"),  # is optional
                         'email': request.form["email"],
                         'password': sha256_crypt.encrypt(str(request.form["password"]))}]
         try:
@@ -339,117 +340,12 @@ def dashboard():
     return render_template("dashboard.html", msg=msg)
 
 
+
+
 # Article Form Class
 class ArticleForm(Form):
     title = StringField('Title', [validators.Length(min=1, max=50)])
     body = TextAreaField('Body', [validators.Length(min=30)])
-
-
-# Article Form Class for the Company
-class CompanyForm(Form):
-    domain = StringField('Domain', [validators.Length(min=1, max=5)])
-    enterprise = StringField('Enterprise', [validators.Length(min=4, max=15)])
-
-
-@app.route('/companies')
-@is_logged_in
-def show_all_companies():
-    # Get Form Fields
-    user_uuid = session['user_uuid']
-    # user_uuid = "b0b793502753"
-    # print("Current user uuid: {}".format(user_uuid))
-    # Create cursor
-    engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
-    conn = engine.connect()
-
-    query = """SELECT company_uuid, domain, enterprise, creator.email AS contact_mail
-    FROM companies AS com 
-    INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
-    INNER JOIN users as admin ON admin.uuid=aof.user_uuid
-    INNER JOIN users as creator ON creator.uuid=aof.creator_uuid
-    WHERE admin.uuid='{}';""".format(user_uuid)
-    ResultProxy = conn.execute(query)
-    companies = [dict(c.items()) for c in ResultProxy.fetchall()]
-    # print("Fetched companies: {}".format(companies))
-
-    return render_template("/companies/companies.html", companies=companies)
-
-# Add company
-@app.route("/add_company", methods=["GET", "POST"])
-@is_logged_in
-def add_company():
-    form = CompanyForm(request.form)
-    form.enterprise.label = "Enterprise shortname"
-    if request.method == 'POST' and form.validate():
-
-        # Create cursor
-        engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
-        conn = engine.connect()
-
-        # Create company
-        company_uuid = get_uid()
-        query = db.insert(app.config["tables"]["companies"])
-        values_list = [{'uuid': company_uuid,
-                        'domain': form.domain.data,
-                        'enterprise': form.enterprise.data}]
-        ResultProxy = conn.execute(query, values_list)
-
-        # Create new is_admin_of instance
-        query = db.insert(app.config["tables"]["is_admin_of"])
-        values_list = [{'user_uuid': session['user_uuid'],
-                        'company_uuid': company_uuid,
-                        'creator_uuid': session['user_uuid'],
-                        'datetime': get_datetime()}]
-        try:
-            ResultProxy = conn.execute(query, values_list)
-            flash("The company {} was created.".format(form.enterprise.data), "success")
-            return redirect(url_for('show_all_companies'))
-
-        except sqlalchemy_exc.IntegrityError:
-            flash("You are already registered with this email. Please log in", "danger")
-            return render_template('login.html')
-
-    return render_template('/companies/add_company.html', form=form)
-
-
-# Delete company
-@app.route("/delete_company/<string:uuid>", methods=["GET"])
-@is_logged_in
-def delete_company(uuid):
-    user_uuid = session['user_uuid']
-
-    # Create cursor
-    engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
-    conn = engine.connect()
-
-    # Check if you are admin of this company
-    query = """SELECT company_uuid, domain, enterprise, creator.email AS contact_mail
-        FROM companies AS com 
-        INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
-        INNER JOIN users as admin ON admin.uuid=aof.user_uuid
-        INNER JOIN users as creator ON creator.uuid=aof.creator_uuid
-        WHERE admin.uuid='{}';""".format(user_uuid)
-    ResultProxy = conn.execute(query)
-    company = [dict(c.items()) for c in ResultProxy.fetchall() if c["company_uuid"] == uuid][0]
-
-    if uuid in company["company_uuid"]:
-        # Delete new is_admin_of instance
-        query = """DELETE FROM is_admin_of
-            WHERE company_uuid='{}';""".format(uuid)
-        ResultProxy = conn.execute(query)
-
-        # Delete company
-        query = """DELETE FROM companies
-            WHERE uuid='{}';""".format(uuid)
-        ResultProxy = conn.execute(query)
-
-        flash("The company {} was deleted.".format(company["enterprise"]), "success")
-        return redirect(url_for('show_all_companies'))
-
-    else:
-        flash("You are not permitted to delete this company", "danger")
-        return redirect(url_for('show_all_companies'))
-
 
 
 @app.route('/articles')
@@ -595,5 +491,5 @@ if __name__ == '__main__':
     # Insert sample for the demo scenario
     # insert_sample()
 
-    # app.secret_key = "1234"
-    app.run(debug=True, port=5000)
+    # Run application
+    app.run(debug=app.config["DEBUG"], port=5000)
