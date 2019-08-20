@@ -27,6 +27,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI',
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = "changeme"
 
+
 def get_datetime():
     import pytz
     from dateutil import tz
@@ -195,60 +196,13 @@ def insert_sample():
 
 @app.route('/')
 def index():
-    return render_template('home.html')
+    return render_template('dashboard.html')
 
 
 @app.route('/about')
 def about():
     return render_template('about.html')
 
-
-@app.route('/articles')
-def articles():
-    # Create cursor
-    conn = psycopg2.connect(dbname='myflaskapp', user='chris', host='localhost', password='postgres')
-    cur = conn.cursor()
-
-    # Get articles
-    cur.execute("SELECT * FROM articles;")
-    result = cur.fetchall()
-    # Close connection
-    cur.close()
-
-    if result is not None:
-        data = list()
-        s = ("id", "title", "author", "body", "create_date")
-        for line in result:
-            entry = dict()
-            for i, k in enumerate(s):
-                entry[k] = line[i]
-            data.append(entry)
-            # print(data)
-        return render_template("articles.html", articles=data)
-    msg = "No articles found"
-
-    return render_template("articles.html", msg=msg)
-
-
-@app.route('/article/<string:id>')
-def article(id):
-    # Create cursor
-    conn = psycopg2.connect(dbname='myflaskapp', user='chris', host='localhost', password='postgres')
-    cur = conn.cursor()
-
-    # Get articles
-    cur.execute("SELECT * FROM articles WHERE id = %s", [id])
-    result = cur.fetchone()
-    # Close connection
-    cur.close()
-
-    if result is not None:
-        s = ("id", "title", "author", "body", "create_date")
-        entry = dict()
-        for i, k in enumerate(s):
-            entry[k] = result[i]
-            # print(data)
-        return render_template("article.html", article=entry)
 
 # Register Form Class for the users
 class RegisterForm(Form):
@@ -267,6 +221,7 @@ class RegisterForm(Form):
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegisterForm(request.form)
+    # form.birthdate.label = "Birthdate"
     if request.method == 'POST' and form.validate():
         # Create cursor
         engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
@@ -286,9 +241,9 @@ def register():
 
         except sqlalchemy_exc.IntegrityError:
             flash("You are already registered with this email. Please log in", "danger")
-            return render_template('register.html', form=form)
+            return render_template('/auth/register.html', form=form)
 
-    return render_template('register.html', form=form)
+    return render_template('/auth/register.html', form=form)
 
 # User login
 @app.route('/login', methods=['GET', 'POST'])
@@ -312,10 +267,10 @@ def login():
 
         if len(data) == 0:
             error = 'Email not found.'
+            return render_template('/auth/login.html', error=error)
+        elif len(data) != 1:
+            error = 'Username was found twice. Error'
             return render_template('login.html', error=error)
-        # elif len(data) != 1:
-        #     error = 'Username was found twice. Error'
-        #     return render_template('login.html', error=error)
         else:
             password = data[0]['password']
 
@@ -332,9 +287,9 @@ def login():
                 return redirect(url_for('dashboard'))
             else:
                 error = 'Invalid login.'
-                return render_template('login.html', error=error)
+                return render_template('/auth/login.html', error=error)
 
-    return render_template('login.html')
+    return render_template('/auth/login.html')
 
 
 # Check if user is logged in
@@ -346,7 +301,6 @@ def is_logged_in(f):
         else:
             flash("Unauthorized. Please login", "danger")
             return redirect(url_for("login"))
-
     return wrap
 
 
@@ -418,7 +372,7 @@ def show_all_companies():
     companies = [dict(c.items()) for c in ResultProxy.fetchall()]
     # print("Fetched companies: {}".format(companies))
 
-    return render_template("companies.html", companies=companies)
+    return render_template("/companies/companies.html", companies=companies)
 
 # Add company
 @app.route("/add_company", methods=["GET", "POST"])
@@ -455,7 +409,7 @@ def add_company():
             flash("You are already registered with this email. Please log in", "danger")
             return render_template('login.html')
 
-    return render_template('add_company.html', form=form)
+    return render_template('/companies/add_company.html', form=form)
 
 
 # Delete company
@@ -496,6 +450,54 @@ def delete_company(uuid):
         flash("You are not permitted to delete this company", "danger")
         return redirect(url_for('show_all_companies'))
 
+
+
+@app.route('/articles')
+def articles():
+    # Create cursor
+    conn = psycopg2.connect(dbname='myflaskapp', user='chris', host='localhost', password='postgres')
+    cur = conn.cursor()
+
+    # Get articles
+    cur.execute("SELECT * FROM articles;")
+    result = cur.fetchall()
+    # Close connection
+    cur.close()
+
+    if result is not None:
+        data = list()
+        s = ("id", "title", "author", "body", "create_date")
+        for line in result:
+            entry = dict()
+            for i, k in enumerate(s):
+                entry[k] = line[i]
+            data.append(entry)
+            # print(data)
+        return render_template("articles.html", articles=data)
+    msg = "No articles found"
+
+    return render_template("articles.html", msg=msg)
+
+
+@app.route('/article/<string:id>')
+def article(id):
+    # Create cursor
+    conn = psycopg2.connect(dbname='myflaskapp', user='chris', host='localhost', password='postgres')
+    cur = conn.cursor()
+
+    # Get articles
+    cur.execute("SELECT * FROM articles WHERE id = %s", [id])
+    result = cur.fetchone()
+    # Close connection
+    cur.close()
+
+    if result is not None:
+        s = ("id", "title", "author", "body", "create_date")
+        entry = dict()
+        for i, k in enumerate(s):
+            entry[k] = result[i]
+            # print(data)
+        return render_template("article.html", article=entry)
 
 # Add article
 @app.route("/add_article", methods=["GET", "POST"])

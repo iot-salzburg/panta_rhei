@@ -15,20 +15,23 @@
         </div>
 
         <div class="form-group">
-            <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" rel="stylesheet">
-            <script src="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
-            <script type='text/javascript' src='//code.jquery.com/jquery-1.8.3.js'></script>
+            <link href="https://stackpath.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.css" rel="stylesheet">
+<!--<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">&lt;!&ndash;            <script src="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>&ndash;&gt;-->
+            <script type='text/javascript' src='//code.jquery.com/jquery-3.4.1.js'></script>
 
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.5.0/css/bootstrap-datepicker3.min.css">
-            <script type='text/javascript' src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.5.0/js/bootstrap-datepicker.min.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.css">
+            <script type='text/javascript' src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.js"></script>
             <script type='text/javascript'>
                 $(function(){
                     $('.input-group.date').datepicker({
-                        calendarWeeks: true,
                         todayHighlight: true,
+                        // beforeShowDay:  new Date(1990, 0, 1),
+                        defaultDate: new Date(1990, 0, 1),
                         autoclose: true,
                         format: 'yyyy-mm-dd',
-                        startDate: '-9y'
+                        viewMode: 'decades',
+                        showOtherMonths: true,
+                        maxDate: '-1y' //The maximum date is 1 year ago
                     });
                 });
             </script>
