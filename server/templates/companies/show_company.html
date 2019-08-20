@@ -2,22 +2,26 @@
 
 {% block body %}
 <!--  <h1>Dashboard <small> Welcome {{session.first_name}} {{session.sur_name}}</small></h1>-->
-  <h1> <small> Admins for Company {{domain}}.{{enterprise}} </small></h1>
+  <h1> <small> Admins for Company {{payload.domain}}.{{payload.enterprise}} </small></h1>
   <hr>
   <table class="table table-striped">
     <tr>
       <th>First Name</th>
       <th>Name</th>
       <th>Contact</th>
+      <th></th>
     </tr>
       {% for admin in admins %}
       <tr>
         <td>{{admin.first_name}}</td>
         <td>{{admin.sur_name}}</td>
         <td>{{admin.email}}</td>
+        <td>
+            <a class="btn btn-danger" href="/delete_admin_company/{{admin.company_uuid}}/{{admin.admin_uuid}}"> remove </a>
+        </td>
     {% endfor %}
   </table>
 
-<a href="../add_admin_company/{{company_uuid}}" class="btn btn-info">add admin</a>
+<a href="../add_admin_company/{{payload.company_uuid}}" class="btn btn-info">add admin</a>
 
 {% endblock %}

@@ -62,7 +62,7 @@ def show_company(company_uuid):
     engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
     conn = engine.connect()
 
-    query = """SELECT domain, enterprise, admin.uuid AS admin_uuid, admin.first_name, admin.sur_name, admin.email 
+    query = """SELECT company_uuid, domain, enterprise, admin.uuid AS admin_uuid, admin.first_name, admin.sur_name, admin.email 
     FROM companies AS com 
     INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
     INNER JOIN users as admin ON admin.uuid=aof.user_uuid 
@@ -77,8 +77,8 @@ def show_company(company_uuid):
         return redirect(url_for('company.show_all_companies'))
 
     # if not, admins has at least one item
-    return render_template("/companies/show_company.html", admins=admins, company_uuid=company_uuid,
-                           domain=admins[0]["domain"], enterprise=admins[0]["enterprise"])
+    payload = admins[0]
+    return render_template("/companies/show_company.html", admins=admins, payload=payload)
 
 
 # Add company
@@ -223,3 +223,60 @@ def add_admin_company(company_uuid):
             return redirect(url_for('company.show_company', company_uuid=selected_company["company_uuid"]))
 
         return render_template('/companies/add_admin_company.html', form=form, domain=domain, enterprise=enterprise)
+
+# Delete admin for company
+@company.route("/delete_admin_company/<string:company_uuid>/<string:admin_uuid>", methods=["GET"])
+@is_logged_in
+def delete_admin_company(company_uuid, admin_uuid):
+    user_uuid = session['user_uuid']
+
+    # Create cursor
+    engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
+    conn = engine.connect()
+
+    # Check if you are admin of this company
+    query = """SELECT company_uuid, domain, enterprise, creator.email AS contact_mail
+        FROM companies AS com 
+        INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
+        INNER JOIN users as admin ON admin.uuid=aof.user_uuid
+        INNER JOIN users as creator ON creator.uuid=aof.creator_uuid
+        WHERE admin.uuid='{}'
+        AND aof.company_uuid='{}';""".format(user_uuid, company_uuid)
+    ResultProxy = conn.execute(query)
+    permitted_companies = [dict(c.items()) for c in ResultProxy.fetchall()]
+
+    if permitted_companies == list():
+        flash("You are not permitted to delete this company", "danger")
+        return redirect(url_for('company.show_all_companies'))
+
+    elif user_uuid == admin_uuid and len(permitted_companies) == 1:
+        flash("You are not permitted to remove yourself, if you are the last admin", "danger")
+        return redirect(url_for('company.show_company', company_uuid=company_uuid))
+
+    else:
+        # get info for the deleted user
+        query = """SELECT company_uuid, domain, enterprise, admin.email AS admin_email, admin.uuid AS admin_uuid
+                FROM companies AS com 
+                INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
+                INNER JOIN users as admin ON admin.uuid=aof.user_uuid
+                WHERE admin.uuid='{}'
+                AND aof.company_uuid='{}';""".format(admin_uuid, company_uuid)
+        ResultProxy = conn.execute(query)
+        del_users = [dict(c.items()) for c in ResultProxy.fetchall()]
+        if del_users == list():
+            flash("nothing to delete.", "danger")
+            return redirect(url_for('company.show_all_companies'))
+
+        else:
+            del_user = del_users[0]
+            # Delete new is_admin_of instance
+            query = """DELETE FROM is_admin_of
+                WHERE user_uuid='{}'
+                AND company_uuid='{}';""".format(admin_uuid, company_uuid)
+            ResultProxy = conn.execute(query)
+            # print("DELETING: {}".format(query))
+
+            flash("User with email {} was removed as admin from company {}.{}.".format(
+                del_user["admin_email"], del_user["domain"], del_user["enterprise"]), "success")
+            return redirect(url_for('company.show_company', company_uuid=del_user["company_uuid"]))
+
