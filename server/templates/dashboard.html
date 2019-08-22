@@ -1,32 +1,81 @@
 {% extends 'layout.html' %}
 
 {% block body %}
-  <h1>Dashboard <small> Welcome {{session.first_name}} {{session.sur_name}}</small></h1>
-  <a class="btn btn-success" href="/add_article"> Add Article</a>
+  <h1>Dashboard</h1>
+  <h1> <small> Welcome {{session.first_name}} {{session.sur_name}}!</small></h1>
+  <br>
+
+
+  <h1> <small> List of dedicated companies </small></h1>
   <hr>
   <table class="table table-striped">
     <tr>
-      <th>ID</th>
-      <th>Title</th>
-      <th>Author</th>
-      <th>Date</th>
+      <th>uuid</th>
+      <th>Domain</th>
+      <th>Enterprise</th>
+<!--      <th>Creator</th>-->
       <th></th>
       <th></th>
     </tr>
-    {% for article in articles %}
+      {% for company in companies %}
       <tr>
-        <td>{{article.id}}</td>
-        <td>{{article.title}}</td>
-        <td>{{article.author}}</td>
-        <td>{{article.create_date}}</td>
-        <td><a href="edit_article/{{article.id}}" class="btn btn-default pull-right">Edit</a></td>
+        <td><a href="show_company/{{company.company_uuid}}" class="btn btn-block">{{company.company_uuid}}</a></td>
+        <td><a href="show_company/{{company.company_uuid}}" class="btn btn-block">{{company.domain}}</a></td>
+        <td><a href="show_company/{{company.company_uuid}}" class="btn btn-block">{{company.enterprise}}</a></td>
+<!--        <td>{{company.contact_mail}}</td>-->
+        <td><a href="show_company/{{company.company_uuid}}" class="btn btn-info">manage company</a></td>
         <td>
-          <form action="{{url_for('delete_article', id=article.id)}}" method="post">
-            <input type="hidden" name="_method" value="DELETE">
-            <input type="submit" value="Delete" class="btn btn-danger">
-          </form>
+            <a class="btn btn-danger" href="/delete_company/{{company.company_uuid}}"> delete</a>
         </td>
       </tr>
     {% endfor %}
   </table>
+    {% if not companies %}
+      No companies were created yet.
+      <br>
+      <br>
+    {% endif %}
+  <a class="btn btn-success" href="/add_company"> Add Company</a>
+
+  <br>
+  <br>
+<!-------------------------------------------------------------------------------------------------------->
+
+<!--  <h1>Dashboard <small> Welcome {{session.first_name}} {{session.sur_name}}</small></h1>-->
+  <h1> <small> List of dedicated systems </small></h1>
+  <hr>
+  <table class="table table-striped">
+    <tr>
+      <th>uuid</th>
+      <th>Domain</th>
+      <th>Enterprise</th>
+      <th>Workcenter</th>
+      <th>Station</th>
+<!--      <th>Creator</th>-->
+      <th></th>
+      <th></th>
+    </tr>
+
+      {% for system in systems %}
+      <tr>
+        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.system_uuid}}</a></td>
+        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.domain}}</a></td>
+        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.enterprise}}</a></td>
+        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.workcenter}}</a></td>
+        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.station}}</a></td>
+<!--        <td>{{system.contact_mail}}</td>-->
+        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-info">manage system</a></td>
+        <td>
+            <a class="btn btn-danger" href="/delete_system/{{system.system_uuid}}"> delete</a>
+        </td>
+      </tr>
+    {% endfor %}
+  </table>
+    {% if not systems %}
+      No systems were created yet.
+      <br>
+      <br>
+    {% endif %}
+  <a class="btn btn-success" href="/add_system"> Add System</a>
+
 {% endblock %}

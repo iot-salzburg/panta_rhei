@@ -301,10 +301,6 @@ def delete_agent_system(system_uuid, agent_uuid):
     # Get current user_uuid
     user_uuid = session["user_uuid"]
 
-    # Create cursor
-    engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
-    conn = engine.connect()
-
     # Check if you are agent of this system
     engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
     conn = engine.connect()
@@ -320,8 +316,6 @@ def delete_agent_system(system_uuid, agent_uuid):
     if permitted_systems == list():
         flash("You are not permitted to add an agent for this system.", "danger")
         return redirect(url_for("system.show_system", system_uuid=system_uuid))
-
-    payload = permitted_systems[0]
 
     if user_uuid == agent_uuid:
         flash("You are not permitted to remove yourself.", "danger")
