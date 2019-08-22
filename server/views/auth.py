@@ -48,11 +48,11 @@ def register():
                         'password': sha256_crypt.encrypt(str(request.form["password"]))}]
         try:
             ResultProxy = conn.execute(query, values_list)
-            flash("You are now registered and can log in", "success")
+            flash("You are now registered and can log in.", "success")
             return redirect(url_for('login'))
 
         except sqlalchemy_exc.IntegrityError:
-            flash("You are already registered with this email. Please log in", "danger")
+            flash("This email is already registered. Please log in.", "danger")
             return render_template('/auth/register.html', form=form)
 
     return render_template('/auth/register.html', form=form)
@@ -109,5 +109,5 @@ def login():
 @is_logged_in
 def logout():
     session.clear()
-    flash("You are now logged out", "success")
+    flash("You are now logged out.", "success")
     return redirect(url_for("auth.login"))

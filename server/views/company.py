@@ -235,7 +235,19 @@ def add_admin_company(company_uuid):
                 flash("No user was found with this email address.", "danger")
                 return render_template('/companies/add_admin_company.html', form=form, domain=domain,
                                        enterprise=enterprise)
+
             user = found_users[0]
+            # Check if the user is already admin of this company
+            query = """SELECT company_uuid, user_uuid
+            FROM companies AS com 
+            INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
+            WHERE aof.user_uuid='{}' AND com.uuid='{}';""".format(user["uuid"], company_uuid)
+            result_proxy = conn.execute(query)
+            if result_proxy.fetchall() != list():
+                flash("This user is already admin of this company.", "danger")
+                return render_template('/companies/add_admin_company.html', form=form, domain=domain,
+                                       enterprise=enterprise)
+
             # Create new is_admin_of instance
             query = db.insert(app.config["tables"]["is_admin_of"])
             values_list = [{'user_uuid': user["uuid"],
