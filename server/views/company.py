@@ -163,14 +163,21 @@ def delete_company(uuid):
         return redirect(url_for('company.show_all_companies'))
 
     # Check if you are the last admin of the company
-    query = """SELECT company_uuid, domain, enterprise, user_uuid
+    query = """SELECT aof.company_uuid, domain, enterprise, user_uuid
+        FROM companies AS com INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
+        WHERE aof.company_uuid='{}';""".format(uuid)
+    result_proxy_admin = conn.execute(query)
+    # Check if you are the last admin of the company
+    query = """SELECT sys.company_uuid
         FROM companies AS com 
-        INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
-        AND aof.company_uuid='{}';""".format(uuid)
-    result_proxy = conn.execute(query)
-    # admins_of_company = [dict(c.items()) for c in result_proxy.fetchall()]
+        INNER JOIN systems AS sys ON com.uuid=sys.company_uuid 
+        WHERE sys.company_uuid='{}';""".format(uuid)
+    result_proxy_system = conn.execute(query)
 
-    if len(result_proxy.fetchall()) >= 2:
+    if len(result_proxy_system.fetchall()) >= 1:
+        flash("You are not permitted to delete a company which has systems.", "danger")
+        return redirect(url_for('company.show_all_companies'))
+    if len(result_proxy_admin.fetchall()) >= 2:
         flash("You are not permitted to delete a company which has multiple admins.", "danger")
         return redirect(url_for('company.show_all_companies'))
 
