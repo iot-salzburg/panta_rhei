@@ -2,10 +2,10 @@
 
 {% block body %}
 
-    <h1>Add admin to company {{domain}}.{{enterprise}}</h1>
+    <h1>Add agent to system {{payload.domain}}.{{payload.enterprise}}.{{payload.workcenter}}.{{payload.station}}</h1>
     <br>
 
-    <p>Add a registered user as admin for this company:</p>
+    <p>Add a registered user as agent for this system:</p>
 
     {% from "includes/_formhelpers.html" import render_field %}
 
@@ -13,7 +13,7 @@
         <div class="form-group">
             {{render_field(form.email, class_="form-control")}}
         </div>
-        <p><input type="submit" class="btn btn-primary" value="Add user as admin"> </p>
+        <p><input type="submit" class="btn btn-primary" value="Add user as agent"> </p>
 
     </form>
 
