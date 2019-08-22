@@ -1,7 +1,42 @@
 {% extends 'layout.html' %}
 
 {% block body %}
-  <h1> <small> Admins for Company {{payload.domain}}.{{payload.enterprise}} </small></h1>
+
+  <h1> <small> Systems of Company {{payload.domain}}.{{payload.enterprise}}  </small></h1>
+  <hr>
+  <table class="table table-striped">
+    <tr>
+      <th>uuid</th>
+<!--      <th>Domain</th>-->
+<!--      <th>Enterprise</th>-->
+      <th>Workcenter</th>
+      <th>Station</th>
+<!--      <th>Creator</th>-->
+      <th></th>
+      <th></th>
+    </tr>
+      {% for system in systems %}
+      <tr>
+        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.system_uuid}}</a></td>
+<!--        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.domain}}</a></td>-->
+<!--        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.enterprise}}</a></td>-->
+        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.workcenter}}</a></td>
+        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.station}}</a></td>
+<!--        <td>{{system.contact_mail}}</td>-->
+        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-info">manage system</a></td>
+        <td>
+            <a class="btn btn-danger" href="/delete_system/{{system.system_uuid}}"> delete</a>
+        </td>
+      </tr>
+    {% endfor %}
+  </table>
+  <a class="btn btn-success" href="/add_system/{{payload.company_uuid}}"> Add System</a>
+  <br>
+  <br>
+
+<!-------------------------------------------------------------------------------------------->
+
+  <h1> <small> Admins of Company {{payload.domain}}.{{payload.enterprise}} </small></h1>
   <hr>
   <table class="table table-striped">
     <tr>
@@ -20,7 +55,6 @@
         </td>
     {% endfor %}
   </table>
-
-<a href="../add_admin_company/{{payload.company_uuid}}" class="btn btn-info">add admin</a>
+  <a href="../add_admin_company/{{payload.company_uuid}}" class="btn btn-info">add admin</a>
 
 {% endblock %}

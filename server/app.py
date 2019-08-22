@@ -27,10 +27,13 @@ app = Flask(__name__)
 app.config.from_envvar('APP_CONFIG_FILE')
 
 from server.views.company import company
-app.register_blueprint(company)  # url_prefix='/comp')
+app.register_blueprint(company)  # url_prefix='/companies')
+
+from server.views.system import system
+app.register_blueprint(system)  # url_prefix='/systems')
 
 from server.views.auth import auth
-app.register_blueprint(auth)  # url_prefix='/comp')
+app.register_blueprint(auth)  # url_prefix='/auth')
 
 
 def create_tables():
@@ -170,7 +173,6 @@ def insert_sample():
 
 
     # Insert is_admin_of
-    # try:
     query = db.insert(app.config["tables"]["is_admin_of"])
     values_list = [
         {'user_uuid': uuid_sue,
@@ -184,6 +186,39 @@ def insert_sample():
          'creator_uuid': uuid_anna}]
     ResultProxy = conn.execute(query, values_list)
 
+    # Insert systems
+    uuid_carfleet = get_uid()
+    uuid_infraprov = get_uid()
+    uuid_weatherservice = get_uid()
+    query = db.insert(app.config["tables"]["systems"])
+    values_list = [
+        {'uuid': uuid_carfleet,
+         'company_uuid': uuid_icecars,
+         'workcenter': "iot-iot4cps-wp5",
+         'station': "CarFleet"},
+        {'uuid': uuid_infraprov,
+         'company_uuid': uuid_iceland,
+         'workcenter': "iot-iot4cps-wp5",
+         'station': "InfraProv"},
+        {'uuid': uuid_weatherservice,
+         'company_uuid': uuid_datahouse,
+         'workcenter': "iot-iot4cps-wp5",
+         'station': "WeatherService"},]
+    ResultProxy = conn.execute(query, values_list)
+
+    # Insert is_agent_of
+    query = db.insert(app.config["tables"]["is_agent_of"])
+    values_list = [
+        {'user_uuid': uuid_sue,
+         'system_uuid': uuid_carfleet,
+         'creator_uuid': uuid_sue},
+        {'user_uuid': uuid_stefan,
+         'system_uuid': uuid_infraprov,
+         'creator_uuid': uuid_stefan},
+        {'user_uuid': uuid_anna,
+         'system_uuid': uuid_weatherservice,
+         'creator_uuid': uuid_anna}]
+    ResultProxy = conn.execute(query, values_list)
 
     app.logger.info("Ingested data into tables.")
 

@@ -1,0 +1,25 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+  <h1> <small> Agents of the system {{payload.domain}}.{{payload.enterprise}}.{{payload.workcenter}}.{{payload.station}} </small></h1>
+  <hr>
+  <table class="table table-striped">
+    <tr>
+      <th>First Name</th>
+      <th>Name</th>
+      <th>Contact</th>
+      <th></th>
+    </tr>
+      {% for agent in agents %}
+      <tr>
+        <td>{{agent.first_name}}</td>
+        <td>{{agent.sur_name}}</td>
+        <td>{{agent.email}}</td>
+        <td>
+            <a class="btn btn-danger" href="/delete_agent_system/{{agent.system_uuid}}/{{agent.agent_uuid}}"> remove </a>
+        </td>
+    {% endfor %}
+  </table>
+
+
+{% endblock %}

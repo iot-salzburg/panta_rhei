@@ -7,82 +7,85 @@ from wtforms import Form, StringField, validators
 
 from .useful_functions import get_datetime, get_uid, is_logged_in
 
-company = Blueprint('company', __name__)  # url_prefix='/comp')
+system = Blueprint('system', __name__)  # url_prefix='/comp')
 
 
-@company.route('/companies')
+@system.route('/systems')
 @is_logged_in
-def show_all_companies():
+def show_all_systems():
     # Get current user_uuid
     user_uuid = session['user_uuid']
 
-    # Fetch companies, for which the current user is admin of
+    # Fetch systems, for which the current user is agent of
     engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
     conn = engine.connect()
-    query = """SELECT company_uuid, domain, enterprise, creator.email AS contact_mail
-    FROM companies AS com 
-    INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
-    INNER JOIN users as admin ON admin.uuid=aof.user_uuid
-    INNER JOIN users as creator ON creator.uuid=aof.creator_uuid
-    WHERE admin.uuid='{}';""".format(user_uuid)
+    query = """SELECT sys.uuid AS system_uuid, domain, enterprise, workcenter, station, agent.email AS contact_mail
+    FROM systems AS sys
+    INNER JOIN companies AS com ON sys.company_uuid=com.uuid
+    INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid 
+    INNER JOIN users as agent ON agent.uuid=agf.user_uuid
+    WHERE agent.uuid='{}';""".format(user_uuid)
     result_proxy = conn.execute(query)
-    companies = [dict(c.items()) for c in result_proxy.fetchall()]
+    systems = [dict(c.items()) for c in result_proxy.fetchall()]
     # print("Fetched companies: {}".format(companies))
 
-    return render_template("/companies/companies.html", companies=companies)
+    return render_template("/systems/systems.html", systems=systems)
 
 
-@company.route('/show_company/<string:company_uuid>')
+@system.route('/show_system/<string:system_uuid>')
 @is_logged_in
-def show_company(company_uuid):
+def show_system(system_uuid):
     # Get current user_uuid
     user_uuid = session['user_uuid']
 
-    # Fetch all admins for the requested company
+    # Fetch all agents for the requested system
     engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
     conn = engine.connect()
     query = """
-    SELECT company_uuid, domain, enterprise, admin.uuid AS admin_uuid, admin.first_name, admin.sur_name, admin.email 
-    FROM companies AS com 
-    INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
-    INNER JOIN users as admin ON admin.uuid=aof.user_uuid 
-    INNER JOIN users as creator ON creator.uuid=aof.creator_uuid 
-    WHERE company_uuid='{}';""".format(company_uuid)
+    SELECT sys.uuid AS system_uuid, domain, enterprise, workcenter, station, 
+    agent.uuid AS agent_uuid, agent.first_name, agent.sur_name, agent.email
+    FROM systems AS sys
+    INNER JOIN companies AS com ON sys.company_uuid=com.uuid
+    INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid 
+    INNER JOIN users as agent ON agent.uuid=agf.user_uuid
+    INNER JOIN users as creator ON creator.uuid=agf.creator_uuid 
+    WHERE sys.uuid='{}';""".format(system_uuid)
     result_proxy = conn.execute(query)
-    admins = [dict(c.items()) for c in result_proxy.fetchall()]
-    # print("Fetched admins: {}".format(admins))
+    agents = [dict(c.items()) for c in result_proxy.fetchall()]
+    print("Fetched agents: {}".format(agents))
 
-    # Check if the company exists and has admins
-    if len(admins) == 0:
-        flash("It seems that this company doesn't exist.", "danger")
-        return redirect(url_for('company.show_all_companies'))
+    # Check if the system exists and has agents
+    if len(agents) == 0:
+        flash("It seems that this system doesn't exist.", "danger")
+        return redirect(url_for('system.show_all_systems'))
 
-    # Check if the current user is admin of the company
-    if user_uuid not in [c["admin_uuid"] for c in admins]:
-        flash("You are not permitted to see details of this company.", "danger")
-        return redirect(url_for('company.show_all_companies'))
+    # Check if the current user is admin of the system
+    if user_uuid not in [c["agent_uuid"] for c in agents]:
+        flash("You are not permitted see details this system.", "danger")
+        return redirect(url_for('system.show_all_systems'))
 
-    # if not, admins has at least one item
-    payload = admins[0]
-
-    # Fetch systems of this company
-    query = """SELECT sys.uuid AS system_uuid, workcenter, station
-    FROM systems AS sys WHERE sys.company_uuid='{}';""".format(company_uuid)
-    result_proxy = conn.execute(query)
-    systems = [dict(c.items()) for c in result_proxy.fetchall()]
-
-    return render_template("/companies/show_company.html", admins=admins, systems=systems, payload=payload)
+    # if not, agents has at least one item
+    payload = agents[0]
+    return render_template("/systems/show_system.html", agents=agents, payload=payload)
 
 
-# Company Form Class
-class CompanyForm(Form):
-    domain = StringField('Domain', [validators.Length(min=1, max=5)])
-    enterprise = StringField('Enterprise', [validators.Length(min=4, max=15)])
+# System Form Class
+class SystemForm(Form):
+    workcenter = StringField('Workcenter', [validators.Length(min=4, max=30)])
+    station = StringField('Station', [validators.Length(min=4, max=20)])
 
-# Add company
-@company.route("/add_company", methods=["GET", "POST"])
+# Add system in system view, redirect to companies
+@system.route("/add_system")
 @is_logged_in
-def add_company():
+def add_system():
+    # redirect to companies
+    flash("Specify the company to which a system should be added.", "info")
+    return redirect(url_for('company.show_all_companies'))
+
+# Add system in company view
+@system.route("/add_system/<string:company_uuid>", methods=["GET", "POST"])
+@is_logged_in
+def add_system_for_company():
     # Get current user_uuid
     user_uuid = session['user_uuid']
     # The basic company form is used
@@ -103,7 +106,7 @@ def add_company():
             result_proxy = conn.execute(query)
             company_uuids = result_proxy.fetchall()
 
-        query = """SELECT domain, enterprise FROM companies 
+        query = """SELECT domain, enterprise FROM companies
                     WHERE domain='{}' AND enterprise='{}';""".format(form.domain.data, form.enterprise.data)
         result_proxy = conn.execute(query)
         if len(result_proxy.fetchall()) == 0:
@@ -136,7 +139,7 @@ def add_company():
 
 
 # Delete company
-@company.route("/delete_company/<string:uuid>", methods=["GET"])
+@system.route("/delete_company/<string:uuid>", methods=["GET"])
 @is_logged_in
 def delete_company(uuid):
     # Get current user_uuid
@@ -148,8 +151,8 @@ def delete_company(uuid):
 
     # Check if you are admin of this company
     query = """SELECT company_uuid, domain, enterprise, user_uuid
-        FROM companies AS com 
-        INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
+        FROM companies AS com
+        INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid
         WHERE aof.user_uuid='{}'
         AND aof.company_uuid='{}';""".format(user_uuid, uuid)
     result_proxy = conn.execute(query)
@@ -161,8 +164,8 @@ def delete_company(uuid):
 
     # Check if you are the last admin of the company
     query = """SELECT company_uuid, domain, enterprise, user_uuid
-        FROM companies AS com 
-        INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
+        FROM companies AS com
+        INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid
         AND aof.company_uuid='{}';""".format(uuid)
     result_proxy = conn.execute(query)
     # admins_of_company = [dict(c.items()) for c in result_proxy.fetchall()]
@@ -188,12 +191,12 @@ def delete_company(uuid):
     return redirect(url_for('company.show_all_companies'))
 
 
-# Admin Management Form Class
-class AdminForm(Form):
+# Agent Management Form Class
+class AgentForm(Form):
     email = StringField('Email', [validators.Email(message="The given email seems to be wrong")])
 
 
-@company.route("/add_admin_company/<company_uuid>", methods=["GET", "POST"])
+@system.route("/add_admin_company/<company_uuid>", methods=["GET", "POST"])
 @is_logged_in
 def add_admin_company(company_uuid):
     # Get current user_uuid
@@ -207,11 +210,11 @@ def add_admin_company(company_uuid):
 
     # Check if you are admin of this company
     query = """SELECT company_uuid, domain, enterprise, creator.email AS contact_mail
-            FROM companies AS com 
-            INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
+            FROM companies AS com
+            INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid
             INNER JOIN users as admin ON admin.uuid=aof.user_uuid
             INNER JOIN users as creator ON creator.uuid=aof.creator_uuid
-            WHERE admin.uuid='{}' 
+            WHERE admin.uuid='{}'
             AND com.uuid='{}';""".format(user_uuid, company_uuid)
     result_proxy = conn.execute(query)
     permitted_companies = [dict(c.items()) for c in result_proxy.fetchall() if c["company_uuid"] == company_uuid]
@@ -246,8 +249,8 @@ def add_admin_company(company_uuid):
             user = found_users[0]
             # Check if the user is already admin of this company
             query = """SELECT company_uuid, user_uuid
-            FROM companies AS com 
-            INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
+            FROM companies AS com
+            INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid
             WHERE aof.user_uuid='{}' AND com.uuid='{}';""".format(user["uuid"], company_uuid)
             result_proxy = conn.execute(query)
             if result_proxy.fetchall() != list():
@@ -269,7 +272,7 @@ def add_admin_company(company_uuid):
         return render_template('/companies/add_admin_company.html', form=form, domain=domain, enterprise=enterprise)
 
 # Delete admin for company
-@company.route("/delete_admin_company/<string:company_uuid>/<string:admin_uuid>", methods=["GET"])
+@system.route("/delete_admin_company/<string:company_uuid>/<string:admin_uuid>", methods=["GET"])
 @is_logged_in
 def delete_admin_company(company_uuid, admin_uuid):
     # Get current user_uuid
@@ -281,8 +284,8 @@ def delete_admin_company(company_uuid, admin_uuid):
 
     # Check if you are admin of this company
     query = """SELECT company_uuid, domain, enterprise, creator.email AS contact_mail
-        FROM companies AS com 
-        INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
+        FROM companies AS com
+        INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid
         INNER JOIN users as admin ON admin.uuid=aof.user_uuid
         INNER JOIN users as creator ON creator.uuid=aof.creator_uuid
         WHERE admin.uuid='{}'
@@ -301,8 +304,8 @@ def delete_admin_company(company_uuid, admin_uuid):
     else:
         # get info for the deleted user
         query = """SELECT company_uuid, domain, enterprise, admin.email AS admin_email, admin.uuid AS admin_uuid
-                FROM companies AS com 
-                INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
+                FROM companies AS com
+                INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid
                 INNER JOIN users as admin ON admin.uuid=aof.user_uuid
                 WHERE admin.uuid='{}'
                 AND aof.company_uuid='{}';""".format(admin_uuid, company_uuid)
