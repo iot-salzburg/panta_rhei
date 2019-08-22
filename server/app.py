@@ -65,7 +65,7 @@ def dashboard():
     WHERE admin.uuid='{}';""".format(user_uuid)
     result_proxy = conn.execute(query)
     companies = [dict(c.items()) for c in result_proxy.fetchall()]
-    print("Fetched companies: {}".format(companies))
+    # print("Fetched companies: {}".format(companies))
     if companies == list():
         msg_companies = "No companies found."
 
@@ -78,7 +78,6 @@ def dashboard():
     WHERE agent.uuid='{}';""".format(user_uuid)
     result_proxy = conn.execute(query)
     systems = [dict(c.items()) for c in result_proxy.fetchall()]
-    print(systems)
     if len(systems) == 0:
         msg_companies = "No companies found."
 
