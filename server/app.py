@@ -1,10 +1,7 @@
 import logging
-
 import sqlalchemy as db
 from dotenv import load_dotenv
 from flask import Flask, session, render_template, redirect, url_for
-
-# from .data import Articles
 
 # Import application-specific functions
 try:
