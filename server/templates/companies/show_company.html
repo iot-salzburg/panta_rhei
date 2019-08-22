@@ -17,13 +17,13 @@
     </tr>
       {% for system in systems %}
       <tr>
-        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.system_uuid}}</a></td>
-<!--        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.domain}}</a></td>-->
-<!--        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.enterprise}}</a></td>-->
-        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.workcenter}}</a></td>
-        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.station}}</a></td>
+        <td><a href="/show_system/{{system.system_uuid}}" class="btn btn-block">{{system.system_uuid}}</a></td>
+<!--        <td><a href="/show_system/{{system.system_uuid}}" class="btn btn-block">{{system.domain}}</a></td>-->
+<!--        <td><a href="/show_system/{{system.system_uuid}}" class="btn btn-block">{{system.enterprise}}</a></td>-->
+        <td><a href="/show_system/{{system.system_uuid}}" class="btn btn-block">{{system.workcenter}}</a></td>
+        <td><a href="/show_system/{{system.system_uuid}}" class="btn btn-block">{{system.station}}</a></td>
 <!--        <td>{{system.contact_mail}}</td>-->
-        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-info">manage system</a></td>
+        <td><a href="/show_system/{{system.system_uuid}}" class="btn btn-info">manage system</a></td>
         <td>
             <a class="btn btn-danger" href="/delete_system/{{system.system_uuid}}"> delete</a>
         </td>

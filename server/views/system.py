@@ -16,6 +16,9 @@ def show_all_systems():
     # Get current user_uuid
     user_uuid = session['user_uuid']
 
+    # Set url (is used in system.delete_system)
+    session["url"] = "/systems"
+
     # Fetch systems, for which the current user is agent of
     engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
     conn = engine.connect()
@@ -52,7 +55,7 @@ def show_system(system_uuid):
     WHERE sys.uuid='{}';""".format(system_uuid)
     result_proxy = conn.execute(query)
     agents = [dict(c.items()) for c in result_proxy.fetchall()]
-    print("Fetched agents: {}".format(agents))
+    # print("Fetched agents: {}".format(agents))
 
     # Check if the system exists and has agents
     if len(agents) == 0:
@@ -85,110 +88,145 @@ def add_system():
 # Add system in company view
 @system.route("/add_system/<string:company_uuid>", methods=["GET", "POST"])
 @is_logged_in
-def add_system_for_company():
+def add_system_for_company(company_uuid):
     # Get current user_uuid
     user_uuid = session['user_uuid']
+
     # The basic company form is used
-    form = CompanyForm(request.form)
-    form.enterprise.label = "Enterprise short-name"
+    form = SystemForm(request.form)
+    form.workcenter.label = 'Workcenter short-name'
+
+    # Get payload
+    engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
+    conn = engine.connect()
+    query = """
+    SELECT company_uuid, domain, enterprise, admin.uuid AS admin_uuid, admin.first_name, admin.sur_name, admin.email 
+    FROM companies AS com 
+    INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
+    INNER JOIN users as admin ON admin.uuid=aof.user_uuid 
+    INNER JOIN users as creator ON creator.uuid=aof.creator_uuid 
+    WHERE company_uuid='{}';""".format(company_uuid)
+    result_proxy = conn.execute(query)
+    admins = [dict(c.items()) for c in result_proxy.fetchall()]
+
+    # Check if the company exists and you are an admin
+    if len(admins) == 0:
+        flash("It seems that this company doesn't exist.", "danger")
+        return redirect(url_for('company.show_all_companies'))
+
+    # Check if the current user is admin of the company
+    if user_uuid not in [c["admin_uuid"] for c in admins]:
+        flash("You are not permitted to add systems for this company.", "danger")
+        return redirect(url_for('company.show_all_companies'))
+
+    # if not, admins has at least one item
+    payload = admins[0]
 
     if request.method == 'POST' and form.validate():
-        # Create a new company and admin-relation using the form's input
-        engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
-        conn = engine.connect()
+        # Create a new system and agent-relation using the form's input
 
-        # Create company and check if either the company_uuid or the company exists
-        company_uuids = ["init"]
-        company_uuid = get_uid()
-        while company_uuids != list():
-            company_uuid = get_uid()
-            query = """SELECT uuid FROM companies WHERE uuid='{}';""".format(company_uuid)
+        # Create system and check if either the system_uuid or the system exists
+        system_uuids = ["init"]
+        system_uuid = get_uid()
+        while system_uuids != list():
+            system_uuid = get_uid()
+            query = """SELECT uuid FROM systems WHERE uuid='{}';""".format(system_uuid)
             result_proxy = conn.execute(query)
-            company_uuids = result_proxy.fetchall()
+            system_uuids = result_proxy.fetchall()
 
-        query = """SELECT domain, enterprise FROM companies
-                    WHERE domain='{}' AND enterprise='{}';""".format(form.domain.data, form.enterprise.data)
+        query = """SELECT domain, enterprise FROM systems
+                INNER JOIN companies ON systems.company_uuid=companies.uuid
+                WHERE domain='{}' AND enterprise='{}' AND workcenter='{}' AND station='{}';
+                """.format(payload["domain"], payload["enterprise"], form.workcenter.data, form.station.data)
         result_proxy = conn.execute(query)
         if len(result_proxy.fetchall()) == 0:
-            query = db.insert(app.config["tables"]["companies"])
-            values_list = [{'uuid': company_uuid,
-                            'domain': form.domain.data,
-                            'enterprise': form.enterprise.data}]
+            query = db.insert(app.config["tables"]["systems"])
+            values_list = [{'uuid': system_uuid,
+                            'company_uuid': payload["company_uuid"],
+                            'workcenter': form.workcenter.data,
+                            'station': form.station.data}]
             conn.execute(query, values_list)
         else:
-            flash("The company {}.{} is already created.".format(form.domain.data, form.enterprise.data), "danger")
-            return redirect(url_for('company.show_all_companies'))
+            flash("The system {}.{}.{}.{} is already created.".format(
+                payload["domain"], payload["enterprise"], form.workcenter.data, form.station.data), "danger")
+            return redirect('/show_company/{}'.format(company_uuid))
 
         # Create new is_admin_of instance
-        query = db.insert(app.config["tables"]["is_admin_of"])
+        query = db.insert(app.config["tables"]["is_agent_of"])
         values_list = [{'user_uuid': user_uuid,
-                        'company_uuid': company_uuid,
+                        'system_uuid': system_uuid,
                         'creator_uuid': user_uuid,
                         'datetime': get_datetime()}]
         try:
             conn.execute(query, values_list)
-            flash("The company {} was created.".format(form.enterprise.data), "success")
-            return redirect(url_for('company.show_all_companies'))
+            flash("The system {}.{} within the company {}.{} was created.".format(
+                form.workcenter.data, form.station.data, payload["domain"], payload["enterprise"]), "success")
+            return redirect('/show_company/{}'.format(company_uuid))
 
         except sqlalchemy_exc.IntegrityError as e:
             print("An Integrity Error occured: {}".format(e))
             flash("An unexpected error occured.", "danger")
             return render_template('login.html')
 
-    return render_template('/companies/add_company.html', form=form)
+    return render_template('/systems/add_system.html', form=form, payload=payload)
 
 
-# Delete company
-@system.route("/delete_company/<string:uuid>", methods=["GET"])
+# Delete system
+@system.route("/delete_system/<string:system_uuid>", methods=["GET"])
 @is_logged_in
-def delete_company(uuid):
+def delete_system(system_uuid):
     # Get current user_uuid
     user_uuid = session['user_uuid']
 
-    # Create cursor
+    # Check if you are agent of this system
     engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
     conn = engine.connect()
-
-    # Check if you are admin of this company
-    query = """SELECT company_uuid, domain, enterprise, user_uuid
+    query = """SELECT company_uuid, domain, enterprise, workcenter, station
         FROM companies AS com
-        INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid
-        WHERE aof.user_uuid='{}'
-        AND aof.company_uuid='{}';""".format(user_uuid, uuid)
+        INNER JOIN systems AS sys ON com.uuid=sys.company_uuid
+        INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid
+        WHERE agf.user_uuid='{}'
+        AND agf.system_uuid='{}';""".format(user_uuid, system_uuid)
     result_proxy = conn.execute(query)
-    permitted_companies = [dict(c.items()) for c in result_proxy.fetchall()]
+    permitted_systems = [dict(c.items()) for c in result_proxy.fetchall()]
 
-    if permitted_companies == list():
-        flash("You are not permitted to delete this company.", "danger")
-        return redirect(url_for('company.show_all_companies'))
+    if permitted_systems == list():
+        flash("You are not permitted to delete this system.", "danger")
+        return redirect(url_for('system.show_all_systems'))
 
-    # Check if you are the last admin of the company
-    query = """SELECT company_uuid, domain, enterprise, user_uuid
+    # Check if you are the last agent of the system
+    query = """SELECT company_uuid, domain, enterprise, workcenter, station
         FROM companies AS com
-        INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid
-        AND aof.company_uuid='{}';""".format(uuid)
+        INNER JOIN systems AS sys ON com.uuid=sys.company_uuid
+        INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid
+        AND agf.system_uuid='{}';""".format(system_uuid)
     result_proxy = conn.execute(query)
-    # admins_of_company = [dict(c.items()) for c in result_proxy.fetchall()]
 
     if len(result_proxy.fetchall()) >= 2:
-        flash("You are not permitted to delete a company which has multiple admins.", "danger")
-        return redirect(url_for('company.show_all_companies'))
+        flash("You are not permitted to delete a system which has multiple agents.", "danger")
+        return redirect(url_for('system.show_all_systems'))
 
-    # Now the company can be deleted
-    selected_company = permitted_companies[0]  # This list has only one element
+    # Now the system can be deleted
+    selected_system = permitted_systems[0]  # This list has only one element
 
     # Delete new is_admin_of instance
-    query = """DELETE FROM is_admin_of
-        WHERE company_uuid='{}';""".format(uuid)
+    query = """DELETE FROM is_agent_of
+        WHERE system_uuid='{}';""".format(system_uuid)
     conn.execute(query)
 
-    # Delete company
-    query = """DELETE FROM companies
-        WHERE uuid='{}';""".format(uuid)
+    # Delete system
+    query = """DELETE FROM systems
+        WHERE uuid='{}';""".format(system_uuid)
     conn.execute(query)
 
-    flash("The company {} was deleted.".format(selected_company["enterprise"]), "success")
-    return redirect(url_for('company.show_all_companies'))
+    flash("The system {}.{}.{}.{} was deleted.".format(selected_system["domain"], selected_system["enterprise"],
+                                                       selected_system["workcenter"], selected_system["station"]),
+          "success")
+
+    # Redirect to latest page, either /systems or /show_company/UID
+    if session.get("url"):
+        return redirect(session.get("url"))
+    return redirect(url_for('system.show_all_systems'))
 
 
 # Agent Management Form Class

@@ -38,6 +38,9 @@ def show_company(company_uuid):
     # Get current user_uuid
     user_uuid = session['user_uuid']
 
+    # Set url (is used in system.delete_system)
+    session["url"] = "/show_company/{}".format(company_uuid)
+
     # Fetch all admins for the requested company
     engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
     conn = engine.connect()
