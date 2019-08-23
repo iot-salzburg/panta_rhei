@@ -13,6 +13,7 @@ except ModuleNotFoundError:
 from server.views.auth import auth
 from server.views.company import company
 from server.views.system import system
+from server.views.clients import client
 from server.create_database import create_tables
 
 
@@ -27,6 +28,7 @@ app.config.from_envvar('APP_CONFIG_FILE')
 # Register modules as blueprint
 app.register_blueprint(company)  # url_prefix='/companies')
 app.register_blueprint(system)  # url_prefix='/systems')
+app.register_blueprint(client)  # url_prefix='/clients')
 app.register_blueprint(auth)  # url_prefix='/auth')
 
 

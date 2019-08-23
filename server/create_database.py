@@ -84,7 +84,7 @@ def create_tables(app):
         'clients', app.config['metadata'],
         db.Column('name', db.VARCHAR(25), primary_key=True, unique=True),
         db.Column('system_uuid', db.ForeignKey('systems.uuid'), nullable=False),
-        db.Column('keyfile', db.LargeBinary, nullable=False),
+        db.Column('keyfile', db.TEXT, nullable=True),
         db.Column('datetime', db.DateTime, nullable=True),
         db.Column('creator_uuid', db.ForeignKey("users.uuid"), nullable=False)
         )
@@ -216,6 +216,29 @@ def insert_sample():
          'system_uuid': uuid_infraprov,
          'creator_uuid': uuid_stefan},
         {'user_uuid': uuid_anna,
+         'system_uuid': uuid_weatherservice,
+         'creator_uuid': uuid_anna}]
+    ResultProxy = conn.execute(query, values_list)
+
+    # Insert client
+    query = db.insert(app.config["tables"]["clients"])
+    values_list = [
+        {'name': "car_1",
+         'system_uuid': uuid_carfleet,
+         'creator_uuid': uuid_sue},
+        {'name': "car_2",
+         'system_uuid': uuid_carfleet,
+         'creator_uuid': uuid_sue},
+        {'name': "gov_1",
+         'system_uuid': uuid_infraprov,
+         'creator_uuid': uuid_stefan},
+        {'name': "weatherstation_1",
+         'system_uuid': uuid_weatherservice,
+         'creator_uuid': uuid_anna},
+        {'name': "weatherstation_2",
+         'system_uuid': uuid_weatherservice,
+         'creator_uuid': uuid_anna},
+        {'name': "analysis",
          'system_uuid': uuid_weatherservice,
          'creator_uuid': uuid_anna}]
     ResultProxy = conn.execute(query, values_list)

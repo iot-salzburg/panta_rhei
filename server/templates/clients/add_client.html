@@ -1,0 +1,22 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+
+    <h1>Add new client application to system
+        {{payload.domain}}.{{payload.enterprise}}.{{payload.workcenter}}.{{payload.station}}</h1>
+    <br>
+
+    <p>The name of the client application will be immutable. A keyfile will be created automatically by submission.</p>
+    {% from "includes/_formhelpers.html" import render_field %}
+
+    <form method="POST" action="">
+        <div class="form-group">
+            {{render_field(form.name, class_="form-control")}}
+        </div>
+
+        <p><input type="submit" class="btn btn-primary" value="Submit"> </p>
+
+    </form>
+
+{% endblock %}
+
