@@ -127,25 +127,25 @@ def insert_sample():
         'sur_name': 'Smith',
         'birthdate': '1967-04-01',
         'email': 'sue.smith@gmail.com',
-        'password': sha256_crypt.encrypt('12345678')},
+        'password': sha256_crypt.encrypt('asdf')},
        {'uuid': uuid_stefan,
         'first_name': 'Stefan',
         'sur_name': 'Gunnarsson',
         'birthdate': '1967-03-01',
         'email': 'stefan.gunnarsson@gmail.com',
-        'password': sha256_crypt.encrypt('12345678')},
+        'password': sha256_crypt.encrypt('asdf')},
        {'uuid': uuid_peter,
         'first_name': 'Peter',
         'sur_name': 'Novak',
         'birthdate': '1990-02-01',
         'email': 'peter.novak@gmail.com',
-        'password': sha256_crypt.encrypt('12345678')},
+        'password': sha256_crypt.encrypt('asdf')},
        {'uuid': uuid_anna,
         'first_name': 'Anna',
         'sur_name': 'Gruber',
         'birthdate': '1994-01-01',
         'email': 'anna.gruber@gmail.com',
-        'password': sha256_crypt.encrypt('12345678')},
+        'password': sha256_crypt.encrypt('asdf')},
        {'uuid': uuid_chris,
         'first_name': 'Chris',
         'sur_name': 'Schranz',
@@ -177,13 +177,16 @@ def insert_sample():
     values_list = [
         {'user_uuid': uuid_sue,
          'company_uuid': uuid_icecars,
-         'creator_uuid': uuid_sue},
+         'creator_uuid': uuid_sue,
+         'datetime': get_datetime()},
         {'user_uuid': uuid_stefan,
          'company_uuid': uuid_iceland,
-         'creator_uuid': uuid_stefan},
+         'creator_uuid': uuid_stefan,
+         'datetime': get_datetime()},
         {'user_uuid': uuid_anna,
          'company_uuid': uuid_datahouse,
-         'creator_uuid': uuid_anna}]
+         'creator_uuid': uuid_anna,
+         'datetime': get_datetime()}]
     ResultProxy = conn.execute(query, values_list)
 
     # Insert systems
@@ -211,13 +214,16 @@ def insert_sample():
     values_list = [
         {'user_uuid': uuid_sue,
          'system_uuid': uuid_carfleet,
-         'creator_uuid': uuid_sue},
+         'creator_uuid': uuid_sue,
+         'datetime': get_datetime()},
         {'user_uuid': uuid_stefan,
          'system_uuid': uuid_infraprov,
-         'creator_uuid': uuid_stefan},
+         'creator_uuid': uuid_stefan,
+         'datetime': get_datetime()},
         {'user_uuid': uuid_anna,
          'system_uuid': uuid_weatherservice,
-         'creator_uuid': uuid_anna}]
+         'creator_uuid': uuid_anna,
+         'datetime': get_datetime()}]
     ResultProxy = conn.execute(query, values_list)
 
     # Insert client
@@ -225,22 +231,28 @@ def insert_sample():
     values_list = [
         {'name': "car_1",
          'system_uuid': uuid_carfleet,
-         'creator_uuid': uuid_sue},
+         'creator_uuid': uuid_sue,
+         'datetime': get_datetime()},
         {'name': "car_2",
          'system_uuid': uuid_carfleet,
-         'creator_uuid': uuid_sue},
+         'creator_uuid': uuid_sue,
+         'datetime': get_datetime()},
         {'name': "gov_1",
          'system_uuid': uuid_infraprov,
-         'creator_uuid': uuid_stefan},
+         'creator_uuid': uuid_stefan,
+         'datetime': get_datetime()},
         {'name': "weatherstation_1",
          'system_uuid': uuid_weatherservice,
-         'creator_uuid': uuid_anna},
+         'creator_uuid': uuid_anna,
+         'datetime': get_datetime()},
         {'name': "weatherstation_2",
          'system_uuid': uuid_weatherservice,
-         'creator_uuid': uuid_anna},
+         'creator_uuid': uuid_anna,
+         'datetime': get_datetime()},
         {'name': "analysis",
          'system_uuid': uuid_weatherservice,
-         'creator_uuid': uuid_anna}]
+         'creator_uuid': uuid_anna,
+         'datetime': get_datetime()}]
     ResultProxy = conn.execute(query, values_list)
 
     app.logger.info("Ingested data into tables.")

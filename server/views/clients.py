@@ -44,7 +44,7 @@ def show_client(system_uuid, client_name):
     engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
     conn = engine.connect()
     query = """SELECT sys.uuid AS system_uuid, com.uuid AS company_uuid, name, domain, enterprise, workcenter, station, 
-    creator.email AS contact_mail, keyfile, agent.uuid AS agent_uuid
+    creator.email AS contact_mail, keyfile, agent.uuid AS agent_uuid, clients.datetime AS datetime
     FROM clients
     INNER JOIN users as creator ON creator.uuid=clients.creator_uuid
     INNER JOIN systems AS sys ON clients.system_uuid=sys.uuid
@@ -93,7 +93,7 @@ def add_client():
 # Add client in system view
 @client.route("/add_client/<string:system_uuid>", methods=["GET", "POST"])
 @is_logged_in
-def add_client_for_company(system_uuid):
+def add_client_for_system(system_uuid):
     # Get current user_uuid
     user_uuid = session["user_uuid"]
 
@@ -104,7 +104,7 @@ def add_client_for_company(system_uuid):
     engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
     conn = engine.connect()
     query = """SELECT sys.uuid AS system_uuid, name, domain, enterprise, workcenter, station, 
-    creator.email AS contact_mail, agent.uuid AS agent_uuid
+    creator.email AS contact_mail, clients.datetime AS datetime, agent.uuid AS agent_uuid
     FROM clients
     INNER JOIN users as creator ON creator.uuid=clients.creator_uuid
     INNER JOIN systems AS sys ON clients.system_uuid=sys.uuid
@@ -115,6 +115,7 @@ def add_client_for_company(system_uuid):
     AND sys.uuid='{}';""".format(user_uuid, system_uuid)
     result_proxy = conn.execute(query)
     clients = [dict(c.items()) for c in result_proxy.fetchall()]
+    print("Fetched clients: {}".format(clients))
 
     # Check if the system exists and you are an admin
     if len(clients) == 0:
@@ -145,193 +146,56 @@ def add_client_for_company(system_uuid):
                             'datetime': get_datetime(),
                             'keyfile': create_keyfile()}]
             conn.execute(query, values_list)
-            flash("The client {} was created for the  system {}.{}.{}.{}.".format(form.name.data,
-                payload["domain"], payload["enterprise"], payload["workcenter"], payload["station"]), "success")
+            flash("The client {} was created .".format(form.name.data), "success")
             return redirect(url_for("client.show_client", system_uuid=system_uuid, client_name=form.name.data))
         else:
-            flash("The client with name {} was already created for system {}.{}.{}.{}.".format(form.name.data,
-                payload["domain"], payload["enterprise"], payload["workcenter"], payload["station"]), "danger")
+            flash("The client with name {} was already created for system {}.{}.{}.{}.".format(
+                form.name.data, payload["domain"], payload["enterprise"], payload["workcenter"], payload["station"]),
+                "danger")
             return redirect(url_for("client.add_client", system_uuid=system_uuid))
 
     return render_template("/clients/add_client.html", form=form, payload=payload)
 
 
-# # Delete system
-# # TODO restrict deleting if clients exist
-# @system.route("/delete_system/<string:system_uuid>", methods=["GET"])
-# @is_logged_in
-# def delete_system(system_uuid):
-#     # Get current user_uuid
-#     user_uuid = session["user_uuid"]
-#
-#     # Check if you are agent of this system
-#     engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
-#     conn = engine.connect()
-#     query = """SELECT company_uuid, domain, enterprise, workcenter, station
-#         FROM companies AS com
-#         INNER JOIN systems AS sys ON com.uuid=sys.company_uuid
-#         INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid
-#         WHERE agf.user_uuid='{}'
-#         AND agf.system_uuid='{}';""".format(user_uuid, system_uuid)
-#     result_proxy = conn.execute(query)
-#     permitted_systems = [dict(c.items()) for c in result_proxy.fetchall()]
-#
-#     if permitted_systems == list():
-#         flash("You are not permitted to delete this system.", "danger")
-#         return redirect(url_for("system.show_all_systems"))
-#
-#     # Check if you are the last agent of the system
-#     query = """SELECT company_uuid, domain, enterprise, workcenter, station
-#         FROM companies AS com
-#         INNER JOIN systems AS sys ON com.uuid=sys.company_uuid
-#         INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid
-#         AND agf.system_uuid='{}';""".format(system_uuid)
-#     result_proxy = conn.execute(query)
-#
-#     if len(result_proxy.fetchall()) >= 2:
-#         flash("You are not permitted to delete a system which has multiple agents.", "danger")
-#         return redirect(url_for("system.show_all_systems"))
-#
-#     # Now the system can be deleted
-#     selected_system = permitted_systems[0]  # This list has only one element
-#
-#     # Delete new is_admin_of instance
-#     query = """DELETE FROM is_agent_of
-#         WHERE system_uuid='{}';""".format(system_uuid)
-#     conn.execute(query)
-#
-#     # Delete system
-#     query = """DELETE FROM systems
-#         WHERE uuid='{}';""".format(system_uuid)
-#     conn.execute(query)
-#
-#     flash("The system {}.{}.{}.{} was deleted.".format(selected_system["domain"], selected_system["enterprise"],
-#                                                        selected_system["workcenter"], selected_system["station"]),
-#           "success")
-#
-#     # Redirect to latest page, either /systems or /show_company/UID
-#     if session.get("url"):
-#         return redirect(session.get("url"))
-#     return redirect(url_for("system.show_all_systems"))
-#
-#
-# # Agent Management Form Class
-# class AgentForm(Form):
-#     email = StringField("Email", [validators.Email(message="The given email seems to be wrong")])
-#
-#
-# @system.route("/add_agent_system/<string:system_uuid>", methods=["GET", "POST"])
-# @is_logged_in
-# def add_agent_system(system_uuid):
-#     # Get current user_uuid
-#     user_uuid = session["user_uuid"]
-#
-#     form = AgentForm(request.form)
-#
-#     # Check if you are agent of this system
-#     engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
-#     conn = engine.connect()
-#     query = """SELECT company_uuid, system_uuid, domain, enterprise, workcenter, station
-#         FROM companies AS com
-#         INNER JOIN systems AS sys ON com.uuid=sys.company_uuid
-#         INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid
-#         WHERE agf.user_uuid='{}'
-#         AND agf.system_uuid='{}';""".format(user_uuid, system_uuid)
-#     result_proxy = conn.execute(query)
-#     permitted_systems = [dict(c.items()) for c in result_proxy.fetchall()]
-#
-#     if permitted_systems == list():
-#         flash("You are not permitted to add an agent for this system.", "danger")
-#         return redirect(url_for("show_system", system_uuid=system_uuid))
-#
-#     payload = permitted_systems[0]
-#
-#     if request.method == "POST" and form.validate():
-#         email = form.email.data
-#
-#         # Check if the user is registered
-#         query = """SELECT * FROM users WHERE email='{}';""".format(email)
-#         result_proxy = conn.execute(query)
-#         found_users = [dict(c.items()) for c in result_proxy.fetchall()]
-#
-#         if found_users == list():
-#             flash("No user was found with this email address.", "danger")
-#             return render_template("/systems/add_agent_system.html", form=form, payload=payload)
-#
-#         user = found_users[0]
-#         # Check if the user is already agent of this system
-#         query = """SELECT system_uuid, user_uuid FROM is_agent_of
-#         WHERE user_uuid='{}' AND system_uuid='{}';""".format(user["uuid"], system_uuid)
-#         result_proxy = conn.execute(query)
-#         if result_proxy.fetchall() != list():
-#             flash("This user is already agent of this system.", "danger")
-#             return render_template("/systems/add_agent_system.html", form=form, payload=payload)
-#
-#         # Create new is_agent_of instance
-#         query = db.insert(app.config["tables"]["is_agent_of"])
-#         values_list = [{"user_uuid": user["uuid"],
-#                         "system_uuid": payload["system_uuid"],
-#                         "creator_uuid": user_uuid,
-#                         "datetime": get_datetime()}]
-#         conn.execute(query, values_list)
-#         flash("The user {} was added to {}.{}.{}.{} as an agent.".format(
-#             email, payload["domain"], payload["enterprise"], payload["workcenter"], payload["station"]), "success")
-#         return redirect(url_for("system.show_system", system_uuid=system_uuid))
-#
-#     return render_template("/systems/add_agent_system.html", form=form, payload=payload)
-#
-# # Delete agent for system
-# @system.route("/delete_agent_system/<string:system_uuid>/<string:agent_uuid>", methods=["GET"])
-# @is_logged_in
-# def delete_agent_system(system_uuid, agent_uuid):
-#     # Get current user_uuid
-#     user_uuid = session["user_uuid"]
-#
-#     # Check if you are agent of this system
-#     engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
-#     conn = engine.connect()
-#     query = """SELECT company_uuid, system_uuid, domain, enterprise, workcenter, station
-#             FROM companies AS com
-#             INNER JOIN systems AS sys ON com.uuid=sys.company_uuid
-#             INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid
-#             WHERE agf.user_uuid='{}'
-#             AND agf.system_uuid='{}';""".format(user_uuid, system_uuid)
-#     result_proxy = conn.execute(query)
-#     permitted_systems = [dict(c.items()) for c in result_proxy.fetchall()]
-#
-#     if permitted_systems == list():
-#         flash("You are not permitted to add an agent for this system.", "danger")
-#         return redirect(url_for("system.show_system", system_uuid=system_uuid))
-#
-#     if user_uuid == agent_uuid:
-#         flash("You are not permitted to remove yourself.", "danger")
-#         return redirect(url_for("system.show_system", system_uuid=system_uuid))
-#
-#     # get info for the deleted agent
-#     query = """SELECT company_uuid, system_uuid, domain, enterprise, workcenter, station, agent.email AS email,
-#     agent.uuid AS agent_uuid
-#     FROM companies AS com
-#     INNER JOIN systems AS sys ON com.uuid=sys.company_uuid
-#     INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid
-#     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
-#     WHERE agent.uuid='{}'
-#     AND agf.system_uuid='{}';""".format(agent_uuid, system_uuid)
-#     result_proxy = conn.execute(query)
-#     del_users = [dict(c.items()) for c in result_proxy.fetchall()]
-#
-#     if del_users == list():
-#         flash("nothing to delete.", "danger")
-#         return redirect(url_for("company.show_all_systems"))
-#
-#     del_user = del_users[0]
-#     # Delete new is_agent_of instance
-#     query = """DELETE FROM is_agent_of
-#         WHERE user_uuid='{}'
-#         AND system_uuid='{}';""".format(agent_uuid, system_uuid)
-#     conn.execute(query)
-#     # print("DELETING: {}".format(query))
-#
-#     flash("User with email {} was removed as agent from system {}.{}.{}.{}.".format(
-#         del_user["email"], del_user["domain"], del_user["enterprise"], del_user["workcenter"], del_user["station"]),
-#         "success")
-#     return redirect(url_for("system.show_system", system_uuid=system_uuid))
+# Delete client
+@client.route("/delete_client/<string:system_uuid>/<string:client_name>", methods=["GET"])
+@is_logged_in
+def delete_system(system_uuid, client_name):
+    # Get current user_uuid
+    user_uuid = session["user_uuid"]
+
+    # Fetch clients of the system, for with the user is agent
+    engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
+    conn = engine.connect()
+    query = """SELECT sys.uuid AS system_uuid, name, domain, enterprise, workcenter, station, 
+    creator.email AS contact_mail, agent.uuid AS agent_uuid
+    FROM clients
+    INNER JOIN users as creator ON creator.uuid=clients.creator_uuid
+    INNER JOIN systems AS sys ON clients.system_uuid=sys.uuid
+    INNER JOIN companies AS com ON sys.company_uuid=com.uuid
+    INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid 
+    INNER JOIN users as agent ON agent.uuid=agf.user_uuid
+    WHERE agent.uuid='{}'
+    AND sys.uuid='{}';""".format(user_uuid, system_uuid)
+    result_proxy = conn.execute(query)
+    clients = [dict(c.items()) for c in result_proxy.fetchall()]
+
+    # Check if the system exists and you are an admin
+    if len(clients) == 0:
+        flash("It seems that this system doesn't exist.", "danger")
+        return redirect(url_for("client.show_all_clients"))
+
+    # Check if the current user is agent of the system
+    if user_uuid not in [c["agent_uuid"] for c in clients]:
+        flash("You are not permitted to delete clients of this system.", "danger")
+        return redirect(url_for("client.show_client", system_uuid=system_uuid, client_name=client_name))
+
+    # Delete the specified client
+    query = """DELETE FROM clients
+        WHERE system_uuid='{}' AND name='{}';""".format(system_uuid, client_name)
+    conn.execute(query)
+
+    flash("The client with name {} was deleted.".format(client_name), "success")
+
+    # Redirect to /show_system/system_uuid
+    return redirect(url_for("system.show_system", system_uuid=system_uuid))
