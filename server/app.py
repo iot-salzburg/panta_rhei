@@ -1,7 +1,7 @@
 import logging
 import sqlalchemy as db
 from dotenv import load_dotenv
-from flask import Flask, session, render_template, redirect, url_for
+from flask import Flask, session, render_template, redirect, url_for, flash
 
 # Import application-specific functions
 try:
@@ -33,13 +33,17 @@ app.register_blueprint(auth)  # url_prefix='/auth')
 
 
 @app.route('/')
-def home():
+def index():
     return redirect(url_for("dashboard"))
 
 
 @app.route("/dashboard")
-@is_logged_in
 def dashboard():
+    # Redirect to home if not logged in
+    if not 'logged_in' in session:
+        flash("You are not logged in yet. Let's start here!", "info")
+        return redirect(url_for("home"))
+
     # Get current user_uuid
     user_uuid = session["user_uuid"]
     msg_systems = msg_companies = None
@@ -87,6 +91,11 @@ def dashboard():
 @app.route('/about')
 def about():
     return render_template('about.html')
+
+
+@app.route('/home')
+def home():
+    return render_template('home.html')
 
 
 if __name__ == '__main__':
