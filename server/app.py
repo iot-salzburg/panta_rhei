@@ -16,7 +16,6 @@ from server.views.system import system
 from server.views.clients import client
 from server.create_database import create_tables
 
-
 # load environment variables automatically from a .env file in the same directory
 load_dotenv()
 
@@ -40,7 +39,7 @@ def index():
 @app.route("/dashboard")
 def dashboard():
     # Redirect to home if not logged in
-    if not 'logged_in' in session:
+    if 'logged_in' not in session:
         flash("You are not logged in yet. Let's start here!", "info")
         return redirect(url_for("home"))
 
@@ -84,7 +83,7 @@ def dashboard():
     if len(systems) == 0:
         msg_companies = "No companies found."
 
-    return render_template("dashboard.html", companies=companies,  systems=systems, msg_systems=msg_systems,
+    return render_template("dashboard.html", companies=companies, systems=systems, msg_systems=msg_systems,
                            msg_companies=msg_companies, session=session)
 
 
