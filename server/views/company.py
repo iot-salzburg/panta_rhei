@@ -123,7 +123,7 @@ def add_company():
             conn.execute(query, values_list)
         else:
             engine.dispose()
-            flash("The company {}.{} is already created.".format(form.domain.data, form.enterprise.data), "danger")
+            flash("The company {}.{} already exists.".format(form.domain.data, form.enterprise.data), "danger")
             return redirect(url_for("company.show_all_companies"))
 
         # Create new is_admin_of instance

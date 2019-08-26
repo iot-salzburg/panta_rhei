@@ -15,6 +15,7 @@ from server.views.home import home_bp
 from server.views.company import company
 from server.views.system import system
 from server.views.clients import client
+from server.views.streamhub import streamhub_bp
 from server.create_database import create_tables
 
 # load environment variables automatically from a .env file in the same directory
@@ -31,6 +32,7 @@ app.register_blueprint(auth)  # url_prefix='/auth')
 app.register_blueprint(company)  # url_prefix='/companies')
 app.register_blueprint(system)  # url_prefix='/systems')
 app.register_blueprint(client)  # url_prefix='/clients')
+app.register_blueprint(streamhub_bp)  # url_prefix='/streamhub')
 
 
 if __name__ == '__main__':

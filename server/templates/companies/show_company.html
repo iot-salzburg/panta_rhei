@@ -30,7 +30,6 @@
       <th>Station</th>
 <!--      <th>Creator</th>-->
       <th></th>
-      <th></th>
     </tr>
       {% for system in systems %}
       <tr>
@@ -40,12 +39,10 @@
         <td><a href="/show_system/{{system.system_uuid}}" class="btn btn-block">{{system.workcenter}}</a></td>
         <td><a href="/show_system/{{system.system_uuid}}" class="btn btn-block">{{system.station}}</a></td>
 <!--        <td>{{system.contact_mail}}</td>-->
-        <td><a href="/show_system/{{system.system_uuid}}" class="btn btn-info"
+        <td><a href="/show_system/{{system.system_uuid}}" class="btn btn-info float-right"
         data-toggle="tooltip" title="Manage this system.">manage system</a></td>
-        <td>
-            <a class="btn btn-danger" href="/delete_system/{{system.system_uuid}}"
-        data-toggle="tooltip" title="Only empty systems can be deleted."> delete</a>
-        </td>
+<!--        <td><a class="btn btn-danger" href="/delete_system/{{system.system_uuid}}"-->
+<!--        data-toggle="tooltip" title="Only empty systems can be deleted."> delete</a> </td>-->
       </tr>
     {% endfor %}
   </table>
@@ -71,7 +68,7 @@
         <td>{{admin.sur_name}}</td>
         <td>{{admin.email}}</td>
         <td>
-            <a class="btn btn-danger" href="/delete_admin_company/{{admin.company_uuid}}/{{admin.admin_uuid}}"
+            <a class="btn btn-danger float-right" href="/delete_admin_company/{{admin.company_uuid}}/{{admin.admin_uuid}}"
         data-toggle="tooltip" title="Remove this user as agent from the company."> remove </a>
         </td>
     {% endfor %}

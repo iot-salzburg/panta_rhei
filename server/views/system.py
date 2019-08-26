@@ -214,6 +214,9 @@ def delete_system(system_uuid):
         AND agf.system_uuid='{}';""".format(user_uuid, system_uuid)
     result_proxy = conn.execute(query)
     permitted_systems = [dict(c.items()) for c in result_proxy.fetchall()]
+    print(user_uuid)
+    print(system_uuid)
+    print("permitted systems: {}".format(permitted_systems))
 
     if permitted_systems == list():
         engine.dispose()
