@@ -9,7 +9,8 @@ from passlib.hash import sha256_crypt
 try:
     from server.views.useful_functions import get_datetime, get_uid, is_logged_in
 except ModuleNotFoundError:
-    pass # from views.useful_functions import get_datetime, get_uid, is_logged_in
+    # This is needed
+    from views.useful_functions import get_datetime, get_uid, is_logged_in
 
 # load environment variables automatically from a .env file in the same directory
 load_dotenv()
