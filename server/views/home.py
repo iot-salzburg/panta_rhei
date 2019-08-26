@@ -54,6 +54,8 @@ def dashboard():
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
     WHERE agent.uuid='{}';""".format(user_uuid)
     result_proxy = conn.execute(query)
+    engine.dispose()
+
     systems = [dict(c.items()) for c in result_proxy.fetchall()]
     if len(systems) == 0:
         msg_companies = "No companies found."

@@ -29,6 +29,7 @@ def show_all_systems():
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
     WHERE agent.uuid='{}';""".format(user_uuid)
     result_proxy = conn.execute(query)
+    engine.dispose()
     systems = [dict(c.items()) for c in result_proxy.fetchall()]
     # print("Fetched companies: {}".format(companies))
 
@@ -59,11 +60,13 @@ def show_system(system_uuid):
 
     # Check if the system exists and has agents
     if len(agents) == 0:
+        engine.dispose()
         flash("It seems that this system doesn't exist.", "danger")
         return redirect(url_for("system.show_all_systems"))
 
     # Check if the current user is agent of the system
     if user_uuid not in [c["agent_uuid"] for c in agents]:
+        engine.dispose()
         flash("You are not permitted see details this system.", "danger")
         return redirect(url_for("system.show_all_systems"))
 
@@ -78,6 +81,7 @@ def show_system(system_uuid):
     WHERE agent.uuid='{}'
     AND sys.uuid='{}';""".format(user_uuid, system_uuid)
     result_proxy = conn.execute(query)
+    engine.dispose()
     clients = [dict(c.items()) for c in result_proxy.fetchall()]
 
     # if not, agents has at least one item
@@ -125,11 +129,13 @@ def add_system_for_company(company_uuid):
 
     # Check if the company exists and you are an admin
     if len(admins) == 0:
+        engine.dispose()
         flash("It seems that this company doesn't exist.", "danger")
         return redirect(url_for("company.show_all_companies"))
 
     # Check if the current user is admin of the company
     if user_uuid not in [c["admin_uuid"] for c in admins]:
+        engine.dispose()
         flash("You are not permitted to add systems for this company.", "danger")
         return redirect(url_for("company.show_all_companies"))
 
@@ -161,7 +167,8 @@ def add_system_for_company(company_uuid):
                             "description": form.description.data}]
             conn.execute(query, values_list)
         else:
-            flash("The system {}.{}.{}.{} is already created.".format(
+            engine.dispose()
+            flash("The system {}.{}.{}.{} already exists.".format(
                 payload["domain"], payload["enterprise"], form.workcenter.data, form.station.data), "danger")
             return redirect(url_for("company.show_company", company_uuid=company_uuid))
 
@@ -173,11 +180,13 @@ def add_system_for_company(company_uuid):
                         "datetime": get_datetime()}]
         try:
             conn.execute(query, values_list)
+            engine.dispose()
             flash("The system {}.{} within the company {}.{} was created.".format(
                 form.workcenter.data, form.station.data, payload["domain"], payload["enterprise"]), "success")
             return redirect(url_for("company.show_company", company_uuid=company_uuid))
 
         except sqlalchemy_exc.IntegrityError as e:
+            engine.dispose()
             print("An Integrity Error occured: {}".format(e))
             flash("An unexpected error occured.", "danger")
             return render_template("login.html")
@@ -206,6 +215,7 @@ def delete_system(system_uuid):
     permitted_systems = [dict(c.items()) for c in result_proxy.fetchall()]
 
     if permitted_systems == list():
+        engine.dispose()
         flash("You are not permitted to delete this system.", "danger")
         return redirect(url_for("system.show_all_systems"))
 
@@ -218,6 +228,7 @@ def delete_system(system_uuid):
     result_proxy = conn.execute(query)
 
     if len(result_proxy.fetchall()) >= 2:
+        engine.dispose()
         flash("You are not permitted to delete a system which has multiple agents.", "danger")
         return redirect(url_for("system.show_all_systems"))
 
@@ -234,6 +245,7 @@ def delete_system(system_uuid):
         WHERE uuid='{}';""".format(system_uuid)
     conn.execute(query)
 
+    engine.dispose()
     flash("The system {}.{}.{}.{} was deleted.".format(selected_system["domain"], selected_system["enterprise"],
                                                        selected_system["workcenter"], selected_system["station"]),
           "success")
@@ -270,6 +282,7 @@ def add_agent_system(system_uuid):
     permitted_systems = [dict(c.items()) for c in result_proxy.fetchall()]
 
     if permitted_systems == list():
+        engine.dispose()
         flash("You are not permitted to add an agent for this system.", "danger")
         return redirect(url_for("show_system", system_uuid=system_uuid))
 
@@ -284,6 +297,7 @@ def add_agent_system(system_uuid):
         found_users = [dict(c.items()) for c in result_proxy.fetchall()]
 
         if found_users == list():
+            engine.dispose()
             flash("No user was found with this email address.", "danger")
             return render_template("/systems/add_agent_system.html", form=form, payload=payload)
 
@@ -293,6 +307,7 @@ def add_agent_system(system_uuid):
         WHERE user_uuid='{}' AND system_uuid='{}';""".format(user["uuid"], system_uuid)
         result_proxy = conn.execute(query)
         if result_proxy.fetchall() != list():
+            engine.dispose()
             flash("This user is already agent of this system.", "danger")
             return render_template("/systems/add_agent_system.html", form=form, payload=payload)
 
@@ -303,6 +318,8 @@ def add_agent_system(system_uuid):
                         "creator_uuid": user_uuid,
                         "datetime": get_datetime()}]
         conn.execute(query, values_list)
+        engine.dispose()
+
         flash("The user {} was added to {}.{}.{}.{} as an agent.".format(
             email, payload["domain"], payload["enterprise"], payload["workcenter"], payload["station"]), "success")
         return redirect(url_for("system.show_system", system_uuid=system_uuid))
@@ -329,10 +346,12 @@ def delete_agent_system(system_uuid, agent_uuid):
     permitted_systems = [dict(c.items()) for c in result_proxy.fetchall()]
 
     if permitted_systems == list():
+        engine.dispose()
         flash("You are not permitted to add an agent for this system.", "danger")
         return redirect(url_for("system.show_system", system_uuid=system_uuid))
 
     if user_uuid == agent_uuid:
+        engine.dispose()
         flash("You are not permitted to remove yourself.", "danger")
         return redirect(url_for("system.show_system", system_uuid=system_uuid))
 
@@ -349,6 +368,7 @@ def delete_agent_system(system_uuid, agent_uuid):
     del_users = [dict(c.items()) for c in result_proxy.fetchall()]
 
     if del_users == list():
+        engine.dispose()
         flash("nothing to delete.", "danger")
         return redirect(url_for("company.show_all_systems"))
 
@@ -360,6 +380,7 @@ def delete_agent_system(system_uuid, agent_uuid):
     conn.execute(query)
     # print("DELETING: {}".format(query))
 
+    engine.dispose()
     flash("User with email {} was removed as agent from system {}.{}.{}.{}.".format(
         del_user["email"], del_user["domain"], del_user["enterprise"], del_user["workcenter"], del_user["station"]),
         "success")

@@ -48,10 +48,12 @@ def register():
                         'password': sha256_crypt.encrypt(str(request.form["password"]))}]
         try:
             ResultProxy = conn.execute(query, values_list)
+            engine.dispose()
             flash("You are now registered and can log in.", "success")
             return redirect(url_for('auth.login'))
 
         except sqlalchemy_exc.IntegrityError:
+            engine.dispose()
             flash("This email is already registered. Please log in.", "danger")
             return render_template('/auth/register.html', form=form)
 
@@ -72,6 +74,7 @@ def login():
         query = "SELECT * FROM users WHERE email = '{}'".format(email)
         ResultProxy = conn.execute(query)
         results = ResultProxy.fetchall()
+        engine.dispose()
 
         data = list()
         for row in results:

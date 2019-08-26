@@ -28,6 +28,7 @@ def show_all_clients():
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
     WHERE agent.uuid='{}';""".format(user_uuid)
     result_proxy = conn.execute(query)
+    engine.dispose()
     clients = [dict(c.items()) for c in result_proxy.fetchall()]
     # print("Fetched clients: {}".format(clients))
 
@@ -58,11 +59,13 @@ def show_client(system_uuid, client_name):
 
     # Check if the system exists and has agents
     if len(clients) == 0:
+        engine.dispose()
         flash("It seems that this client doesn't exist.", "danger")
         return redirect(url_for("client.show_all_clients"))
 
     # Check if the current user is agent of the client's system
     if user_uuid not in [c["agent_uuid"] for c in clients]:
+        engine.dispose()
         flash("You are not permitted see details this client.", "danger")
         return redirect(url_for("client.show_all_clients"))
 
@@ -116,15 +119,17 @@ def add_client_for_system(system_uuid):
     AND sys.uuid='{}';""".format(user_uuid, system_uuid)
     result_proxy = conn.execute(query)
     clients = [dict(c.items()) for c in result_proxy.fetchall()]
-    print("Fetched clients: {}".format(clients))
+    # print("Fetched clients: {}".format(clients))
 
     # Check if the system exists and you are an admin
     if len(clients) == 0:
+        engine.dispose()
         flash("It seems that this system doesn't exist.", "danger")
         return redirect(url_for("system.show_all_systems"))
 
     # Check if the current user is agent of the system
     if user_uuid not in [c["agent_uuid"] for c in clients]:
+        engine.dispose()
         flash("You are not permitted to add clients for this system.", "danger")
         return redirect(url_for("system.show_all_systems"))
 
@@ -148,9 +153,11 @@ def add_client_for_system(system_uuid):
                             'datetime': get_datetime(),
                             'keyfile': create_keyfile()}]
             conn.execute(query, values_list)
+            engine.dispose()
             flash("The client {} was created .".format(form.name.data), "success")
             return redirect(url_for("client.show_client", system_uuid=system_uuid, client_name=form.name.data))
         else:
+            engine.dispose()
             flash("The client with name {} was already created for system {}.{}.{}.{}.".format(
                 form.name.data, payload["domain"], payload["enterprise"], payload["workcenter"], payload["station"]),
                 "danger")
@@ -184,11 +191,13 @@ def delete_client(system_uuid, client_name):
 
     # Check if the system exists and you are an admin
     if len(clients) == 0:
+        engine.dispose()
         flash("It seems that this system doesn't exist.", "danger")
         return redirect(url_for("client.show_all_clients"))
 
     # Check if the current user is agent of the system
     if user_uuid not in [c["agent_uuid"] for c in clients]:
+        engine.dispose()
         flash("You are not permitted to delete clients of this system.", "danger")
         return redirect(url_for("client.show_client", system_uuid=system_uuid, client_name=client_name))
 
@@ -196,6 +205,7 @@ def delete_client(system_uuid, client_name):
     query = """DELETE FROM clients
         WHERE system_uuid='{}' AND name='{}';""".format(system_uuid, client_name)
     conn.execute(query)
+    engine.dispose()
 
     flash("The client with name {} was deleted.".format(client_name), "success")
 
