@@ -7,28 +7,31 @@
   <table class="table table-striped">
     <tr>
       <th>uuid</th>
-      <th>Domain</th>
-      <th>Enterprise</th>
-      <th>Workcenter</th>
-      <th>Station</th>
-<!--      <th>Creator</th>-->
+      <th>Company</th>
+      <th>System</th>
+      <th>Creator</th>
       <th></th>
-      <th></th>
+<!--      <th></th>-->
     </tr>
+
       {% for system in systems %}
       <tr>
         <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.system_uuid}}</a></td>
-        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.domain}}</a></td>
-        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.enterprise}}</a></td>
-        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.workcenter}}</a></td>
-        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.station}}</a></td>
-<!--        <td>{{system.contact_mail}}</td>-->
-        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-info">manage system</a></td>
-        <td>
-            <a class="btn btn-danger" href="/delete_system/{{system.system_uuid}}"> delete</a>
-        </td>
+        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.domain}}.{{system.enterprise}}</a></td>
+        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.workcenter}}.{{system.station}}</a></td>
+        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.contact_mail}}</a></td>
+        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-info float-right"
+            data-toggle="tooltip" title="Manage this system.">manage system</a></td>
+<!--        <td><a class="btn btn-danger" href="/delete_system/{{system.system_uuid}}"> delete</a></td>-->
       </tr>
     {% endfor %}
   </table>
-  <a class="btn btn-success" href="/add_system"> Add System</a>
+    {% if not systems %}
+      No systems were created yet.
+      <br>
+      <br>
+    {% endif %}
+  <a class="btn btn-success" href="/add_system"
+      data-toggle="tooltip" title="Add a new system to this company."> Add System</a>
+
 {% endblock %}

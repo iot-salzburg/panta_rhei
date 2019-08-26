@@ -1,9 +1,12 @@
 {% extends 'layout.html' %}
 
 {% block body %}
-  <h1>Dashboard</h1>
+  <table class="table">
+  <td>
+    <h1> Dashboard </h1>
   <h1> <small> Welcome {{session.first_name}} {{session.sur_name}}!</small></h1>
-  <br>
+  </td>
+  </table>
 
 
   <h1> <small> List of dedicated companies </small></h1>
@@ -13,20 +16,20 @@
       <th>uuid</th>
       <th>Domain</th>
       <th>Enterprise</th>
-<!--      <th>Creator</th>-->
+      <th>Creator</th>
       <th></th>
-      <th></th>
+<!--      <th></th>-->
     </tr>
       {% for company in companies %}
       <tr>
         <td><a href="show_company/{{company.company_uuid}}" class="btn btn-block">{{company.company_uuid}}</a></td>
         <td><a href="show_company/{{company.company_uuid}}" class="btn btn-block">{{company.domain}}</a></td>
         <td><a href="show_company/{{company.company_uuid}}" class="btn btn-block">{{company.enterprise}}</a></td>
+        <td><a href="show_company/{{company.company_uuid}}" class="btn btn-block">{{company.contact_mail}}</a></td>
 <!--        <td>{{company.contact_mail}}</td>-->
-        <td><a href="show_company/{{company.company_uuid}}" class="btn btn-info">manage company</a></td>
-        <td>
-            <a class="btn btn-danger" href="/delete_company/{{company.company_uuid}}"> delete</a>
-        </td>
+        <td><a href="show_company/{{company.company_uuid}}" class="btn btn-info float-right"
+        data-toggle="tooltip" title="Manage this company.">manage company</a></td>
+<!--        <td><a class="btn btn-danger" href="/delete_company/{{company.company_uuid}}"> delete</a></td>-->
       </tr>
     {% endfor %}
   </table>
@@ -35,7 +38,8 @@
       <br>
       <br>
     {% endif %}
-  <a class="btn btn-success" href="/add_company"> Add Company</a>
+  <a class="btn btn-success" href="/add_company"
+        data-toggle="tooltip" title="Add a new company."> Add Company</a>
 
   <br>
   <br>
@@ -47,27 +51,22 @@
   <table class="table table-striped">
     <tr>
       <th>uuid</th>
-      <th>Domain</th>
-      <th>Enterprise</th>
-      <th>Workcenter</th>
-      <th>Station</th>
-<!--      <th>Creator</th>-->
+      <th>Company</th>
+      <th>System</th>
+      <th>Creator</th>
       <th></th>
-      <th></th>
+<!--      <th></th>-->
     </tr>
 
       {% for system in systems %}
       <tr>
         <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.system_uuid}}</a></td>
-        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.domain}}</a></td>
-        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.enterprise}}</a></td>
-        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.workcenter}}</a></td>
-        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.station}}</a></td>
-<!--        <td>{{system.contact_mail}}</td>-->
-        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-info">manage system</a></td>
-        <td>
-            <a class="btn btn-danger" href="/delete_system/{{system.system_uuid}}"> delete</a>
-        </td>
+        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.domain}}.{{system.enterprise}}</a></td>
+        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.workcenter}}.{{system.station}}</a></td>
+        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.contact_mail}}</a></td>
+        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-info float-right"
+        data-toggle="tooltip" title="Manage this system.">manage system</a></td>
+<!--        <td><a class="btn btn-danger" href="/delete_system/{{system.system_uuid}}"> delete</a></td>-->
       </tr>
     {% endfor %}
   </table>
@@ -76,6 +75,7 @@
       <br>
       <br>
     {% endif %}
-  <a class="btn btn-success" href="/add_system"> Add System</a>
+  <a class="btn btn-success" href="/add_system"
+      data-toggle="tooltip" title="Add a new system to this company."> Add System</a>
 
 {% endblock %}

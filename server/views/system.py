@@ -17,7 +17,7 @@ def show_all_systems():
     user_uuid = session["user_uuid"]
 
     # Set url (is used in system.delete_system)
-    session["url"] = "/systems"
+    session["last_url"] = "/systems"
 
     # Fetch systems, for which the current user is agent of
     engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
@@ -251,8 +251,8 @@ def delete_system(system_uuid):
           "success")
 
     # Redirect to latest page, either /systems or /show_company/UID
-    if session.get("url"):
-        return redirect(session.get("url"))
+    if session.get("last_url"):
+        return redirect(session.get("last_url"))
     return redirect(url_for("system.show_all_systems"))
 
 

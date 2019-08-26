@@ -29,7 +29,6 @@ def show_all_companies():
     engine.dispose()
     companies = [dict(c.items()) for c in result_proxy.fetchall()]
     # print("Fetched companies: {}".format(companies))
-
     return render_template("/companies/companies.html", companies=companies)
 
 
@@ -192,7 +191,7 @@ def delete_company(company_uuid):
     if len(result_proxy_admin.fetchall()) >= 2:
         flash("You are not permitted to delete a company which has other admins.", "danger")
         engine.dispose()
-        return redirect(url_for("company.show_company", company_uuid=company_uuid))
+        return redirect(url_for("company.show_all_companies"))
 
     # Now the company can be deleted
     selected_company = permitted_companies[0]  # This list has only one element

@@ -7,27 +7,24 @@
   <table class="table table-striped">
     <tr>
       <th>Name</th>
-      <th>Domain</th>
-      <th>Enterprise</th>
-      <th>Workcenter</th>
-      <th>Station</th>
+      <th>Company</th>
+      <th>System</th>
       <th>Creator</th>
 <!--      <th>Creator</th>-->
-      <th></th>
       <th></th>
     </tr>
       {% for client in clients %}
       <tr>
         <td><a href="show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-block">{{client.name}}</a></td>
-        <td><a href="show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-block">{{client.domain}}</a></td>
-        <td><a href="show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-block">{{client.enterprise}}</a></td>
-        <td><a href="show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-block">{{client.workcenter}}</a></td>
-        <td><a href="show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-block">{{client.station}}</a></td>
+        <td><a href="show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-block">{{client.domain}}.{{client.enterprise}}</a></td>
+        <td><a href="show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-block">{{client.workcenter}}.{{client.station}}</a></td>
         <td><a href="show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-block">{{client.contact_mail}}</a></td>
 <!--        <td>{{client.contact_mail}}</td>-->
-        <td><a href="show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-info">manage client</a></td>
+        <td><a href="show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-info float-right"
+                data-toggle="tooltip" title="Manage this client application.">manage client</a></td>
       </tr>
     {% endfor %}
   </table>
-  <a class="btn btn-success" href="/add_client"> Add Client</a>
+  <a class="btn btn-success" href="/add_client"
+      data-toggle="tooltip" title="Add a new client application to this system."> Add Client</a>
 {% endblock %}

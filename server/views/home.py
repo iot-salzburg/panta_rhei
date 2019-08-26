@@ -2,6 +2,7 @@ import logging
 import sqlalchemy as db
 from flask import current_app as app
 from flask import Blueprint, render_template, flash, redirect, url_for, session, request
+import inspect
 
 home_bp = Blueprint("home", __name__)
 
@@ -21,6 +22,10 @@ def dashboard():
     # Get current user_uuid
     user_uuid = session["user_uuid"]
     msg_systems = msg_companies = None
+
+    # # Set url_for module.function (is used in type.delete_type)
+    # session["last_url"] = str(__name__).split(".")[-1] + "." + inspect.currentframe().f_code.co_name
+    # print(session.get("last_url"))
 
     # Fetch companies, for which the current user is admin of
     engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
