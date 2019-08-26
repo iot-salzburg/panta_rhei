@@ -1,5 +1,11 @@
+import os
+import inspect
+import zipfile
+import io
+import pathlib
+
 import sqlalchemy as db
-from flask import Blueprint, render_template, flash, redirect, url_for, session, request
+from flask import Blueprint, render_template, flash, redirect, url_for, session, request, Response, send_file
 # Must be imported to use the app config
 from flask import current_app as app
 from sqlalchemy import exc as sqlalchemy_exc
@@ -207,3 +213,53 @@ def delete_client(system_uuid, client_name):
 
     # Redirect to /show_system/system_uuid
     return redirect(url_for("system.show_system", system_uuid=system_uuid))
+
+
+# download key as zip
+@client.route("/download_key/<string:system_uuid>/<string:client_name>", methods=["GET"])
+@is_logged_in
+def download_key(system_uuid, client_name):
+    # Get current user_uuid
+    user_uuid = session["user_uuid"]
+
+    # Only the creator of an client is allowed to download the key
+    engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
+    conn = engine.connect()
+    query = """SELECT system_uuid, name, creator.email AS contact_mail, creator_uuid
+    FROM clients
+    INNER JOIN users as creator ON creator.uuid=clients.creator_uuid
+    WHERE creator_uuid='{}' AND system_uuid='{}';""".format(user_uuid, system_uuid)
+    result_proxy = conn.execute(query)
+    engine.dispose()
+    clients = [dict(c.items()) for c in result_proxy.fetchall()]
+
+    # Check if the system exists and you are an admin
+    if len(clients) == 0:
+        flash("It seems that this system doesn't exist.", "danger")
+        return redirect(url_for("client.show_all_clients"))
+
+    # Check if the current user is agent of the system
+    if user_uuid != clients[0]["creator_uuid"]:
+        flash("You are not permitted to delete clients of this system.", "danger")
+        return redirect(url_for("client.show_client", system_uuid=system_uuid, client_name=client_name))
+
+    filename = "key_{}_{}.zip".format(system_uuid, client_name.strip().replace(" ", ""))
+    # filename = "key_4f12073c57f2_RaspberryPi.zip"
+    filepath = os.path.join(os.path.dirname(os.path.realpath(inspect.getframeinfo(inspect.currentframe()).filename)),
+                            "keys", filename)
+
+    print("filepath: {}".format(filepath))
+
+    print(os.path.dirname(os.path.realpath(inspect.getframeinfo(inspect.currentframe()).filename)))
+
+    if os.path.exists(filepath):
+
+        flash("The key was downloaded, keep privacy in mind, this key can't' be downloaded anymore!", "info")
+
+        return send_file(
+                        filepath,
+                        mimetype='application/zip',
+                        as_attachment=True,
+                        attachment_filename=filename)
+
+    return redirect(url_for("client.show_client", system_uuid=system_uuid, client_name=client_name))

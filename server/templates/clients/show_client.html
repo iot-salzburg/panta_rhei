@@ -27,10 +27,8 @@
       <th>Company</th>
       <th>Creator's mail</th>
       <th>Created at</th>
-      <th>Keyfile</th>
+      <th>Key</th>
 <!--      <th>Creator</th>-->
-      <th></th>
-      <th></th>
     </tr>
       <tr>
         <td><a href="/show_client/{{payload.system_uuid}}/{{payload.name}}" class="btn btn-block">{{payload.name}}</a></td>
@@ -38,7 +36,8 @@
         <td><a href="/show_company/{{payload.company_uuid}}" class="btn btn-block">{{payload.domain}}.{{payload.enterprise}}</a></td>
         <td><a href="/show_client/{{payload.system_uuid}}/{{payload.name}}" class="btn btn-block">{{payload.contact_mail}}</a></td>
         <td><a href="/show_client/{{payload.system_uuid}}/{{payload.name}}" class="btn btn-block">{{payload.datetime}}</a></td>
-        <td><a href="/show_client/{{payload.system_uuid}}/{{payload.name}}" class="btn btn-info">download keyfile</a></td>
+        <td><a href="/download_key/{{payload.system_uuid}}/{{payload.name}}" class="btn btn-info float-right"
+        data-toggle="tooltip" title="For security reasons, the key can be downloaded only once!">download key and delete</a></td>
       </tr>
   </table>
 
