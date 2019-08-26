@@ -49,7 +49,7 @@ def register():
         try:
             ResultProxy = conn.execute(query, values_list)
             flash("You are now registered and can log in.", "success")
-            return redirect(url_for('login'))
+            return redirect(url_for('auth.login'))
 
         except sqlalchemy_exc.IntegrityError:
             flash("This email is already registered. Please log in.", "danger")
@@ -96,7 +96,7 @@ def login():
                 session['sur_name'] = data[0]['sur_name']
 
                 flash('You are now logged in', 'success')
-                return redirect(url_for('dashboard'))
+                return redirect(url_for('home.dashboard'))
             else:
                 error = 'Invalid login.'
                 return render_template('/auth/login.html', error=error)
