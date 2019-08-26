@@ -45,7 +45,8 @@ def show_company(company_uuid):
     engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
     conn = engine.connect()
     query = """
-    SELECT company_uuid, domain, enterprise, description, admin.uuid AS admin_uuid, admin.first_name, admin.sur_name, admin.email 
+    SELECT company_uuid, domain, enterprise, description, admin.uuid AS admin_uuid, admin.first_name, admin.sur_name, 
+    admin.email, creator.email AS creator_mail, com.datetime AS com_datetime
     FROM companies AS com 
     INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
     INNER JOIN users as admin ON admin.uuid=aof.user_uuid 

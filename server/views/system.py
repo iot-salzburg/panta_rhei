@@ -46,8 +46,8 @@ def show_system(system_uuid):
     engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
     conn = engine.connect()
     query = """
-    SELECT sys.uuid AS system_uuid, domain, enterprise, sys.description, workcenter, station, 
-    agent.uuid AS agent_uuid, agent.first_name, agent.sur_name, agent.email
+    SELECT sys.uuid AS system_uuid, domain, enterprise, sys.description, workcenter, station, sys.datetime AS sys_datetime,
+    agent.uuid AS agent_uuid, agent.first_name, agent.sur_name, agent.email AS agent_mail, creator.email AS creator_mail
     FROM systems AS sys
     INNER JOIN companies AS com ON sys.company_uuid=com.uuid
     INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid 
@@ -92,7 +92,7 @@ def show_system(system_uuid):
 # System Form Class
 class SystemForm(Form):
     workcenter = StringField("Workcenter", [validators.Length(min=2, max=30)])
-    station = StringField("Station", [validators.Length(min=4, max=20)])
+    station = StringField("Station", [validators.Length(min=2, max=20)])
     description = TextAreaField("Description", [validators.Length(max=16*1024)])
 
 # Add system in system view, redirect to companies
@@ -164,6 +164,7 @@ def add_system_for_company(company_uuid):
                             "company_uuid": payload["company_uuid"],
                             "workcenter": form.workcenter.data,
                             "station": form.station.data,
+                            "datetime": get_datetime(),
                             "description": form.description.data}]
             conn.execute(query, values_list)
         else:
@@ -230,7 +231,19 @@ def delete_system(system_uuid):
     if len(result_proxy.fetchall()) >= 2:
         engine.dispose()
         flash("You are not permitted to delete a system which has multiple agents.", "danger")
-        return redirect(url_for("system.show_all_systems"))
+        return redirect(url_for("system.show_system", system_uuid=system_uuid))
+
+    # Check if there are client applications for that system
+    query = """SELECT system_uuid, clients.name AS client_name
+        FROM systems
+        INNER JOIN clients ON systems.uuid=clients.system_uuid
+        WHERE system_uuid='{}';""".format(system_uuid)
+    result_proxy = conn.execute(query)
+
+    if len(result_proxy.fetchall()) >= 1:
+        engine.dispose()
+        flash("You are not permitted to delete a system which has client applications.", "danger")
+        return redirect(url_for("system.show_system", system_uuid=system_uuid))
 
     # Now the system can be deleted
     selected_system = permitted_systems[0]  # This list has only one element

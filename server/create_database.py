@@ -59,6 +59,7 @@ def create_tables(app):
         db.Column('uuid', db.VARCHAR(12), primary_key=True, unique=True),
         db.Column('domain', db.VARCHAR(4), nullable=False),
         db.Column('enterprise', db.VARCHAR(15), nullable=False),
+        db.Column('datetime', db.DateTime, nullable=True),
         db.Column('description', db.VARCHAR(1000), nullable=True)
         )
     app.config["tables"]["systems"] = db.Table(
@@ -67,6 +68,7 @@ def create_tables(app):
         db.Column('company_uuid', db.ForeignKey('companies.uuid')),
         db.Column('workcenter', db.VARCHAR(30), nullable=False),
         db.Column('station', db.VARCHAR(20), nullable=False),
+        db.Column('datetime', db.DateTime, nullable=True),
         db.Column('description', db.VARCHAR(1000), nullable=True)
         )
     app.config["tables"]["is_admin_of"] = db.Table(
@@ -170,15 +172,18 @@ def insert_sample():
         {'uuid': uuid_icecars,
          'domain': 'cz',
          'enterprise': 'icecars',
-         'description': lorem_ipsum},
+         'description': lorem_ipsum,
+         'datetime': get_datetime()},
         {'uuid': uuid_iceland,
          'domain': 'is',
          'enterprise': 'iceland',
-         'description': lorem_ipsum},
+         'description': lorem_ipsum,
+         'datetime': get_datetime()},
         {'uuid': uuid_datahouse,
          'domain': 'at',
          'enterprise': 'datahouse',
-         'description': lorem_ipsum}]
+         'description': lorem_ipsum,
+         'datetime': get_datetime()}]
     ResultProxy = conn.execute(query, values_list)
 
 
@@ -209,17 +214,20 @@ def insert_sample():
          'company_uuid': uuid_icecars,
          'workcenter': "iot-iot4cps-wp5",
          'station': "CarFleet",
-         'description': lorem_ipsum},
+         'description': lorem_ipsum,
+         'datetime': get_datetime()},
         {'uuid': uuid_infraprov,
          'company_uuid': uuid_iceland,
          'workcenter': "iot-iot4cps-wp5",
          'station': "InfraProv",
-         'description': lorem_ipsum},
+         'description': lorem_ipsum,
+         'datetime': get_datetime()},
         {'uuid': uuid_weatherservice,
          'company_uuid': uuid_datahouse,
          'workcenter': "iot-iot4cps-wp5",
          'station': "WeatherService",
-         'description': lorem_ipsum}]
+         'description': lorem_ipsum,
+         'datetime': get_datetime()}]
     ResultProxy = conn.execute(query, values_list)
 
     # Insert is_agent_of

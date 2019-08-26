@@ -107,16 +107,12 @@ def add_client_for_system(system_uuid):
     # Fetch clients of the system, for with the user is agent
     engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
     conn = engine.connect()
-    query = """SELECT sys.uuid AS system_uuid, name, domain, enterprise, workcenter, station, 
-    creator.email AS contact_mail, clients.datetime AS datetime, agent.uuid AS agent_uuid
-    FROM clients
-    INNER JOIN users as creator ON creator.uuid=clients.creator_uuid
-    INNER JOIN systems AS sys ON clients.system_uuid=sys.uuid
+    query = """SELECT sys.uuid AS system_uuid, domain, enterprise, workcenter, station, agent.uuid AS agent_uuid
+    FROM systems AS sys
     INNER JOIN companies AS com ON sys.company_uuid=com.uuid
     INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid 
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
-    WHERE agent.uuid='{}'
-    AND sys.uuid='{}';""".format(user_uuid, system_uuid)
+    WHERE agent.uuid='{}' AND sys.uuid='{}';""".format(user_uuid, system_uuid)
     result_proxy = conn.execute(query)
     clients = [dict(c.items()) for c in result_proxy.fetchall()]
     # print("Fetched clients: {}".format(clients))

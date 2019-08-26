@@ -1,10 +1,12 @@
 {% extends 'layout.html' %}
 
 {% block body %}
-
   <table class="table">
   <td>
     <h1> <small> Company: {{payload.domain}}.{{payload.enterprise}} </small></h1>
+    {% if payload.creator_mail %}
+    <h3> <small> Created by {{payload.creator_mail}} at {{payload.com_datetime}}. </small></h3>
+    {% endif %}
     {% if payload.description %}
     {{payload.description}}
     {% endif %}
@@ -77,4 +79,6 @@
   <a href="../add_admin_company/{{payload.company_uuid}}" class="btn btn-success"
         data-toggle="tooltip" title="Add a registered user as new admin for this company.">Add Admin</a>
 
+  <br>
+  <br>
 {% endblock %}
