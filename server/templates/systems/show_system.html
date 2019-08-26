@@ -1,8 +1,24 @@
 {% extends 'layout.html' %}
 
 {% block body %}
-  <h1> <small> Agents of the system {{payload.domain}}.{{payload.enterprise}}.{{payload.workcenter}}.{{payload.station}} </small></h1>
+
+  <table class="table">
+  <td>
+    <h1> <small> System: {{payload.domain}}.{{payload.enterprise}}.{{payload.workcenter}}.{{payload.station}} </small></h1>
+    <h3> <small> Part of the company: {{payload.domain}}.{{payload.enterprise}} </small></h3>
+    {% if payload.description %}
+    {{payload.description}}
+    {% endif %}
+  </td>
+  <td>
+<!--     <a class="btn btn-info float-right mb-2" href="/edit_client/{{payload.system_uuid}}/{{payload.name}}"> edit description </a>-->
+     <a class="btn btn-danger float-right" href="/delete_system/{{payload.system_uuid}}"
+        data-toggle="tooltip" title="Only empty systems can be deleted."> delete system </a>
+  </td>
+  </table>
+
   <hr>
+  <h2> <small> Agents </small></h2>
   <table class="table table-striped">
     <tr>
       <th>First Name</th>
@@ -16,19 +32,21 @@
         <td>{{agent.sur_name}}</td>
         <td>{{agent.email}}</td>
         <td>
-            <a class="btn btn-danger" href="/delete_agent_system/{{agent.system_uuid}}/{{agent.agent_uuid}}"> remove </a>
+            <a class="btn btn-danger" href="/delete_agent_system/{{agent.system_uuid}}/{{agent.agent_uuid}}"
+        data-toggle="tooltip" title="Remove this user as agent from the company."> remove </a>
         </td>
     {% endfor %}
   </table>
 
-  <a href="/add_agent_system/{{payload.system_uuid}}" class="btn btn-success">Add Agent</a>
+  <a href="/add_agent_system/{{payload.system_uuid}}" class="btn btn-success"
+        data-toggle="tooltip" title="Add a registered user as new agent for this system.">Add Agent</a>
 
   <br>
   <br>
 <!---------------------------------------------------------------------------------------------->
 
-  <h1> <small> Client applications of the system {{payload.domain}}.{{payload.enterprise}}.{{payload.workcenter}}.{{payload.station}} </small></h1>
   <hr>
+  <h2> <small> Client applications </small></h2>
   <table class="table table-striped">
     <tr>
       <th>Name</th>
@@ -48,10 +66,12 @@
         <td><a href="/show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-block">{{client.contact_mail}}</a></td>
         <td><a href="/show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-block">{{client.datetime}}</a></td>
 <!--        <td>{{client.contact_mail}}</td>-->
-        <td><a href="/show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-info">manage client</a></td>
+        <td><a href="/show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-info"
+          data-toggle="tooltip" title="Manage this client.">manage client</a></td>
       </tr>
     {% endfor %}
   </table>
-  <a class="btn btn-success" href="/add_client/{{payload.system_uuid}}"> Add Client</a>
+  <a class="btn btn-success" href="/add_client/{{payload.system_uuid}}"
+        data-toggle="tooltip" title="Add a new client application for this system."> Add Client</a>
 
 {% endblock %}

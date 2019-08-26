@@ -9,7 +9,7 @@ from passlib.hash import sha256_crypt
 try:
     from server.views.useful_functions import get_datetime, get_uid, is_logged_in
 except ModuleNotFoundError:
-    from views.useful_functions import get_datetime, get_uid, is_logged_in
+    pass # from views.useful_functions import get_datetime, get_uid, is_logged_in
 
 # load environment variables automatically from a .env file in the same directory
 load_dotenv()
@@ -57,14 +57,16 @@ def create_tables(app):
         'companies', app.config['metadata'],
         db.Column('uuid', db.VARCHAR(12), primary_key=True, unique=True),
         db.Column('domain', db.VARCHAR(4), nullable=False),
-        db.Column('enterprise', db.VARCHAR(15), nullable=False)
+        db.Column('enterprise', db.VARCHAR(15), nullable=False),
+        db.Column('description', db.VARCHAR(1000), nullable=True)
         )
     app.config["tables"]["systems"] = db.Table(
         'systems', app.config['metadata'],
         db.Column('uuid', db.VARCHAR(12), primary_key=True, unique=True),
         db.Column('company_uuid', db.ForeignKey('companies.uuid')),
         db.Column('workcenter', db.VARCHAR(30), nullable=False),
-        db.Column('station', db.VARCHAR(20), nullable=False)
+        db.Column('station', db.VARCHAR(20), nullable=False),
+        db.Column('description', db.VARCHAR(1000), nullable=True)
         )
     app.config["tables"]["is_admin_of"] = db.Table(
         'is_admin_of', app.config['metadata'],
@@ -86,7 +88,8 @@ def create_tables(app):
         db.Column('system_uuid', db.ForeignKey('systems.uuid'), nullable=False),
         db.Column('keyfile', db.TEXT, nullable=True),
         db.Column('datetime', db.DateTime, nullable=True),
-        db.Column('creator_uuid', db.ForeignKey("users.uuid"), nullable=False)
+        db.Column('creator_uuid', db.ForeignKey("users.uuid"), nullable=False),
+        db.Column('description', db.VARCHAR(1000), nullable=True)
         )
     app.config["tables"]["gost_thing"] = db.Table(
         'gost_thing', app.config['metadata'],
@@ -106,6 +109,9 @@ def create_tables(app):
 
 
 def insert_sample():
+    lorem_ipsum = """Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. 
+    Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec 
+    quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim."""
     # Create context, connection and metadata
     engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
     conn = engine.connect()
@@ -162,13 +168,16 @@ def insert_sample():
     values_list = [
         {'uuid': uuid_icecars,
          'domain': 'cz',
-         'enterprise': 'icecars'},
+         'enterprise': 'icecars',
+         'description': lorem_ipsum},
         {'uuid': uuid_iceland,
          'domain': 'is',
-         'enterprise': 'iceland'},
+         'enterprise': 'iceland',
+         'description': lorem_ipsum},
         {'uuid': uuid_datahouse,
          'domain': 'at',
-         'enterprise': 'datahouse'}]
+         'enterprise': 'datahouse',
+         'description': lorem_ipsum}]
     ResultProxy = conn.execute(query, values_list)
 
 
@@ -198,15 +207,18 @@ def insert_sample():
         {'uuid': uuid_carfleet,
          'company_uuid': uuid_icecars,
          'workcenter': "iot-iot4cps-wp5",
-         'station': "CarFleet"},
+         'station': "CarFleet",
+         'description': lorem_ipsum},
         {'uuid': uuid_infraprov,
          'company_uuid': uuid_iceland,
          'workcenter': "iot-iot4cps-wp5",
-         'station': "InfraProv"},
+         'station': "InfraProv",
+         'description': lorem_ipsum},
         {'uuid': uuid_weatherservice,
          'company_uuid': uuid_datahouse,
          'workcenter': "iot-iot4cps-wp5",
-         'station': "WeatherService"},]
+         'station': "WeatherService",
+         'description': lorem_ipsum}]
     ResultProxy = conn.execute(query, values_list)
 
     # Insert is_agent_of
@@ -232,27 +244,33 @@ def insert_sample():
         {'name': "car_1",
          'system_uuid': uuid_carfleet,
          'creator_uuid': uuid_sue,
-         'datetime': get_datetime()},
+         'datetime': get_datetime(),
+         'description': lorem_ipsum},
         {'name': "car_2",
          'system_uuid': uuid_carfleet,
          'creator_uuid': uuid_sue,
-         'datetime': get_datetime()},
+         'datetime': get_datetime(),
+         'description': lorem_ipsum},
         {'name': "gov_1",
          'system_uuid': uuid_infraprov,
          'creator_uuid': uuid_stefan,
-         'datetime': get_datetime()},
+         'datetime': get_datetime(),
+         'description': lorem_ipsum},
         {'name': "weatherstation_1",
          'system_uuid': uuid_weatherservice,
          'creator_uuid': uuid_anna,
-         'datetime': get_datetime()},
+         'datetime': get_datetime(),
+         'description': lorem_ipsum},
         {'name': "weatherstation_2",
          'system_uuid': uuid_weatherservice,
          'creator_uuid': uuid_anna,
-         'datetime': get_datetime()},
+         'datetime': get_datetime(),
+         'description': lorem_ipsum},
         {'name': "analysis",
          'system_uuid': uuid_weatherservice,
          'creator_uuid': uuid_anna,
-         'datetime': get_datetime()}]
+         'datetime': get_datetime(),
+         'description': lorem_ipsum}]
     ResultProxy = conn.execute(query, values_list)
 
     app.logger.info("Ingested data into tables.")

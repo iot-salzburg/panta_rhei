@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, flash, redirect, url_for, session,
 # Must be imported to use the app config
 from flask import current_app as app
 from sqlalchemy import exc as sqlalchemy_exc
-from wtforms import Form, StringField, validators
+from wtforms import Form, StringField, validators, TextField, TextAreaField
 
 from .useful_functions import get_datetime, get_uid, is_logged_in
 
@@ -45,7 +45,7 @@ def show_company(company_uuid):
     engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
     conn = engine.connect()
     query = """
-    SELECT company_uuid, domain, enterprise, admin.uuid AS admin_uuid, admin.first_name, admin.sur_name, admin.email 
+    SELECT company_uuid, domain, enterprise, description, admin.uuid AS admin_uuid, admin.first_name, admin.sur_name, admin.email 
     FROM companies AS com 
     INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
     INNER JOIN users as admin ON admin.uuid=aof.user_uuid 
@@ -81,6 +81,7 @@ def show_company(company_uuid):
 class CompanyForm(Form):
     domain = StringField("Domain", [validators.Length(min=1, max=5)])
     enterprise = StringField("Enterprise", [validators.Length(min=4, max=15)])
+    description = TextAreaField("Description", [validators.Length(max=16*1024)])
 
 # Add company
 @company.route("/add_company", methods=["GET", "POST"])
@@ -113,7 +114,8 @@ def add_company():
             query = db.insert(app.config["tables"]["companies"])
             values_list = [{"uuid": company_uuid,
                             "domain": form.domain.data,
-                            "enterprise": form.enterprise.data}]
+                            "enterprise": form.enterprise.data,
+                            "description": form.description.data}]
             conn.execute(query, values_list)
         else:
             flash("The company {}.{} is already created.".format(form.domain.data, form.enterprise.data), "danger")
@@ -133,7 +135,7 @@ def add_company():
         except sqlalchemy_exc.IntegrityError as e:
             print("An Integrity Error occured: {}".format(e))
             flash("An unexpected error occured.", "danger")
-            return render_template("login.html")
+            return render_template(url_for("auth.login"))
 
     return render_template("/companies/add_company.html", form=form)
 

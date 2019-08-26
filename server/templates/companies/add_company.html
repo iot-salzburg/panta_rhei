@@ -16,6 +16,10 @@
         <div class="form-group">
             {{render_field(form.enterprise, class_="form-control")}}
         </div>
+        <div class="form-group">
+            {{render_field(form.description, class_="form-control")}}
+            <small id="description" class="form-text text-muted">The description is optional.</small>
+        </div>
 
         <p><input type="submit" class="btn btn-primary" value="Submit"> </p>
 

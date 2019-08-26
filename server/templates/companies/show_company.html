@@ -2,8 +2,25 @@
 
 {% block body %}
 
-  <h1> <small> Systems of Company {{payload.domain}}.{{payload.enterprise}}  </small></h1>
+  <table class="table">
+  <td>
+    <h1> <small> Company: {{payload.domain}}.{{payload.enterprise}} </small></h1>
+    {% if payload.description %}
+    {{payload.description}}
+    {% endif %}
+  </td>
+  <td>
+<!--     <a class="btn btn-info float-right mb-2" href="/edit_client/{{payload.system_uuid}}/{{payload.name}}"> edit description </a>-->
+     <a class="btn btn-danger float-right" href="/delete_company/{{payload.company_uuid}}"
+        data-toggle="tooltip" title="Only empty companies can be deleted."> delete system </a>
+<!--    <a> <small>Only empty companies can be deleted.</small></a>-->
+
+
+  </td>
+  </table>
+
   <hr>
+  <h2> <small> Systems </small></h2>
   <table class="table table-striped">
     <tr>
       <th>uuid</th>
@@ -23,21 +40,24 @@
         <td><a href="/show_system/{{system.system_uuid}}" class="btn btn-block">{{system.workcenter}}</a></td>
         <td><a href="/show_system/{{system.system_uuid}}" class="btn btn-block">{{system.station}}</a></td>
 <!--        <td>{{system.contact_mail}}</td>-->
-        <td><a href="/show_system/{{system.system_uuid}}" class="btn btn-info">manage system</a></td>
+        <td><a href="/show_system/{{system.system_uuid}}" class="btn btn-info"
+        data-toggle="tooltip" title="Manage this system.">manage system</a></td>
         <td>
-            <a class="btn btn-danger" href="/delete_system/{{system.system_uuid}}"> delete</a>
+            <a class="btn btn-danger" href="/delete_system/{{system.system_uuid}}"
+        data-toggle="tooltip" title="Only empty systems can be deleted."> delete</a>
         </td>
       </tr>
     {% endfor %}
   </table>
-  <a class="btn btn-success" href="/add_system/{{payload.company_uuid}}"> Add System</a>
+  <a class="btn btn-success" href="/add_system/{{payload.company_uuid}}"
+        data-toggle="tooltip" title="Add a new system to this company."> Add System</a>
   <br>
   <br>
 
 <!-------------------------------------------------------------------------------------------->
 
-  <h1> <small> Admins of Company {{payload.domain}}.{{payload.enterprise}} </small></h1>
   <hr>
+  <h2> <small> Admins</small></h2>
   <table class="table table-striped">
     <tr>
       <th>First Name</th>
@@ -51,10 +71,12 @@
         <td>{{admin.sur_name}}</td>
         <td>{{admin.email}}</td>
         <td>
-            <a class="btn btn-danger" href="/delete_admin_company/{{admin.company_uuid}}/{{admin.admin_uuid}}"> remove </a>
+            <a class="btn btn-danger" href="/delete_admin_company/{{admin.company_uuid}}/{{admin.admin_uuid}}"
+        data-toggle="tooltip" title="Remove this user as agent from the company."> remove </a>
         </td>
     {% endfor %}
   </table>
-  <a href="../add_admin_company/{{payload.company_uuid}}" class="btn btn-success">Add Admin</a>
+  <a href="../add_admin_company/{{payload.company_uuid}}" class="btn btn-success"
+        data-toggle="tooltip" title="Add a registered user as new admin for this company.">Add Admin</a>
 
 {% endblock %}

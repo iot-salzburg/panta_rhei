@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, flash, redirect, url_for, session,
 # Must be imported to use the app config
 from flask import current_app as app
 from sqlalchemy import exc as sqlalchemy_exc
-from wtforms import Form, StringField, validators
+from wtforms import Form, StringField, validators, TextAreaField
 
 from .useful_functions import get_datetime, get_uid, is_logged_in
 
@@ -45,7 +45,7 @@ def show_system(system_uuid):
     engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
     conn = engine.connect()
     query = """
-    SELECT sys.uuid AS system_uuid, domain, enterprise, workcenter, station, 
+    SELECT sys.uuid AS system_uuid, domain, enterprise, sys.description, workcenter, station, 
     agent.uuid AS agent_uuid, agent.first_name, agent.sur_name, agent.email
     FROM systems AS sys
     INNER JOIN companies AS com ON sys.company_uuid=com.uuid
@@ -89,6 +89,7 @@ def show_system(system_uuid):
 class SystemForm(Form):
     workcenter = StringField("Workcenter", [validators.Length(min=2, max=30)])
     station = StringField("Station", [validators.Length(min=4, max=20)])
+    description = TextAreaField("Description", [validators.Length(max=16*1024)])
 
 # Add system in system view, redirect to companies
 @system.route("/add_system")
@@ -156,7 +157,8 @@ def add_system_for_company(company_uuid):
             values_list = [{"uuid": system_uuid,
                             "company_uuid": payload["company_uuid"],
                             "workcenter": form.workcenter.data,
-                            "station": form.station.data}]
+                            "station": form.station.data,
+                            "description": form.description.data}]
             conn.execute(query, values_list)
         else:
             flash("The system {}.{}.{}.{} is already created.".format(

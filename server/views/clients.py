@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, flash, redirect, url_for, session,
 # Must be imported to use the app config
 from flask import current_app as app
 from sqlalchemy import exc as sqlalchemy_exc
-from wtforms import Form, StringField, validators
+from wtforms import Form, StringField, validators, TextAreaField
 
 from .useful_functions import get_datetime, get_uid, is_logged_in
 
@@ -44,7 +44,7 @@ def show_client(system_uuid, client_name):
     engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
     conn = engine.connect()
     query = """SELECT sys.uuid AS system_uuid, com.uuid AS company_uuid, name, domain, enterprise, workcenter, station, 
-    creator.email AS contact_mail, keyfile, agent.uuid AS agent_uuid, clients.datetime AS datetime
+    creator.email AS contact_mail, clients.description, keyfile, agent.uuid AS agent_uuid, clients.datetime AS datetime
     FROM clients
     INNER JOIN users as creator ON creator.uuid=clients.creator_uuid
     INNER JOIN systems AS sys ON clients.system_uuid=sys.uuid
@@ -74,6 +74,7 @@ def show_client(system_uuid, client_name):
 # Client Form Class
 class ClientForm(Form):
     name = StringField("Name", [validators.Length(min=2, max=20)])
+    description = TextAreaField("Description", [validators.Length(max=16*1024)])
 
 
 def create_keyfile():
@@ -143,6 +144,7 @@ def add_client_for_system(system_uuid):
             values_list = [{'name': form.name.data,
                             'system_uuid': system_uuid,
                             'creator_uuid': user_uuid,
+                            "description": form.description.data,
                             'datetime': get_datetime(),
                             'keyfile': create_keyfile()}]
             conn.execute(query, values_list)
@@ -160,7 +162,7 @@ def add_client_for_system(system_uuid):
 # Delete client
 @client.route("/delete_client/<string:system_uuid>/<string:client_name>", methods=["GET"])
 @is_logged_in
-def delete_system(system_uuid, client_name):
+def delete_client(system_uuid, client_name):
     # Get current user_uuid
     user_uuid = session["user_uuid"]
 
