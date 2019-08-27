@@ -51,7 +51,7 @@ def show_client(system_uuid, client_name):
     engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
     conn = engine.connect()
     query = """SELECT sys.uuid AS system_uuid, com.uuid AS company_uuid, name, domain, enterprise, workcenter, station, 
-    creator.email AS contact_mail, clients.description, keyfile, agent.uuid AS agent_uuid, clients.datetime AS datetime
+    creator.email AS contact_mail, clients.description, keyfile_av, agent.uuid AS agent_uuid, clients.datetime AS datetime
     FROM clients
     INNER JOIN users as creator ON creator.uuid=clients.creator_uuid
     INNER JOIN systems AS sys ON clients.system_uuid=sys.uuid
@@ -86,9 +86,27 @@ class ClientForm(Form):
     description = TextAreaField("Description", [validators.Length(max=16*1024)])
 
 
-def create_keyfile():
+def create_keyfile(name="testclient", system_uuid="12345678"):
+    import shutil
     # TODO create keyfile
-    return "This will be made later"
+
+    # make directory with unique name
+    dirname = "ssl_{}_{}".format(system_uuid, name)
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    path = os.path.join(dir_path, "keys", dirname)
+    print("Create dir with name: {}".format(path))
+    os.mkdir(path)
+
+    # Create keyfiles in the path
+    os.mkfifo(os.path.join(path, "cert-signed"))
+    os.mkfifo(os.path.join(path, "client-cert-signed"))
+
+    # create zip archive and delete directory
+    shutil.make_archive(path, "zip", path)
+    print("Create zip with name: {}".format(path))
+    # os.remove(os.path.join(path, "cert-signed"))
+    # os.remove(os.path.join(path, "client-cert-signed"))
+    # os.rmdir(path)
 
 
 # Add client in clients view, redirect to systems
@@ -153,9 +171,11 @@ def add_client_for_system(system_uuid):
                             'creator_uuid': user_uuid,
                             "description": form.description.data,
                             'datetime': get_datetime(),
-                            'keyfile': create_keyfile()}]
+                            'keyfile_av': True}]
             conn.execute(query, values_list)
             engine.dispose()
+            # Create keyfile based on the given information
+            create_keyfile(name=form.name.data, system_uuid=system_uuid)
             flash("The client {} was created .".format(form.name.data), "success")
             return redirect(url_for("client.show_client", system_uuid=system_uuid, client_name=form.name.data))
         else:
@@ -243,23 +263,25 @@ def download_key(system_uuid, client_name):
         flash("You are not permitted to delete clients of this system.", "danger")
         return redirect(url_for("client.show_client", system_uuid=system_uuid, client_name=client_name))
 
-    filename = "key_{}_{}.zip".format(system_uuid, client_name.strip().replace(" ", ""))
-    # filename = "key_4f12073c57f2_RaspberryPi.zip"
-    filepath = os.path.join(os.path.dirname(os.path.realpath(inspect.getframeinfo(inspect.currentframe()).filename)),
-                            "keys", filename)
 
-    print("filepath: {}".format(filepath))
-
-    print(os.path.dirname(os.path.realpath(inspect.getframeinfo(inspect.currentframe()).filename)))
+    zipname = "ssl_{}_{}.zip".format(system_uuid, client_name)
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    filepath = os.path.join(dir_path, "keys", zipname)
+    # print("filepath: {}".format(filepath))
 
     if os.path.exists(filepath):
-
+        engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
+        conn = engine.connect()
+        query = """UPDATE clients
+        SET keyfile_av=False
+        WHERE name='{}' AND system_uuid='{}';""".format(client_name, system_uuid)
+        result_proxy = conn.execute(query)
+        engine.dispose()
         flash("The key was downloaded, keep privacy in mind, this key can't' be downloaded anymore!", "info")
-
         return send_file(
                         filepath,
                         mimetype='application/zip',
                         as_attachment=True,
-                        attachment_filename=filename)
+                        attachment_filename=zipname)
 
     return redirect(url_for("client.show_client", system_uuid=system_uuid, client_name=client_name))

@@ -35,6 +35,7 @@ def drop_tables():
     DROP TABLE IF EXISTS is_agent_of CASCADE;
     """
     result_proxy = conn.execute(query)
+    engine.dispose()
 
 
 def create_tables(app):
@@ -89,7 +90,7 @@ def create_tables(app):
         'clients', app.config['metadata'],
         db.Column('name', db.VARCHAR(25), primary_key=True, unique=True),
         db.Column('system_uuid', db.ForeignKey('systems.uuid'), nullable=False),
-        db.Column('keyfile', db.TEXT, nullable=True),
+        db.Column('keyfile_av', db.BOOLEAN, nullable=False, default=False),
         db.Column('datetime', db.DateTime, nullable=True),
         db.Column('creator_uuid', db.ForeignKey("users.uuid"), nullable=False),
         db.Column('description', db.VARCHAR(1000), nullable=True)
@@ -108,6 +109,7 @@ def create_tables(app):
 
     # Creates the tables
     app.config['metadata'].create_all(engine)
+    engine.dispose()
     app.logger.info("Created tables.")
 
 
@@ -282,6 +284,7 @@ def insert_sample():
          'description': lorem_ipsum}]
     ResultProxy = conn.execute(query, values_list)
 
+    engine.dispose()
     app.logger.info("Ingested data into tables.")
 
 

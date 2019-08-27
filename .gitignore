@@ -118,3 +118,5 @@ demo_applications/InfraProvider/jupyter/src/data
 demo_applications/InfraProvider/jupyter/share
 
 *__pycache__*
+server/views/keys/ssl*
+*fuse_hidden*
