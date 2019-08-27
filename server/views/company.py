@@ -197,6 +197,8 @@ def delete_company(company_uuid):
     # Now the company can be deleted
     selected_company = permitted_companies[0]  # This list has only one element
 
+    # TODO use transactions
+    # also in systems and during the creation
     # Delete new is_admin_of instance
     query = """DELETE FROM is_admin_of
         WHERE company_uuid='{}';""".format(company_uuid)

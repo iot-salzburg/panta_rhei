@@ -23,6 +23,9 @@ def is_logged_in(f):
         if 'logged_in' in session:
             return f(*args, **kwargs)
         else:
-            flash("Unauthorized. Please login", "danger")
+            flash("Please login.", "danger")
             return redirect(url_for("auth.login"))
     return wrap
+
+
+# DO create is_admin and is_agent

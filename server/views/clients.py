@@ -263,7 +263,6 @@ def download_key(system_uuid, client_name):
         flash("You are not permitted to delete clients of this system.", "danger")
         return redirect(url_for("client.show_client", system_uuid=system_uuid, client_name=client_name))
 
-
     zipname = "ssl_{}_{}.zip".format(system_uuid, client_name)
     dir_path = os.path.dirname(os.path.realpath(__file__))
     filepath = os.path.join(dir_path, "keys", zipname)
@@ -271,13 +270,16 @@ def download_key(system_uuid, client_name):
 
     if os.path.exists(filepath):
         engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
-        conn = engine.connect()
+        conn = engine.connect()  # no transactions as they aren't threadsafe
         query = """UPDATE clients
         SET keyfile_av=False
         WHERE name='{}' AND system_uuid='{}';""".format(client_name, system_uuid)
         result_proxy = conn.execute(query)
         engine.dispose()
         flash("The key was downloaded, keep privacy in mind, this key can't' be downloaded anymore!", "info")
+
+        # send_file, delete and then redirect
+        # https://stackoverflow.com/questions/41518040/how-to-make-flask-to-send-a-file-and-then-redirect/41518521
         return send_file(
                         filepath,
                         mimetype='application/zip',

@@ -4,10 +4,8 @@ from dotenv import load_dotenv
 from flask import Flask
 
 # Import application-specific functions
-try:
-    from server.views.useful_functions import get_datetime, get_uid, is_logged_in
-except ModuleNotFoundError:
-    from views.useful_functions import get_datetime, get_uid, is_logged_in
+from server.views.useful_functions import get_datetime, get_uid, is_logged_in
+
 
 # Import modules
 from server.views.auth import auth
@@ -39,8 +37,14 @@ if __name__ == '__main__':
     app.logger.setLevel(logging.INFO)
     app.logger.info("Starting the platform.")
 
+    # Create engine once and held globally
+    # The typical usage of create_engine() is once per particular database URL, held globally for the lifetime of a single application process.
+    # see: https://docs.sqlalchemy.org/en/13/core/connections.html#basic-usage
+
     # Create tables to get the data model
     create_tables(app)
 
     # Run application
     app.run(debug=app.config["DEBUG"], port=5000)
+
+# TODO logout if inactive (with wrapper)
