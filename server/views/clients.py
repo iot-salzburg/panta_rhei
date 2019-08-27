@@ -278,7 +278,7 @@ def download_key(system_uuid, client_name):
         engine.dispose()
         flash("The key was downloaded, keep privacy in mind, this key can't' be downloaded anymore!", "info")
 
-        # send_file, delete and then redirect
+        # TODO send_file, delete and then redirect
         # https://stackoverflow.com/questions/41518040/how-to-make-flask-to-send-a-file-and-then-redirect/41518521
         return send_file(
                         filepath,
