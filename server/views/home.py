@@ -80,3 +80,6 @@ def about():
 @home_bp.route('/home')
 def home():
     return render_template('home.html')
+
+
+# DO: Implement navbar

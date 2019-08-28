@@ -2,12 +2,12 @@ import os
 import sqlalchemy as db
 from sqlalchemy import exc as sqlalchemy_exc
 
-
 from flask import Blueprint, Flask, render_template, flash , redirect, url_for, session, request
 from passlib.hash import sha256_crypt
 
 import wtforms
 from wtforms import Form, StringField, TextField, TextAreaField, PasswordField, validators
+from flask_wtf import Recaptcha  # TODO use repatcha for user registration
 from flask import current_app as app
 
 from .useful_functions import get_datetime, get_uid, is_logged_in
@@ -18,13 +18,16 @@ auth = Blueprint('auth', __name__) #, url_prefix='/comp')
 
 # Register Form Class for the users
 class RegisterForm(Form):
-    first_name = StringField('First Name', [validators.Length(min=1, max=50)])
-    name = StringField('Name', [validators.Length(min=1, max=50)])
+    first_name = StringField('First Name', [validators.DataRequired(),
+                                            validators.Length(min=1, max=50)])
+    name = StringField('Name', [validators.DataRequired(),
+                                validators.Length(min=1, max=50)])
     birthdate = wtforms.DateField("Birthdate", format='%Y-%m-%d')
-    email = StringField('Email', [validators.Email(message="The given email seems to be wrong")])
+    email = StringField('Email', [validators.DataRequired(),
+                                  validators.Email(message="The given email seems to be wrong.")])
     password = PasswordField('Password', [
         validators.DataRequired(),
-        validators.EqualTo('confirm', message='Passwords do not match')
+        validators.EqualTo('confirm', message='Passwords do not match.')
     ])
     confirm = PasswordField('Confirm Password')
 
