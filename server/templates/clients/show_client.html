@@ -11,12 +11,27 @@
     {{payload.description}}
     {% endif %}
   </td>
-  <td>
+    <td>
 <!--     <a class="btn btn-info float-right mb-2" href="/edit_client/{{payload.system_uuid}}/{{payload.name}}"> edit description </a>-->
      <a class="btn btn-danger float-right" href="/delete_client/{{payload.system_uuid}}/{{payload.name}}"
         data-toggle="tooltip" title="Delete this client application."> delete client </a>
+      <br>
+      <br>
+      <h3> <small> Client application config: </small></h3>
+      <pre id="json"></pre>
   </td>
   </table>
+
+  <script>
+    var data = {
+        "client_name": '{{config.client_name}}',
+        "system": '{{config.system}}',
+        "gost_servers": '{{config.kafka_bootstrap_servers}}',
+        "kafka_bootstrap_servers": '{{config.kafka_bootstrap_servers}}'};
+    document.getElementById("json").innerHTML = JSON.stringify(data, undefined, 2);
+  </script>
+
+
 
   <hr>
   <table class="table table-striped">

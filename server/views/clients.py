@@ -1,9 +1,10 @@
 import os
+import json
 
 import sqlalchemy as db
 from flask import Blueprint, render_template, flash, redirect, url_for, session, request, send_file
 # Must be imported to use the app config
-from flask import current_app as app
+from flask import current_app as app, jsonify
 from wtforms import Form, StringField, validators, TextAreaField
 
 from .useful_functions import get_datetime, is_logged_in, valid_level_name
@@ -84,7 +85,13 @@ def show_client(system_uuid, client_name):
 
     # if not, agents has at least one item
     payload = clients[0]
-    return render_template("/clients/show_client.html", payload=payload)
+    config = {"client_name": client_name,
+              "system": "{}.{}.{}.{}".format(payload["domain"], payload["enterprise"],
+                                             payload["workcenter"], payload["station"]),
+              "gost_servers": "localhost:8084",
+              "kafka_bootstrap_servers": app.config["KAFKA_BOOTSTRAP_SERVER"]}
+
+    return render_template("/clients/show_client.html", payload=payload, config=config)
 
 
 # Client Form Class
