@@ -368,7 +368,7 @@ def delete_agent_system(system_uuid, agent_uuid):
 
     if user_uuid == agent_uuid:
         engine.dispose()
-        flash("You are not permitted to remove yourself.", "danger")
+        flash("You can't remove yourself.", "danger")
         return redirect(url_for("system.show_system", system_uuid=system_uuid))
 
     # get info for the deleted agent

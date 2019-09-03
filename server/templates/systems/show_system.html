@@ -59,6 +59,7 @@
 <!--      <th>Created at</th>-->
 <!--      <th>Creator</th>-->
       <th></th>
+      <th></th>
     </tr>
       {% for client in clients %}
       <tr>
@@ -69,7 +70,9 @@
 <!--        <td><a href="/show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-block">{{client.datetime}}</a></td>-->
 <!--        <td>{{client.contact_mail}}</td>-->
         <td><a href="/show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-info float-right"
-          data-toggle="tooltip" title="Manage this client.">manage client</a></td>
+          data-toggle="tooltip" title="Manage this client.">manage</a></td>
+        <td><a class="btn btn-danger float-right" href="/delete_client/{{client.system_uuid}}/{{client.name}}"
+        data-toggle="tooltip" title="Delete this client application."> delete </a></td>
       </tr>
     {% endfor %}
   </table>

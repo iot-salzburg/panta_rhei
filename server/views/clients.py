@@ -1,17 +1,12 @@
 import os
-import inspect
-import zipfile
-import io
-import pathlib
 
 import sqlalchemy as db
-from flask import Blueprint, render_template, flash, redirect, url_for, session, request, Response, send_file, make_response, send_from_directory
+from flask import Blueprint, render_template, flash, redirect, url_for, session, request, send_file
 # Must be imported to use the app config
 from flask import current_app as app
-from sqlalchemy import exc as sqlalchemy_exc
 from wtforms import Form, StringField, validators, TextAreaField
 
-from .useful_functions import get_datetime, get_uid, is_logged_in, valid_level_name
+from .useful_functions import get_datetime, is_logged_in, valid_level_name
 
 client = Blueprint("client", __name__)  # url_prefix="/comp")
 
@@ -100,7 +95,7 @@ class ClientForm(Form):
 
 def create_keyfile(name="testclient", system_uuid="12345678"):
     import shutil
-    # TODO create keyfile
+    # TODO create a real keyfile
 
     # make directory with unique name
     dirname = "ssl_{}_{}".format(system_uuid, name)
