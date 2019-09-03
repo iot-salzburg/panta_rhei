@@ -37,7 +37,7 @@
         <td><a href="/show_client/{{payload.system_uuid}}/{{payload.name}}" class="btn btn-block">{{payload.datetime}}</a></td>
 
         {% if payload.keyfile_av %}
-        <td><a href="/download_key/{{payload.system_uuid}}/{{payload.name}}" target="_blank" class="btn btn-info float-right"
+        <td><a href="/download_key/{{payload.system_uuid}}/{{payload.name}}" class="btn btn-info float-right"
         data-toggle="tooltip" title="For security reasons, the key can be downloaded only once!">download key and delete</a></td>
         {% else %}
         <td><a href="/download_key/{{payload.system_uuid}}/{{payload.name}}" class="btn btn-info float-right disabled"
