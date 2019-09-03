@@ -5,7 +5,7 @@ from flask import current_app as app
 from sqlalchemy import exc as sqlalchemy_exc
 from wtforms import Form, StringField, validators, TextField, TextAreaField
 
-from .useful_functions import get_datetime, get_uid, is_logged_in
+from .useful_functions import get_datetime, get_uid, is_logged_in, valid_level_name
 
 company = Blueprint("company", __name__)  # url_prefix="/comp")
 
@@ -83,8 +83,8 @@ def show_company(company_uuid):
 
 # Company Form Class
 class CompanyForm(Form):
-    domain = StringField("Domain", [validators.Length(min=1, max=5)])
-    enterprise = StringField("Enterprise", [validators.Length(min=4, max=15)])
+    domain = StringField("Domain", [validators.Length(min=1, max=5), valid_level_name])
+    enterprise = StringField("Enterprise", [validators.Length(min=4, max=15), valid_level_name])
     description = TextAreaField("Description", [validators.Length(max=16*1024)])
 
 # Add company
@@ -216,7 +216,7 @@ def delete_company(company_uuid):
 
 # Admin Management Form Class
 class AdminForm(Form):
-    email = StringField("Email", [validators.Email(message="The given email seems to be wrong")])
+    email = StringField("Email", [validators.Email(message="The given email seems to be wrong.")])
 
 
 @company.route("/add_admin_company/<string:company_uuid>", methods=["GET", "POST"])

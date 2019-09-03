@@ -8,5 +8,5 @@ streamhub_bp = Blueprint("streamhub", __name__)  # url_prefix="/comp")
 @streamhub_bp.route("/streamhub")
 @is_logged_in
 def show_all_streams():
-
-    return render_template("/streamhub/streamhub.html")
+    return "Not implemented yet.", 501
+    # return render_template("/streamhub/streamhub.html")

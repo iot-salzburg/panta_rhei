@@ -11,7 +11,7 @@ from flask import current_app as app
 from sqlalchemy import exc as sqlalchemy_exc
 from wtforms import Form, StringField, validators, TextAreaField
 
-from .useful_functions import get_datetime, get_uid, is_logged_in
+from .useful_functions import get_datetime, get_uid, is_logged_in, valid_level_name
 
 client = Blueprint("client", __name__)  # url_prefix="/comp")
 
@@ -82,7 +82,7 @@ def show_client(system_uuid, client_name):
 
 # Client Form Class
 class ClientForm(Form):
-    name = StringField("Name", [validators.Length(min=2, max=20)])
+    name = StringField("Name", [validators.Length(min=2, max=20), valid_level_name])
     description = TextAreaField("Description", [validators.Length(max=16*1024)])
 
 

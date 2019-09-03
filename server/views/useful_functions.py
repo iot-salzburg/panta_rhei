@@ -28,4 +28,15 @@ def is_logged_in(f):
     return wrap
 
 
+# Validator for company, system and client names
+# only 0-9, a-z, A-Z and "-" is allowed.
+def valid_level_name(form, field):
+    import re
+    from wtforms import ValidationError
+    if " " in field.data:
+        raise ValidationError("Whitespaces are not allowed in the name.")
+    if not re.match("^[a-zA-Z0-9-]*$", field.data):
+        raise ValidationError("Only alphanumeric characters and '-' are allowed.")
+
+
 # DO create is_admin and is_agent

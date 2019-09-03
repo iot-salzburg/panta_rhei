@@ -2,14 +2,8 @@ import logging
 import sqlalchemy as db
 from flask import current_app as app
 from flask import Blueprint, render_template, flash, redirect, url_for, session, request
-# from flask_cache import Cache
-from .useful_functions import is_logged_in
 
 home_bp = Blueprint("home", __name__)
-
-# cache = Cache(app)
-# TODO caching for listings: http://exploreflask.com/en/latest/views.html#caching
-# for each method, that can be shown multiple times
 
 
 @home_bp.route('/')
@@ -19,9 +13,11 @@ def index():
 
 
 @home_bp.route("/dashboard")
-# @cache.cached(timeout=60)
-@is_logged_in
 def dashboard():
+    # Redirect to home if not logged in
+    if 'logged_in' not in session:
+        return redirect(url_for("home.home"))
+
     # Get current user_uuid
     user_uuid = session["user_uuid"]
     msg_systems = msg_companies = None
@@ -80,6 +76,3 @@ def about():
 @home_bp.route('/home')
 def home():
     return render_template('home.html')
-
-
-# DO: Implement navbar

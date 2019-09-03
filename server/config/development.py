@@ -13,5 +13,5 @@ SQLALCHEMY_TRACK_MODIFICATIONS = False
 # Secret key for signing cookies
 SECRET_KEY = "changeme"
 
-# TODO implement bootstrap server connection
+# Bootstrap servers for Kafka
 KAFKA_BOOTSTRAP_SERVER = "localhost:9092"

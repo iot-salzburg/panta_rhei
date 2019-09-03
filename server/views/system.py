@@ -5,7 +5,7 @@ from flask import current_app as app
 from sqlalchemy import exc as sqlalchemy_exc
 from wtforms import Form, StringField, validators, TextAreaField
 
-from .useful_functions import get_datetime, get_uid, is_logged_in
+from .useful_functions import get_datetime, get_uid, is_logged_in, valid_level_name
 
 system = Blueprint("system", __name__)  # url_prefix="/comp")
 
@@ -91,8 +91,8 @@ def show_system(system_uuid):
 
 # System Form Class
 class SystemForm(Form):
-    workcenter = StringField("Workcenter", [validators.Length(min=2, max=30)])
-    station = StringField("Station", [validators.Length(min=2, max=20)])
+    workcenter = StringField("Workcenter", [validators.Length(min=2, max=30), valid_level_name])
+    station = StringField("Station", [validators.Length(min=2, max=20), valid_level_name])
     description = TextAreaField("Description", [validators.Length(max=16*1024)])
 
 # Add system in system view, redirect to companies
@@ -274,7 +274,7 @@ def delete_system(system_uuid):
 
 # Agent Management Form Class
 class AgentForm(Form):
-    email = StringField("Email", [validators.Email(message="The given email seems to be wrong")])
+    email = StringField("Email", [validators.Email(message="The given email seems to be wrong.")])
 
 
 @system.route("/add_agent_system/<string:system_uuid>", methods=["GET", "POST"])
