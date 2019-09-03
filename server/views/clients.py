@@ -5,7 +5,7 @@ import io
 import pathlib
 
 import sqlalchemy as db
-from flask import Blueprint, render_template, flash, redirect, url_for, session, request, Response, send_file
+from flask import Blueprint, render_template, flash, redirect, url_for, session, request, Response, send_file, make_response, send_from_directory
 # Must be imported to use the app config
 from flask import current_app as app
 from sqlalchemy import exc as sqlalchemy_exc
@@ -75,6 +75,18 @@ def show_client(system_uuid, client_name):
         flash("You are not permitted see details this client.", "danger")
         return redirect(url_for("client.show_all_clients"))
 
+    if session["key_status"] == "download":
+        session["key_status"] = "init"
+        flash("The key was downloaded. Keep in mind that this key can't' be downloaded twice!", "success")
+
+        # Delete the zip file for security reasons
+        # make directory with unique name
+        zipname = "ssl_{}_{}.zip".format(system_uuid, client_name)
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        path = os.path.join(dir_path, "keys", zipname)
+        os.remove(path)
+        app.logger.info("Removed key.")
+
     # if not, agents has at least one item
     payload = clients[0]
     return render_template("/clients/show_client.html", payload=payload)
@@ -94,7 +106,7 @@ def create_keyfile(name="testclient", system_uuid="12345678"):
     dirname = "ssl_{}_{}".format(system_uuid, name)
     dir_path = os.path.dirname(os.path.realpath(__file__))
     path = os.path.join(dir_path, "keys", dirname)
-    print("Create dir with name: {}".format(path))
+    # print("Create dir with name: {}".format(path))
     os.mkdir(path)
 
     # Create keyfiles in the path
@@ -103,10 +115,10 @@ def create_keyfile(name="testclient", system_uuid="12345678"):
 
     # create zip archive and delete directory
     shutil.make_archive(path, "zip", path)
-    print("Create zip with name: {}".format(path))
-    # os.remove(os.path.join(path, "cert-signed"))
-    # os.remove(os.path.join(path, "client-cert-signed"))
-    # os.rmdir(path)
+    app.logger.info("Create zip with name: {}".format(path))
+    os.remove(os.path.join(path, "cert-signed"))
+    os.remove(os.path.join(path, "client-cert-signed"))
+    os.rmdir(path)
 
 
 # Add client in clients view, redirect to systems
@@ -266,7 +278,6 @@ def download_key(system_uuid, client_name):
     zipname = "ssl_{}_{}.zip".format(system_uuid, client_name)
     dir_path = os.path.dirname(os.path.realpath(__file__))
     filepath = os.path.join(dir_path, "keys", zipname)
-    # print("filepath: {}".format(filepath))
 
     if os.path.exists(filepath):
         engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
@@ -276,14 +287,15 @@ def download_key(system_uuid, client_name):
         WHERE name='{}' AND system_uuid='{}';""".format(client_name, system_uuid)
         result_proxy = conn.execute(query)
         engine.dispose()
-        flash("The key was downloaded, keep privacy in mind, this key can't' be downloaded anymore!", "info")
 
-        # TODO send_file, delete and then redirect
-        # https://stackoverflow.com/questions/41518040/how-to-make-flask-to-send-a-file-and-then-redirect/41518521
+        # Set the status to download in order to flash a message in client.show_client
+        # This Session value must be reset there!
+        session["key_status"] = "download"
         return send_file(
                         filepath,
                         mimetype='application/zip',
                         as_attachment=True,
-                        attachment_filename=zipname)
+                        attachment_filename=zipname) and redirect(url_for("client.show_client", system_uuid=system_uuid, client_name=client_name))
 
+    flash("The key file was not found.", "danger")
     return redirect(url_for("client.show_client", system_uuid=system_uuid, client_name=client_name))
