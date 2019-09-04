@@ -2,6 +2,8 @@
 import logging
 
 # confluent_kafka is based on librdkafka, details in install_kafka_requirements.sh
+import os
+
 import confluent_kafka
 import confluent_kafka.admin as kafka_admin
 from confluent_kafka import cimpl
@@ -10,22 +12,45 @@ PLATFORM_TOPIC = "platform.logger"
 
 
 def check_kafka(app):
-    app.logger.debug("Connecting to Kafka Bootstrap servers '{}'".format(app.config["KAFKA_BOOTSTRAP_SERVER"]))
+    app.logger.debug("Connecting to Kafka Bootstrap servers '{}'.".format(app.config["KAFKA_BOOTSTRAP_SERVER"]))
     kac = kafka_admin.AdminClient({'bootstrap.servers': app.config["KAFKA_BOOTSTRAP_SERVER"]})
     try:
         topics = kac.list_topics(timeout=3.0).topics
-        app.logger.debug("Connected: {}".format(topics))
+        app.logger.debug("Connected to {}.".format(PLATFORM_TOPIC))
 
         # Create topic if not already done and return True
         if PLATFORM_TOPIC in topics.keys():
             return True
         else:
             kac.create_topics([confluent_kafka.admin.NewTopic(PLATFORM_TOPIC, 3, 1)])
-            app.logger.info("Created new topic with name {}".format(PLATFORM_TOPIC))
+            app.logger.info("Created new topic with name {}.".format(PLATFORM_TOPIC))
             return True
     except cimpl.KafkaException:
         app.logger.error("Couldn't connect to Kafka Bootstrap servers. Check manually if the servers are reachable!")
         return False
+
+
+def create_system_topics(app, system_name):
+    if check_kafka(app):
+        # Create system topics
+        kac = kafka_admin.AdminClient({'bootstrap.servers': app.config["KAFKA_BOOTSTRAP_SERVER"]})
+        kac.create_topics([confluent_kafka.admin.NewTopic(system_name + ".logging", 3, 1),
+                           confluent_kafka.admin.NewTopic(system_name + ".internal", 3, 1),
+                           confluent_kafka.admin.NewTopic(system_name + ".external", 3, 1)])
+        app.logger.debug("Created system topics for '{}'".format(system_name))
+
+
+def delete_system_topics(app, system_name):
+    if check_kafka(app):
+        # Delete system topics
+        try:
+            for ktype in [".logging", ".internal", ".external"]:
+                os.system("/kafka/bin/kafka-topics.sh --zookeeper :2181 --delete --topic {}".format(ktype))
+        except:
+            app.logger.warning("Already deleted.")
+        # kac = kafka_admin.AdminClient({'bootstrap.servers': app.config["KAFKA_BOOTSTRAP_SERVER"]})
+        # kac.delete_topics([system_name + ktype for ktype in [".logging", ".internal", ".external"]])
+        # app.logger.debug("Marked system topics for '{}' as deleted.".format(system_name))
 
 
 class KafkaHandler(logging.Handler):

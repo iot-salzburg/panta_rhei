@@ -6,7 +6,7 @@ from flask import Flask
 
 # Import application-specific functions
 from server.views.useful_functions import get_datetime, get_uid, is_logged_in
-from server.views.kafka_interface import check_kafka, KafkaHandler
+from server.views.kafka_interface import check_kafka, create_system_topics, delete_system_topics, KafkaHandler
 
 
 # Import modules
@@ -54,12 +54,16 @@ if __name__ == '__main__':
     # Create postgres tables to get the data model
     create_tables(app)
 
+    delete_system_topics(app, "asdf.asdf.asdf.asdf")
+
+
     # Run application
     app.run(debug=app.config["DEBUG"], port=5000)
 
-    # Create engine once and held globally
-    # The typical usage of create_engine() is once per particular database URL,
-    # held globally for the lifetime of a single application process.
-    # see: https://docs.sqlalchemy.org/en/13/core/connections.html#basic-usage
+
+# Create engine once and held globally
+# The typical usage of create_engine() is once per particular database URL,
+# held globally for the lifetime of a single application process.
+# see: https://docs.sqlalchemy.org/en/13/core/connections.html#basic-usage
 
 # TODO logout if inactive (with wrapper)
