@@ -190,6 +190,7 @@ def add_client_for_system(system_uuid):
             engine.dispose()
             # Create keyfile based on the given information
             create_keyfile(name=form.name.data, system_uuid=system_uuid)
+            app.logger.info("A client {} was created .".format(form.name.data))
             flash("The client {} was created .".format(form.name.data), "success")
             return redirect(url_for("client.show_client", system_uuid=system_uuid, client_name=form.name.data))
         else:
@@ -243,6 +244,7 @@ def delete_client(system_uuid, client_name):
     conn.execute(query)
     engine.dispose()
 
+    app.logger.info("The client with name {} was deleted.".format(client_name))
     flash("The client with name {} was deleted.".format(client_name), "success")
 
     # Redirect to /show_system/system_uuid

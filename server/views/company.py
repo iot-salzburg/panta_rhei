@@ -135,6 +135,7 @@ def add_company():
         try:
             conn.execute(query, values_list)
             engine.dispose()
+            app.logger.info("The company {} was created.".format(form.enterprise.data))
             flash("The company {} was created.".format(form.enterprise.data), "success")
             return redirect(url_for("company.show_all_companies"))
 
@@ -210,6 +211,7 @@ def delete_company(company_uuid):
     conn.execute(query)
     engine.dispose()
 
+    app.logger.info("The company {} was deleted.".format(selected_company["enterprise"]))
     flash("The company {} was deleted.".format(selected_company["enterprise"]), "success")
     return redirect(url_for("company.show_all_companies"))
 

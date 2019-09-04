@@ -81,9 +81,6 @@ class DigitalTwinClient:
             self.producer = confluent_kafka.Producer({'bootstrap.servers': self.config["kafka_bootstrap_servers"],
                                                       'client.id': self.config["client_name"],
                                                       'default.topic.config': {'acks': 'all'}})
-            # TODO How to create a topic via the client
-            # a = confluent_kafka.admin.AdminClient({'bootstrap.servers': self.config["kafka_bootstrap_servers"]})
-            # a.create_topics([confluent_kafka.admin.NewTopic("test.mytopic", 2, 1)])
 
         else:
             kafka_rest_url = "http://" + self.config["kafka_rest_server"] + "/topics"

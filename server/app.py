@@ -1,3 +1,4 @@
+import sys
 import logging
 
 from dotenv import load_dotenv
@@ -5,6 +6,7 @@ from flask import Flask
 
 # Import application-specific functions
 from server.views.useful_functions import get_datetime, get_uid, is_logged_in
+from server.views.kafka_interface import check_kafka, KafkaHandler
 
 
 # Import modules
@@ -25,26 +27,39 @@ app = Flask(__name__)
 app.config.from_envvar('APP_CONFIG_FILE')
 
 # Register modules as blueprint
-app.register_blueprint(home_bp)  # url_prefix='/home')
-app.register_blueprint(auth)  # url_prefix='/auth')
-app.register_blueprint(company)  # url_prefix='/companies')
-app.register_blueprint(system)  # url_prefix='/systems')
-app.register_blueprint(client)  # url_prefix='/clients')
-app.register_blueprint(streamhub_bp)  # url_prefix='/streamhub')
+app.register_blueprint(home_bp)
+app.register_blueprint(auth)
+app.register_blueprint(company)
+app.register_blueprint(system)
+app.register_blueprint(client)
+app.register_blueprint(streamhub_bp)
 
 
 if __name__ == '__main__':
-    app.logger.setLevel(logging.INFO)
+    app.logger.setLevel(logging.DEBUG)
+    app.logger.info("Preparing the platform.")
+
+    # Check the connection to Kafka and create new tables if not already done
+    if not check_kafka(app):
+        app.logger.error("The connection to Kafka Servers couldn't be established.")
+        sys.exit(1)
+
+    # Adding a KafkaHandler to the logger, ingests messages into kafka
+    kh = KafkaHandler(app)
+    app.logger.addHandler(kh)
+
     app.logger.info("Starting the platform.")
+    app.logger.info("Connection to Kafka Servers are okay.")
 
-    # Create engine once and held globally
-    # The typical usage of create_engine() is once per particular database URL, held globally for the lifetime of a single application process.
-    # see: https://docs.sqlalchemy.org/en/13/core/connections.html#basic-usage
-
-    # Create tables to get the data model
+    # Create postgres tables to get the data model
     create_tables(app)
 
     # Run application
     app.run(debug=app.config["DEBUG"], port=5000)
+
+    # Create engine once and held globally
+    # The typical usage of create_engine() is once per particular database URL,
+    # held globally for the lifetime of a single application process.
+    # see: https://docs.sqlalchemy.org/en/13/core/connections.html#basic-usage
 
 # TODO logout if inactive (with wrapper)

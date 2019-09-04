@@ -182,8 +182,10 @@ def add_system_for_company(company_uuid):
         try:
             conn.execute(query, values_list)
             engine.dispose()
-            flash("The system {}.{} within the company {}.{} was created.".format(
-                form.workcenter.data, form.station.data, payload["domain"], payload["enterprise"]), "success")
+            msg = "The system {}.{} within the company {}.{} was created.".format(
+                form.workcenter.data, form.station.data, payload["domain"], payload["enterprise"])
+            app.logger.info(msg)
+            flash(msg, "success")
             return redirect(url_for("company.show_company", company_uuid=company_uuid))
 
         except sqlalchemy_exc.IntegrityError as e:
@@ -262,9 +264,10 @@ def delete_system(system_uuid):
     conn.execute(query)
 
     engine.dispose()
-    flash("The system {}.{}.{}.{} was deleted.".format(selected_system["domain"], selected_system["enterprise"],
-                                                       selected_system["workcenter"], selected_system["station"]),
-          "success")
+    msg = "The system {}.{}.{}.{} was deleted.".format(selected_system["domain"], selected_system["enterprise"],
+                                                       selected_system["workcenter"], selected_system["station"])
+    app.logger.info(msg)
+    flash(msg, "success")
 
     # Redirect to latest page, either /systems or /show_company/UID
     if session.get("last_url"):

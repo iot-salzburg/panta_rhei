@@ -52,6 +52,7 @@ def register():
         try:
             ResultProxy = conn.execute(query, values_list)
             engine.dispose()
+            app.logger.info("New registration: {}".format(values_list))
             flash("You are now registered and can log in.", "success")
             return redirect(url_for('auth.login'))
 
@@ -101,10 +102,12 @@ def login():
                 session['first_name'] = data[0]['first_name']
                 session['sur_name'] = data[0]['sur_name']
 
+                app.logger.info("New login: {}".format(email))
                 flash('You are now logged in', 'success')
                 return redirect(url_for('home.dashboard'))
             else:
                 error = 'Invalid login.'
+                app.logger.info("Invalid login: {}".format(session['email']))
                 return render_template('/auth/login.html', error=error)
 
     return render_template('/auth/login.html')
@@ -114,6 +117,7 @@ def login():
 @auth.route("/logout")
 @is_logged_in
 def logout():
+    app.logger.info("New logout: {}".format(session['email']))
     session.clear()
     flash("You are now logged out.", "success")
     return redirect(url_for("auth.login"))
