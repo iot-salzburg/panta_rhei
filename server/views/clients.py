@@ -178,6 +178,10 @@ def add_client_for_system(system_uuid):
         INNER JOIN clients ON clients.system_uuid=systems.uuid
         WHERE system_uuid='{}' AND name='{}';""".format(system_uuid, form.name.data)
         result_proxy = conn.execute(query)
+
+        system_name = "{}.{}.{}.{}".format(payload["domain"], payload["enterprise"],
+                                           payload["workcenter"], payload["station"])
+
         if len(result_proxy.fetchall()) == 0:
             query = db.insert(app.config["tables"]["clients"])
             values_list = [{'name': form.name.data,
@@ -190,14 +194,15 @@ def add_client_for_system(system_uuid):
             engine.dispose()
             # Create keyfile based on the given information
             create_keyfile(name=form.name.data, system_uuid=system_uuid)
-            app.logger.info("A client {} was created .".format(form.name.data))
-            flash("The client {} was created .".format(form.name.data), "success")
+            msg = "The user '{}' was added to system '{}' as client.".format(form.name.data, system_name)
+            app.logger.info(msg)
+            flash(msg, "success")
             return redirect(url_for("client.show_client", system_uuid=system_uuid, client_name=form.name.data))
         else:
             engine.dispose()
-            flash("The client with name {} was already created for system {}.{}.{}.{}.".format(
-                form.name.data, payload["domain"], payload["enterprise"], payload["workcenter"], payload["station"]),
-                "danger")
+            msg = "The client with name '{}' was already created for system '{}'.".format(form.name.data, system_name)
+            app.logger.info(msg)
+            flash(msg, "danger")
             return redirect(url_for("client.add_client", system_uuid=system_uuid))
 
     return render_template("/clients/add_client.html", form=form, payload=payload)
@@ -244,8 +249,11 @@ def delete_client(system_uuid, client_name):
     conn.execute(query)
     engine.dispose()
 
-    app.logger.info("The client with name {} was deleted.".format(client_name))
-    flash("The client with name {} was deleted.".format(client_name), "success")
+    system_name = "{}.{}.{}.{}".format(clients[0]["domain"], clients[0]["enterprise"],
+                                       clients[0]["workcenter"], clients[0]["station"])
+    msg = "The user '{}' was removed from system '{}' as client.".format(client_name, system_name)
+    app.logger.info(msg)
+    flash(msg, "success")
 
     # Redirect to /show_system/system_uuid
     return redirect(url_for("system.show_system", system_uuid=system_uuid))

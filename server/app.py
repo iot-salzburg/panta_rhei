@@ -37,11 +37,13 @@ app.register_blueprint(streamhub_bp)
 
 
 if __name__ == '__main__':
-    app.logger.setLevel(logging.DEBUG)
+    app.logger.setLevel(logging.INFO)
     app.logger.info("Preparing the platform.")
 
     # Check the connection to Kafka and create new tables if not already done
-    if not check_kafka(app):
+    if check_kafka(app):
+        app.logger.debug("Connected to with bootstrap servers '{}'.".format(app.config["KAFKA_BOOTSTRAP_SERVER"]))
+    else:
         app.logger.error("The connection to Kafka Servers couldn't be established.")
         sys.exit(1)
 
@@ -57,8 +59,8 @@ if __name__ == '__main__':
     create_default_topics(app)
 
     # Test creation and deletion of topics
-    create_system_topics(app, "asdf.asdf.asdf.asdf")
-    delete_system_topics(app, "asdf.asdf.asdf.asdf")
+    create_system_topics(app, "test.test.test.test")
+    delete_system_topics(app, "test.test.test.test")
 
     # Run application
     app.run(debug=app.config["DEBUG"], port=5000)

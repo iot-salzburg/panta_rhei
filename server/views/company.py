@@ -123,7 +123,7 @@ def add_company():
             conn.execute(query, values_list)
         else:
             engine.dispose()
-            flash("The company {}.{} already exists.".format(form.domain.data, form.enterprise.data), "danger")
+            flash("The company '{}.{}' already exists.".format(form.domain.data, form.enterprise.data), "danger")
             return redirect(url_for("company.show_all_companies"))
 
         # Create new is_admin_of instance
@@ -135,8 +135,9 @@ def add_company():
         try:
             conn.execute(query, values_list)
             engine.dispose()
-            app.logger.info("The company {} was created.".format(form.enterprise.data))
-            flash("The company {} was created.".format(form.enterprise.data), "success")
+            company_name = "{}.{}".format(form.domain.data, form.enterprise.data)
+            app.logger.info("The company '{}' was created.".format(company_name))
+            flash("The company '{}' was created.".format(company_name), "success")
             return redirect(url_for("company.show_all_companies"))
 
         except sqlalchemy_exc.IntegrityError as e:
@@ -211,8 +212,9 @@ def delete_company(company_uuid):
     conn.execute(query)
     engine.dispose()
 
-    app.logger.info("The company {} was deleted.".format(selected_company["enterprise"]))
-    flash("The company {} was deleted.".format(selected_company["enterprise"]), "success")
+    company_name = "{}.{}".format(selected_company["domain"], selected_company["enterprise"])
+    app.logger.info("The company '{}' was deleted.".format(company_name))
+    flash("The company '{}' was deleted.".format(company_name), "success")
     return redirect(url_for("company.show_all_companies"))
 
 
@@ -293,7 +295,9 @@ def add_admin_company(company_uuid):
 
         conn.execute(query, values_list)
         engine.dispose()
-        flash("The user {} was added to {}.{} as an admin.".format(form.email.data, domain, enterprise), "success")
+        msg = "The user '{}' was added to '{}.{}' as an admin.".format(form.email.data, domain, enterprise)
+        app.logger.info(msg)
+        flash(msg, "success")
         return redirect(url_for("company.show_company", company_uuid=selected_company["company_uuid"]))
 
     return render_template("/companies/add_admin_company.html", form=form, domain=domain, enterprise=enterprise)
@@ -355,6 +359,9 @@ def delete_admin_company(company_uuid, admin_uuid):
             # print("DELETING: {}".format(query))
 
             engine.dispose()
-            flash("User with email {} was removed as admin from company {}.{}.".format(
-                del_user["admin_email"], del_user["domain"], del_user["enterprise"]), "success")
+
+            msg = "The user with email '{}' was removed as admin from company '{}.{}'.".format(
+                del_user["admin_email"], del_user["domain"], del_user["enterprise"])
+            app.logger.info(msg)
+            flash(msg, "success")
             return redirect(url_for("company.show_company", company_uuid=del_user["company_uuid"]))
