@@ -3,6 +3,7 @@ import logging
 
 # confluent_kafka is based on librdkafka, details in install_kafka_requirements.sh
 import os
+import subprocess
 
 import confluent_kafka
 import confluent_kafka.admin as kafka_admin
@@ -34,23 +35,41 @@ def create_system_topics(app, system_name):
     if check_kafka(app):
         # Create system topics
         kac = kafka_admin.AdminClient({'bootstrap.servers': app.config["KAFKA_BOOTSTRAP_SERVER"]})
-        kac.create_topics([confluent_kafka.admin.NewTopic(system_name + ".logging", 3, 1),
-                           confluent_kafka.admin.NewTopic(system_name + ".internal", 3, 1),
-                           confluent_kafka.admin.NewTopic(system_name + ".external", 3, 1)])
+        kac.create_topics([confluent_kafka.admin.NewTopic(system_name + ".log", 3, 1),
+                           confluent_kafka.admin.NewTopic(system_name + ".int", 3, 1),
+                           confluent_kafka.admin.NewTopic(system_name + ".ext", 3, 1)])
         app.logger.debug("Created system topics for '{}'".format(system_name))
 
 
-def delete_system_topics(app, system_name):
+def create_default_topics(app):
     if check_kafka(app):
-        # Delete system topics
+        # Create default system topics
+        for system_name in ["cz.icecars.iot-iot4cps-wp5.CarFleet",
+                            "is.iceland.iot-iot4cps-wp5.InfraProv",
+                            "at.datahouse.iot-iot4cps-wp5.WeatherService"]:
+            kac = kafka_admin.AdminClient({'bootstrap.servers': app.config["KAFKA_BOOTSTRAP_SERVER"]})
+            kac.create_topics([confluent_kafka.admin.NewTopic(system_name + ".log", 3, 1),
+                               confluent_kafka.admin.NewTopic(system_name + ".int", 3, 1),
+                               confluent_kafka.admin.NewTopic(system_name + ".ext", 3, 1)])
+            app.logger.debug("Created system topics for '{}'".format(system_name))
+
+
+def delete_system_topics(app, system_name):
+    # Delete system topics
+    if check_kafka(app):
         try:
-            for ktype in [".logging", ".internal", ".external"]:
-                os.system("/kafka/bin/kafka-topics.sh --zookeeper :2181 --delete --topic {}".format(ktype))
-        except:
-            app.logger.warning("Already deleted.")
-        # kac = kafka_admin.AdminClient({'bootstrap.servers': app.config["KAFKA_BOOTSTRAP_SERVER"]})
-        # kac.delete_topics([system_name + ktype for ktype in [".logging", ".internal", ".external"]])
-        # app.logger.debug("Marked system topics for '{}' as deleted.".format(system_name))
+            for ktype in [".log", ".int", ".ext"]:
+                # TODO use subprocess
+                cmd = "/kafka/bin/kafka-topics.sh --bootstrap-server {} --delete --topic {}".format(
+                    app.config["KAFKA_BOOTSTRAP_SERVER"], system_name + ktype)
+                with open(os.devnull, "w") as devnull:
+                    res = subprocess.call(cmd.split(), stdout=devnull, stderr=devnull)
+        except Exception as e:
+            app.logger.warning("System topics were already deleted.")
+        app.logger.debug("Deleted topics for system '{}'.".format(system_name))
+    # That doesn't work now
+    # kac = kafka_admin.AdminClient({'bootstrap.servers': app.config["KAFKA_BOOTSTRAP_SERVER"]})
+    # kac.delete_topics([system_name + ktype for ktype in [".log", ".int", ".ext"])
 
 
 class KafkaHandler(logging.Handler):

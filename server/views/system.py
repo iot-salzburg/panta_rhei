@@ -6,6 +6,7 @@ from sqlalchemy import exc as sqlalchemy_exc
 from wtforms import Form, StringField, validators, TextAreaField
 
 from .useful_functions import get_datetime, get_uid, is_logged_in, valid_level_name
+from .kafka_interface import check_kafka, create_system_topics, delete_system_topics
 
 system = Blueprint("system", __name__)  # url_prefix="/comp")
 
@@ -182,9 +183,16 @@ def add_system_for_company(company_uuid):
         try:
             conn.execute(query, values_list)
             engine.dispose()
+
+            system_name = "{}.{}.{}.{}".format(payload["domain"], payload["enterprise"],
+                                               form.workcenter.data, form.station.data)
+            # Create system topics
+            create_system_topics(app, system_name=system_name)
+
             msg = "The system {}.{} within the company {}.{} was created.".format(
                 form.workcenter.data, form.station.data, payload["domain"], payload["enterprise"])
             app.logger.info(msg)
+
             flash(msg, "success")
             return redirect(url_for("company.show_company", company_uuid=company_uuid))
 
@@ -216,9 +224,6 @@ def delete_system(system_uuid):
         AND agf.system_uuid='{}';""".format(user_uuid, system_uuid)
     result_proxy = conn.execute(query)
     permitted_systems = [dict(c.items()) for c in result_proxy.fetchall()]
-    print(user_uuid)
-    print(system_uuid)
-    print("permitted systems: {}".format(permitted_systems))
 
     if permitted_systems == list():
         engine.dispose()
@@ -262,10 +267,14 @@ def delete_system(system_uuid):
     query = """DELETE FROM systems
         WHERE uuid='{}';""".format(system_uuid)
     conn.execute(query)
-
     engine.dispose()
-    msg = "The system {}.{}.{}.{} was deleted.".format(selected_system["domain"], selected_system["enterprise"],
-                                                       selected_system["workcenter"], selected_system["station"])
+
+    system_name = "{}.{}.{}.{}".format(selected_system["domain"], selected_system["enterprise"],
+                                       selected_system["workcenter"], selected_system["station"])
+    # Delete Kafka topics
+    delete_system_topics(app, system_name=system_name)
+
+    msg = "The system {} was deleted.".format(system_name)
     app.logger.info(msg)
     flash(msg, "success")
 

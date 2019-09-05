@@ -71,7 +71,7 @@ def show_client(system_uuid, client_name):
         flash("You are not permitted see details this client.", "danger")
         return redirect(url_for("client.show_all_clients"))
 
-    if session["key_status"] == "download":
+    if session.get("key_status") == "download":
         session["key_status"] = "init"
         flash("The key was downloaded. Keep in mind that this key can't' be downloaded twice!", "success")
 
