@@ -60,4 +60,4 @@ if __name__ == '__main__':
     # delete_system_topics(app, "test.test.test.test")
 
     # Run application
-    app.run(debug=app.config["DEBUG"], port=5000)
+    app.run(debug=app.config["DEBUG"], port=1908)

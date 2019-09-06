@@ -46,7 +46,7 @@ class DigitalTwinClient:
         # Create a mapping for each datastream of the client
         self.mapping = dict()
         self.mapping["logging"] = {"name": "logging", "@iot.id": -1,
-                                   "kafka-topic": self.config["system"] + ".logging",
+                                   "kafka-topic": self.config["system"] + ".log",
                                    "observationType": "logging"}
 
         # Check the connection to Kafka, note that the connection to the brokers are preferred
@@ -201,9 +201,9 @@ class DigitalTwinClient:
         # Build the kafka-topic that is used
         # kafka_topic = "{}.{}.".format(self.config["system_prefix"], self.config["system_name"])
         if self.mapping[quantity]["observationType"] == "logging":
-            kafka_topic = self.config["system"] + "." + "logging"
+            kafka_topic = self.config["system"] + "." + "log"
         else:
-            kafka_topic = self.config["system"] + "." + "data"
+            kafka_topic = self.config["system"] + "." + "int"
 
         # The key is of the form "thing" or "client-name" (for logging)
         kafka_key = str(self.mapping[quantity].get("Thing", self.config["client_name"]))
@@ -347,7 +347,7 @@ class DigitalTwinClient:
             self.consumer = confluent_kafka.Consumer(**conf)
 
             # Subscribe to topics
-            self.consumer.subscribe([self.config["system"] + ".data", self.config["system"] + ".external"])
+            self.consumer.subscribe([self.config["system"] + ".int", self.config["system"] + ".ext"])
 
         else:
             # Create consumer
@@ -369,7 +369,7 @@ class DigitalTwinClient:
             # Subscribe to topics
             kafka_url = "http://{}/consumers/{}/instances/{}/subscription".format(
                 self.config["kafka_rest_server"], self.config["kafka_group_id"], self.config["kafka_consumer_id"])
-            data = json.dumps({"topics": [self.config["system"] + ".data", self.config["system"] + ".external"]}
+            data = json.dumps({"topics": [self.config["system"] + ".int", self.config["system"] + ".ext"]}
                               ).encode("utf-8")
             res = requests.post(kafka_url, data=data,
                                 headers=dict({"Content-Type": "application/vnd.kafka.json.v2+json"}))
@@ -432,7 +432,7 @@ class DigitalTwinClient:
         :param timeout: duration how long to wait to receive data
         :return: either None or data in SensorThings format and augmented with metadata for each received and
         subscribed datastream. e.g.
-        [{"topic": "eu.srfg.iot-iot4cps-wp5.car1.data","key": "eu.srfg.iot-iot4cps-wp5.car1.Demo Car 1",
+        [{"topic": "eu.srfg.iot-iot4cps-wp5.car1.int","key": "eu.srfg.iot-iot4cps-wp5.car1.Demo Car 1",
         "value": {"phenomenonTime": "2019-04-08T09:47:35.408785+00:00","resultTime": "2019-04-08T09:47:35.408950+00:00",
         "Datastream": {"@iot.id": 11},"result": 2.9698054997459593},"partition": 0,"offset": 1},...]
         """

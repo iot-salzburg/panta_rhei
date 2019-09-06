@@ -1,6 +1,6 @@
 {
   "Things": {
-    "demo_station_1": {
+    "weatherstation_1": {
       "name": "Demo Station 1"
     }
   },
@@ -12,7 +12,7 @@
   "Datastreams": {
     "temperature": {
       "name": "Air Temperature",
-      "Thing": "demo_station_1",
+      "Thing": "weatherstation_1",
       "Sensor": "demo_temp-sensor"
     }
   }

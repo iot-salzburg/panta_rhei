@@ -1,6 +1,6 @@
 {
   "Things": {
-    "demo_station_2": {
+    "weatherstation_2": {
       "name": "Demo Station 2",
       "description": "Weather Station that provides temperature data",
       "properties": {
@@ -31,7 +31,7 @@
         "description": "Air Temperature at the demo station 2",
         "definition": "http://www.qudt.org/qudt/owl/1.0.0/quantity/Instances.html#AreaTemperature"
       },
-      "Thing": "demo_station_2",
+      "Thing": "weatherstation_2",
       "Sensor": "demo_temp-sensor"
     }
   }

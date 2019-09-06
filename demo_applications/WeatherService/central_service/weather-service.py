@@ -24,8 +24,8 @@ INSTANCES = os.path.join(dirname, "instances.json")
 SUBSCRIPTIONS = os.path.join(dirname, "subscriptions.json")
 
 # Set the configs, create a new Digital Twin Instance and register file structure
-config = {"client_name": "weather-service-consumer",
-          "system": "at.srfg.iot-iot4cps-wp5.WeatherService",
+config = {"client_name": "centralservice",
+          "system": "is.iceland.iot-iot4cps-wp5.WeatherService",
           "gost_servers": "localhost:8084",
           "kafka_bootstrap_servers": "localhost:9092",  # kafka bootstrap server is the preferred way to connect
           "kafka_rest_server": "localhost:8082"}

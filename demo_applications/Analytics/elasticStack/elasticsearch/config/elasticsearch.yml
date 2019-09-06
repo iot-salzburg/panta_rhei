@@ -1,5 +1,5 @@
 # set indexes to be created
-action.auto_create_index: .security,.monitoring*,.watches,.triggered_watches,.watcher-history*,at.srfg.iot-iot4cps-wp5.*
+action.auto_create_index: .security,.monitoring*,.watches,.triggered_watches,.watcher-history*,at.srfg.*,cz.icecars*
 
 cluster.name: "docker-cluster"
 network.host: 0.0.0.0

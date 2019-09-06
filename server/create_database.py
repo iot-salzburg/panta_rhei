@@ -200,7 +200,7 @@ def insert_sample():
 
     # Insert systems
     uuid_carfleet = get_uid()
-    uuid_infraprov = get_uid()
+    uuid_roadanalytics = get_uid()
     uuid_weatherservice = get_uid()
     query = db.insert(app.config["tables"]["systems"])
     values_list = [
@@ -210,16 +210,16 @@ def insert_sample():
          'station': "CarFleet",
          'description': lorem_ipsum,
          'datetime': get_datetime()},
-        {'uuid': uuid_infraprov,
+        {'uuid': uuid_weatherservice,
          'company_uuid': uuid_iceland,
          'workcenter': "iot-iot4cps-wp5",
-         'station': "InfraProv",
+         'station': "WeatherService",
          'description': lorem_ipsum,
          'datetime': get_datetime()},
-        {'uuid': uuid_weatherservice,
+        {'uuid': uuid_roadanalytics,
          'company_uuid': uuid_datahouse,
          'workcenter': "iot-iot4cps-wp5",
-         'station': "WeatherService",
+         'station': "RoadAnalytics",
          'description': lorem_ipsum,
          'datetime': get_datetime()}]
     ResultProxy = conn.execute(query, values_list)
@@ -232,11 +232,11 @@ def insert_sample():
          'creator_uuid': uuid_sue,
          'datetime': get_datetime()},
         {'user_uuid': uuid_stefan,
-         'system_uuid': uuid_infraprov,
+         'system_uuid': uuid_weatherservice,
          'creator_uuid': uuid_stefan,
          'datetime': get_datetime()},
         {'user_uuid': uuid_anna,
-         'system_uuid': uuid_weatherservice,
+         'system_uuid': uuid_roadanalytics,
          'creator_uuid': uuid_anna,
          'datetime': get_datetime()}]
     ResultProxy = conn.execute(query, values_list)
@@ -258,29 +258,29 @@ def insert_sample():
          'creator_uuid': uuid_sue,
          'datetime': get_datetime(),
          'description': lorem_ipsum},
-        {'name': "gov_1",
-         'system_uuid': uuid_infraprov,
-         'metadata_name': "sensorthings",
-         'metadata_uri': "http://localhost:8084",
-         'creator_uuid': uuid_stefan,
-         'datetime': get_datetime(),
-         'description': lorem_ipsum},
         {'name': "weatherstation_1",
          'system_uuid': uuid_weatherservice,
          'metadata_name': "sensorthings",
          'metadata_uri': "http://localhost:8084",
-         'creator_uuid': uuid_anna,
+         'creator_uuid': uuid_stefan,
          'datetime': get_datetime(),
          'description': lorem_ipsum},
         {'name': "weatherstation_2",
          'system_uuid': uuid_weatherservice,
          'metadata_name': "sensorthings",
          'metadata_uri': "http://localhost:8084",
-         'creator_uuid': uuid_anna,
+         'creator_uuid': uuid_stefan,
          'datetime': get_datetime(),
          'description': lorem_ipsum},
-        {'name': "analysis",
+        {'name': "centralservice",
          'system_uuid': uuid_weatherservice,
+         'metadata_name': "sensorthings",
+         'metadata_uri': "http://localhost:8084",
+         'creator_uuid': uuid_stefan,
+         'datetime': get_datetime(),
+         'description': lorem_ipsum},
+        {'name': "datastack-adapter",
+         'system_uuid': uuid_roadanalytics,
          'metadata_name': "sensorthings",
          'metadata_uri': "http://localhost:8084",
          'creator_uuid': uuid_anna,

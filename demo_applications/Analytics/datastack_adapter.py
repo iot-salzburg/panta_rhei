@@ -32,7 +32,7 @@ ELASTICSTACK_URLS = ["http://localhost:9200", "http://localhost:9600"]
 
 # Set the configs, create a new Digital Twin Instance and register file structure
 config = {"client_name": "datastack-adapter",
-          "system": "at.srfg.iot-iot4cps-wp5.InfraProv",
+          "system": "at.datahouse.iot-iot4cps-wp5.RoadAnalytics",
           "kafka_bootstrap_servers": "localhost:9092",  # "192.168.48.81:9092,192.168.48.82:9092,192.168.48.83:9092"
           "gost_servers": "localhost:8084"}  # "192.168.48.81:8082"
 client = DigitalTwinClient(**config)
@@ -85,7 +85,7 @@ try:
                          "result": received_quantity["result"]})
 
             # Pipe the data to Logstash of the Elastic Stack
-            # logger_metric.info('', extra=data)
+            logger_metric.info('', extra=data)
             print(json.dumps(data, indent=2))
 
 except KeyboardInterrupt:

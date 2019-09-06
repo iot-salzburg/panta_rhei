@@ -13,15 +13,15 @@ public class StreamHub_CarFleet {
 
     public static void main(String[] args) {
         // the system name (must be unique, gets a consumer-group) and recipients
-        final String SYSTEM_NAME = "at.srfg.iot-iot4cps-wp5.CarFleet";
-        final String [] OUTPUT_SYSTEMS = {"at.srfg.iot-iot4cps-wp5.InfraProv"};
+        final String SYSTEM_NAME = "cz.icecars.iot-iot4cps-wp5.CarFleet";
+        final String [] OUTPUT_SYSTEMS = {"at.datahouse.iot-iot4cps-wp5.RoadAnalytics"};
         final String KAFKA_BOOTSTRAP_SERVERS = "127.0.0.1:9092";
 
         // create input and output topics from system name
-        final String inputTopicName = SYSTEM_NAME + ".data";
+        final String inputTopicName = SYSTEM_NAME + ".int";
         final String [] outputTopics = new String[OUTPUT_SYSTEMS.length];
         for (int i=0; i<OUTPUT_SYSTEMS.length; i++)
-            outputTopics[i] = OUTPUT_SYSTEMS[i] + ".external";
+            outputTopics[i] = OUTPUT_SYSTEMS[i] + ".ext";
 
         // create properties
         Properties properties = new Properties();
@@ -38,7 +38,7 @@ public class StreamHub_CarFleet {
         KStream<String, String> filteredStream = inputTopic.filter((k, jsonTweet) -> true);
 
         for (String topic: outputTopics)
-            if (topic.contains("external"))
+            if (topic.endsWith(".ext"))
                 filteredStream.to(topic);
             else
                 System.out.println("Check the OUTPUT_TOPICS: " + topic);
