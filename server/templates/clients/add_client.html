@@ -14,6 +14,12 @@
             {{render_field(form.name, class_="form-control")}}
         </div>
         <div class="form-group">
+            {{render_field(form.metadata_name, class_="form-control")}}
+        </div>
+        <div class="form-group">
+            {{render_field(form.metadata_uri, class_="form-control")}}
+        </div>
+        <div class="form-group">
             {{render_field(form.description, class_="form-control")}}
             <small id="description" class="form-text text-muted">The description is optional.</small>
         </div>

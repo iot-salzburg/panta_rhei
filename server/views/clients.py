@@ -47,7 +47,8 @@ def show_client(system_uuid, client_name):
     engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
     conn = engine.connect()
     query = """SELECT sys.uuid AS system_uuid, com.uuid AS company_uuid, name, domain, enterprise, workcenter, station, 
-    creator.email AS contact_mail, clients.description, keyfile_av, agent.uuid AS agent_uuid, clients.datetime AS datetime
+    creator.email AS contact_mail, clients.description, keyfile_av, agent.uuid AS agent_uuid, 
+    clients.datetime AS datetime, metadata_name, metadata_uri
     FROM clients
     INNER JOIN users as creator ON creator.uuid=clients.creator_uuid
     INNER JOIN systems AS sys ON clients.system_uuid=sys.uuid
@@ -97,6 +98,9 @@ def show_client(system_uuid, client_name):
 # Client Form Class
 class ClientForm(Form):
     name = StringField("Name", [validators.Length(min=2, max=20), valid_level_name])
+    metadata_name = StringField("Metadata Name", [validators.Length(min=2, max=50)])
+    metadata_uri = StringField("Metadata URI", [validators.Length(min=2, max=256),
+                                                validators.URL(message="This must be a valid URI.")])
     description = TextAreaField("Description", [validators.Length(max=16*1024)])
 
 
@@ -186,6 +190,8 @@ def add_client_for_system(system_uuid):
             query = db.insert(app.config["tables"]["clients"])
             values_list = [{'name': form.name.data,
                             'system_uuid': system_uuid,
+                            'metadata_name': form.metadata_name.data,
+                            'metadata_uri': form.metadata_uri.data,
                             'creator_uuid': user_uuid,
                             "description": form.description.data,
                             'datetime': get_datetime(),
