@@ -13,6 +13,9 @@ PLATFORM_TOPIC = "platform.logger"
 
 
 def check_kafka(app):
+    if not app.config["KAFKA_BOOTSTRAP_SERVER"]:
+        app.logger.warning("The connection to Kafka is disabled. Check the '.env' file!")
+        return True
     kac = kafka_admin.AdminClient({'bootstrap.servers': app.config["KAFKA_BOOTSTRAP_SERVER"]})
     try:
         topics = kac.list_topics(timeout=3.0).topics
@@ -33,6 +36,8 @@ def check_kafka(app):
 
 
 def create_system_topics(app, system_name):
+    if not app.config["KAFKA_BOOTSTRAP_SERVER"]:
+        return None
     if check_kafka(app):
         # Create system topics
         kac = kafka_admin.AdminClient({'bootstrap.servers': app.config["KAFKA_BOOTSTRAP_SERVER"]})
@@ -43,6 +48,8 @@ def create_system_topics(app, system_name):
 
 
 def create_default_topics(app):
+    if not app.config["KAFKA_BOOTSTRAP_SERVER"]:
+        return None
     if check_kafka(app):
         # Create default system topics
         for system_name in ["cz.icecars.iot-iot4cps-wp5.CarFleet",
@@ -52,6 +59,8 @@ def create_default_topics(app):
 
 
 def delete_system_topics(app, system_name):
+    if not app.config["KAFKA_BOOTSTRAP_SERVER"]:
+        return None
     # Delete system topics
     if check_kafka(app):
         for ktype in [".log", ".int", ".ext"]:

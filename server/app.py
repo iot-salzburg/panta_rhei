@@ -34,7 +34,11 @@ app.register_blueprint(streamhub_bp)
 
 
 if __name__ == '__main__':
-    app.logger.setLevel(logging.INFO)
+    if app.config["DEBUG"]:
+        app.logger.setLevel(logging.DEBUG)
+    else:
+        app.logger.setLevel(logging.INFO)
+
     app.logger.info("Preparing the platform.")
 
     # Check the connection to Kafka and create new tables if not already done

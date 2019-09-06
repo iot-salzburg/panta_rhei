@@ -61,7 +61,7 @@ def create_tables(app):
         db.Column('domain', db.VARCHAR(4), nullable=False),
         db.Column('enterprise', db.VARCHAR(15), nullable=False),
         db.Column('datetime', db.DateTime, nullable=True),
-        db.Column('description', db.VARCHAR(1000), nullable=True)
+        db.Column('description', db.VARCHAR(1024), nullable=True)
         )
     app.config["tables"]["systems"] = db.Table(
         'systems', app.config['metadata'],
@@ -70,7 +70,7 @@ def create_tables(app):
         db.Column('workcenter', db.VARCHAR(30), nullable=False),
         db.Column('station', db.VARCHAR(20), nullable=False),
         db.Column('datetime', db.DateTime, nullable=True),
-        db.Column('description', db.VARCHAR(1000), nullable=True)
+        db.Column('description', db.VARCHAR(1024), nullable=True)
         )
     app.config["tables"]["is_admin_of"] = db.Table(
         'is_admin_of', app.config['metadata'],
@@ -95,19 +95,9 @@ def create_tables(app):
         db.Column('keyfile_av', db.BOOLEAN, nullable=False, default=False),
         db.Column('datetime', db.DateTime, nullable=True),
         db.Column('creator_uuid', db.ForeignKey("users.uuid"), nullable=False),
-        db.Column('description', db.VARCHAR(1000), nullable=True)
+        db.Column('description', db.VARCHAR(1024), nullable=True)
         )
-    app.config["tables"]["gost_thing"] = db.Table(
-        'gost_thing', app.config['metadata'],
-        db.Column('link', db.VARCHAR(50), nullable=False),
-        db.Column('system_uuid', db.ForeignKey("systems.uuid"), primary_key=True)
-        )
-    app.config["tables"]["gost_ds"] = db.Table(
-        'gost_ds', app.config['metadata'],
-        db.Column('link', db.VARCHAR(50), nullable=False),
-        db.Column('client_name', db.ForeignKey("clients.name"), primary_key=True),
-        db.Column('system_uuid', db.ForeignKey("systems.uuid"), primary_key=True)
-        )
+
 
     # Creates the tables
     app.config['metadata'].create_all(engine)
