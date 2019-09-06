@@ -7,7 +7,6 @@ from passlib.hash import sha256_crypt
 
 import wtforms
 from wtforms import Form, StringField, TextField, TextAreaField, PasswordField, validators
-from flask_wtf import Recaptcha  # TODO use repatcha for user registration
 from flask import current_app as app
 
 from .useful_functions import get_datetime, get_uid, is_logged_in

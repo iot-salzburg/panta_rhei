@@ -4,20 +4,17 @@ import logging
 from dotenv import load_dotenv
 from flask import Flask
 
-# Import application-specific functions
-from server.views.useful_functions import get_datetime, get_uid, is_logged_in
-from server.views.kafka_interface import check_kafka, create_system_topics, delete_system_topics, \
-    create_default_topics, KafkaHandler
-
-
+from server.create_database import create_tables
 # Import modules
 from server.views.auth import auth
-from server.views.home import home_bp
-from server.views.company import company
-from server.views.system import system
 from server.views.clients import client
+from server.views.company import company
+from server.views.home import home_bp
+
+# Import application-specific functions
+from server.views.kafka_interface import check_kafka, create_default_topics, KafkaHandler
 from server.views.streamhub import streamhub_bp
-from server.create_database import create_tables
+from server.views.system import system
 
 # load environment variables automatically from a .env file in the same directory
 load_dotenv()
@@ -58,17 +55,9 @@ if __name__ == '__main__':
     create_tables(app)
     create_default_topics(app)
 
-    # Test creation and deletion of topics
-    create_system_topics(app, "test.test.test.test")
-    delete_system_topics(app, "test.test.test.test")
+    # # Test creation and deletion of topics
+    # create_system_topics(app, "test.test.test.test")
+    # delete_system_topics(app, "test.test.test.test")
 
     # Run application
     app.run(debug=app.config["DEBUG"], port=5000)
-
-
-# Create engine once and held globally
-# The typical usage of create_engine() is once per particular database URL,
-# held globally for the lifetime of a single application process.
-# see: https://docs.sqlalchemy.org/en/13/core/connections.html#basic-usage
-
-# TODO logout if inactive (with wrapper)

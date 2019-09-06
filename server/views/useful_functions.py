@@ -16,7 +16,7 @@ def get_datetime():
 
 # Check if user is logged in
 def is_logged_in(f):
-    from flask import Blueprint, Flask, render_template, flash, redirect, url_for, session
+    from flask import flash, redirect, url_for, session
     from functools import wraps
     @wraps(f)
     def wrap(*args, **kwargs):

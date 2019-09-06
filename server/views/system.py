@@ -174,36 +174,36 @@ def add_system_for_company(company_uuid):
                 payload["domain"], payload["enterprise"], form.workcenter.data, form.station.data), "danger")
             return redirect(url_for("company.show_company", company_uuid=company_uuid))
 
-        # Create new is_admin_of instance
-        query = db.insert(app.config["tables"]["is_agent_of"])
-        values_list = [{"user_uuid": user_uuid,
-                        "system_uuid": system_uuid,
-                        "creator_uuid": user_uuid,
-                        "datetime": get_datetime()}]
+        system_name = "{}.{}.{}.{}".format(payload["domain"], payload["enterprise"],
+                                           form.workcenter.data, form.station.data)
+        transaction = conn.begin()
         try:
+            # Create new is_admin_of instance
+            query = db.insert(app.config["tables"]["is_agent_of"])
+            values_list = [{"user_uuid": user_uuid,
+                            "system_uuid": system_uuid,
+                            "creator_uuid": user_uuid,
+                            "datetime": get_datetime()}]
             conn.execute(query, values_list)
             engine.dispose()
 
-            system_name = "{}.{}.{}.{}".format(payload["domain"], payload["enterprise"],
-                                               form.workcenter.data, form.station.data)
             # Create system topics
             create_system_topics(app, system_name=system_name)
 
+            transaction.commit()
             app.logger.info("The system '{}' was created.".format(system_name))
             flash("The system '{}' was created.".format(system_name), "success")
             return redirect(url_for("company.show_company", company_uuid=company_uuid))
-
-        except sqlalchemy_exc.IntegrityError as e:
-            engine.dispose()
-            print("An Integrity Error occured: {}".format(e))
-            flash("An unexpected error occured.", "danger")
+        except:
+            transaction.rollback()
+            app.logger.warning("The system '{}' couldn't created.".format(system_name))
+            flash("The system '{}' couldn't created.".format(system_name), "danger")
             return render_template("login.html")
 
     return render_template("/systems/add_system.html", form=form, payload=payload)
 
 
 # Delete system
-# TODO restrict deleting if clients exist
 @system.route("/delete_system/<string:system_uuid>", methods=["GET"])
 @is_logged_in
 def delete_system(system_uuid):
@@ -254,30 +254,36 @@ def delete_system(system_uuid):
 
     # Now the system can be deleted
     selected_system = permitted_systems[0]  # This list has only one element
-
-    # Delete new is_admin_of instance
-    query = """DELETE FROM is_agent_of
-        WHERE system_uuid='{}';""".format(system_uuid)
-    conn.execute(query)
-
-    # Delete system
-    query = """DELETE FROM systems
-        WHERE uuid='{}';""".format(system_uuid)
-    conn.execute(query)
-    engine.dispose()
-
     system_name = "{}.{}.{}.{}".format(selected_system["domain"], selected_system["enterprise"],
                                        selected_system["workcenter"], selected_system["station"])
-    # Delete Kafka topics
-    delete_system_topics(app, system_name=system_name)
 
-    app.logger.info("The system '{}' was deleted.".format(system_name))
-    flash("The system '{}' was deleted.".format(system_name), "success")
+    transaction = conn.begin()
+    try:
+        # Delete new is_admin_of instance
+        query = """DELETE FROM is_agent_of
+            WHERE system_uuid='{}';""".format(system_uuid)
+        conn.execute(query)
+        # Delete system
+        query = """DELETE FROM systems
+            WHERE uuid='{}';""".format(system_uuid)
+        conn.execute(query)
+        engine.dispose()
 
-    # Redirect to latest page, either /systems or /show_company/UID
-    if session.get("last_url"):
-        return redirect(session.get("last_url"))
-    return redirect(url_for("system.show_all_systems"))
+        # Delete Kafka topics
+        delete_system_topics(app, system_name=system_name)
+
+        transaction.commit()
+        app.logger.info("The system '{}' was deleted.".format(system_name))
+        flash("The system '{}' was deleted.".format(system_name), "success")
+    except:
+        transaction.rollback()
+        app.logger.warning("The system '{}' couldn't deleted.".format(system_name))
+        flash("The system '{}' couldn't deleted.".format(system_name), "danger")
+    finally:
+        # Redirect to latest page, either /systems or /show_company/UID
+        if session.get("last_url"):
+            return redirect(session.get("last_url"))
+        return redirect(url_for("system.show_all_systems"))
 
 
 # Agent Management Form Class

@@ -198,24 +198,29 @@ def delete_company(company_uuid):
 
     # Now the company can be deleted
     selected_company = permitted_companies[0]  # This list has only one element
-
-    # TODO use transactions
-    # also in systems and during the creation
-    # Delete new is_admin_of instance
-    query = """DELETE FROM is_admin_of
-        WHERE company_uuid='{}';""".format(company_uuid)
-    conn.execute(query)
-
-    # Delete company
-    query = """DELETE FROM companies
-        WHERE uuid='{}';""".format(company_uuid)
-    conn.execute(query)
-    engine.dispose()
-
     company_name = "{}.{}".format(selected_company["domain"], selected_company["enterprise"])
-    app.logger.info("The company '{}' was deleted.".format(company_name))
-    flash("The company '{}' was deleted.".format(company_name), "success")
-    return redirect(url_for("company.show_all_companies"))
+
+    transaction = conn.begin()
+    try:
+        # Delete new is_admin_of instance
+        query = """DELETE FROM is_admin_of
+            WHERE company_uuid='{}';""".format(company_uuid)
+        conn.execute(query)
+        # Delete company
+        query = """DELETE FROM companies
+            WHERE uuid='{}';""".format(company_uuid)
+        conn.execute(query)
+        transaction.commit()
+        engine.dispose()
+
+        app.logger.info("The company '{}' was deleted.".format(company_name))
+        flash("The company '{}' was deleted.".format(company_name), "success")
+    except:
+        transaction.rollback()
+        app.logger.warning("The company '{}' couldn't be deleted.".format(company_name))
+        flash("The company '{}' couldn't be deleted.".format(company_name), "danger")
+    finally:
+        return redirect(url_for("company.show_all_companies"))
 
 
 # Admin Management Form Class
