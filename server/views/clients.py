@@ -1,5 +1,6 @@
 import os
 import json
+import time
 
 import sqlalchemy as db
 from flask import Blueprint, render_template, flash, redirect, url_for, session, request, send_file
@@ -74,8 +75,6 @@ def show_client(system_uuid, client_name):
 
     if session.get("key_status") == "download":
         session["key_status"] = "init"
-        flash("The key was downloaded. Keep in mind that this key can't' be downloaded twice!", "success")
-
         # Delete the zip file for security reasons
         # make directory with unique name
         zipname = "ssl_{}_{}.zip".format(system_uuid, client_name)
@@ -297,23 +296,29 @@ def download_key(system_uuid, client_name):
     dir_path = os.path.dirname(os.path.realpath(__file__))
     filepath = os.path.join(dir_path, "keys", zipname)
 
-    if os.path.exists(filepath):
-        engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
-        conn = engine.connect()  # no transactions as they aren't threadsafe
-        query = """UPDATE clients
-        SET keyfile_av=False
-        WHERE name='{}' AND system_uuid='{}';""".format(client_name, system_uuid)
-        result_proxy = conn.execute(query)
-        engine.dispose()
+    if not os.path.exists(filepath):
+        flash("The key file was not found.", "danger")
+        return redirect(url_for("client.show_client", system_uuid=system_uuid, client_name=client_name))
 
-        # Set the status to download in order to flash a message in client.show_client
-        # This Session value must be reset there!
-        session["key_status"] = "download"
-        return send_file(
-                        filepath,
-                        mimetype='application/zip',
-                        as_attachment=True,
-                        attachment_filename=zipname) and redirect(url_for("client.show_client", system_uuid=system_uuid, client_name=client_name))
+    # Set the status to download in order to flash a message in client.show_client
+    if session.get("key_status") == "download":
+        return redirect(url_for("client.show_client", system_uuid=system_uuid, client_name=client_name))
+    # This Session value must be reset there!
+    session["key_status"] = "download"
 
-    flash("The key file was not found.", "danger")
-    return redirect(url_for("client.show_client", system_uuid=system_uuid, client_name=client_name))
+    engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
+    conn = engine.connect()  # no transactions as they aren't threadsafe
+    query = """UPDATE clients
+    SET keyfile_av=False
+    WHERE name='{}' AND system_uuid='{}';""".format(client_name, system_uuid)
+    result_proxy = conn.execute(query)
+    engine.dispose()
+
+    flash("The key was downloaded. Keep in mind that this key can't' be downloaded twice!", "success")
+    return send_file(
+        filepath,
+        mimetype='application/zip',
+        as_attachment=True,
+        attachment_filename=zipname)
+    # and redirect(url_for("client.show_client", system_uuid=system_uuid, client_name=client_name))
+
