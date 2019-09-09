@@ -8,7 +8,7 @@ from flask import Blueprint, render_template, flash, redirect, url_for, session,
 from flask import current_app as app, jsonify
 from wtforms import Form, StringField, validators, TextAreaField
 
-from .useful_functions import get_datetime, is_logged_in, valid_level_name
+from .useful_functions import get_datetime, is_logged_in, valid_level_name, valid_name, valid_url
 
 client = Blueprint("client", __name__)  # url_prefix="/comp")
 
@@ -96,10 +96,9 @@ def show_client(system_uuid, client_name):
 
 # Client Form Class
 class ClientForm(Form):
-    name = StringField("Name", [validators.Length(min=2, max=20), valid_level_name])
+    name = StringField("Name", [validators.Length(min=2, max=20), valid_name])
     metadata_name = StringField("Metadata Name", [validators.Length(min=2, max=50)])
-    metadata_uri = StringField("Metadata URI", [validators.Length(min=2, max=256),
-                                                validators.URL(message="This must be a valid URI.")])
+    metadata_uri = StringField("Metadata URI", [validators.Length(min=2, max=256), valid_url])
     description = TextAreaField("Description", [validators.Length(max=16*1024)])
 
 

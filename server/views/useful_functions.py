@@ -28,8 +28,8 @@ def is_logged_in(f):
     return wrap
 
 
-# Validator for company, system and client names
-# only 0-9, a-z, A-Z and "-" is allowed.
+# Validator for company and system names
+# only 0-9, a-z, A-Z and "-" are allowed.
 def valid_level_name(form, field):
     import re
     from wtforms import ValidationError
@@ -37,6 +37,34 @@ def valid_level_name(form, field):
         raise ValidationError("Whitespaces are not allowed in the name.")
     if not re.match("^[a-zA-Z0-9-]*$", field.data):
         raise ValidationError("Only alphanumeric characters and '-' are allowed.")
+
+
+# Validator for client names
+# only 0-9, a-z, A-Z, "-" and "_" are allowed.
+def valid_name(form, field):
+    import re
+    from wtforms import ValidationError
+    if " " in field.data:
+        raise ValidationError("Whitespaces are not allowed in the name.")
+    if not re.match("^[a-zA-Z0-9-_]*$", field.data):
+        raise ValidationError("Only alphanumeric characters, '-' and '_' are allowed.")
+
+
+# Validator for url
+def valid_url(form, field):
+    import re
+    from wtforms import ValidationError
+    regex = re.compile(
+        r'^(?:http|ftp)s?://'  # http:// or https://
+        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
+        r'localhost|'  # localhost...
+        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
+        r'(?::\d+)?'  # optional port
+        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+    if " " in field.data:
+        raise ValidationError("Whitespaces are not allowed in the url.")
+    if not re.match(regex, field.data):
+        raise ValidationError("The URL seems to be malformed.")
 
 
 # DO create is_admin and is_agent
