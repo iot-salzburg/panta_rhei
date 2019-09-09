@@ -4,9 +4,9 @@
 
   <table class="table">
   <td>
-    <h1> <small> Stream: {{payload.name}} </small></h1>
-    <h3> <small> Part of the system: {{payload.input_system}} </small></h3>
-    <h3> <small> Sends data to system: {{payload.output_system}} </small></h3>
+    <h1> <small>Streams name: </small> <br>{{payload.name}}</h1>
+    <h3> <small> Source system: {{payload.input_system}} </small></h3>
+    <h3> <small> Target system: {{payload.output_system}} </small></h3>
 <!--    <h5> <small> Metadata URI: {{payload.metadata_uri}}</small></h5>-->
     {% if payload.description %}
     {{payload.description}}
@@ -34,8 +34,8 @@
   <table class="table table-striped">
     <tr>
       <th>Name of the Stream</th>
-      <th>Input System</th>
-      <th>Output System</th>
+      <th>Source System</th>
+      <th>Target System</th>
       <th>Creator's mail</th>
       <th>Created at</th>
 <!--      <th>Creator</th>-->

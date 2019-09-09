@@ -33,9 +33,10 @@ def is_logged_in(f):
 def valid_level_name(form, field):
     import re
     from wtforms import ValidationError
-    if " " in field.data:
+    data = field.data.strip()
+    if " " in data:
         raise ValidationError("Whitespaces are not allowed in the name.")
-    if not re.match("^[a-zA-Z0-9-]*$", field.data):
+    if not re.match("^[a-zA-Z0-9-]*$", data):
         raise ValidationError("Only alphanumeric characters and '-' are allowed.")
 
 
@@ -44,9 +45,10 @@ def valid_level_name(form, field):
 def valid_name(form, field):
     import re
     from wtforms import ValidationError
-    if " " in field.data:
+    data = field.data.strip()
+    if " " in data:
         raise ValidationError("Whitespaces are not allowed in the name.")
-    if not re.match("^[a-zA-Z0-9-_]*$", field.data):
+    if not re.match("^[a-zA-Z0-9-_]*$", data):
         raise ValidationError("Only alphanumeric characters, '-' and '_' are allowed.")
 
 
@@ -54,6 +56,7 @@ def valid_name(form, field):
 def valid_url(form, field):
     import re
     from wtforms import ValidationError
+    data = field.data.strip()
     regex = re.compile(
         r'^(?:http|ftp)s?://'  # http:// or https://
         r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
@@ -61,9 +64,9 @@ def valid_url(form, field):
         r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
         r'(?::\d+)?'  # optional port
         r'(?:/?|[/?]\S+)$', re.IGNORECASE)
-    if " " in field.data:
-        raise ValidationError("Whitespaces are not allowed in the url.")
-    if not re.match(regex, field.data):
+    if " " in data:
+        raise ValidationError("Whitespaces are not allowed.")
+    if not re.match(regex, data):
         raise ValidationError("The URL seems to be malformed.")
 
 
@@ -71,11 +74,12 @@ def valid_url(form, field):
 def valid_system(form, field):
     import re
     from wtforms import ValidationError
-    if " " in field.data:
-        raise ValidationError("Whitespaces are not allowed in the url.")
-    if not re.match("^[a-zA-Z0-9-.]*$", field.data):
+    data = field.data.strip()
+    if " " in data:
+        raise ValidationError("Whitespaces are not allowed.")
+    if not re.match("^[a-zA-Z0-9-.]*$", data):
         raise ValidationError("Only alphanumeric characters, '-' and '.' are allowed.")
-    if field.data.count(".") != 3:
+    if data.count(".") != 3:
         raise ValidationError("The System doesn't match the pattern: [domain].[enterprice].[work-center].[station]")
 
 # DO create is_admin and is_agent

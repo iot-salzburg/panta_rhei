@@ -131,6 +131,8 @@ def add_system_for_company(company_uuid):
     # The basic company form is used
     form = SystemForm(request.form)
     form.workcenter.label = "Workcenter short-name"
+    form_workcenter = form.workcenter.data.strip()
+    form_station = form.station.data.strip()
 
     # Get payload
     engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
@@ -174,25 +176,25 @@ def add_system_for_company(company_uuid):
         query = """SELECT domain, enterprise FROM systems
                 INNER JOIN companies ON systems.company_uuid=companies.uuid
                 WHERE domain='{}' AND enterprise='{}' AND workcenter='{}' AND station='{}';
-                """.format(payload["domain"], payload["enterprise"], form.workcenter.data, form.station.data)
+                """.format(payload["domain"], payload["enterprise"], form_workcenter, form_station)
         result_proxy = conn.execute(query)
         if len(result_proxy.fetchall()) == 0:
             query = db.insert(app.config["tables"]["systems"])
             values_list = [{"uuid": system_uuid,
                             "company_uuid": payload["company_uuid"],
-                            "workcenter": form.workcenter.data,
-                            "station": form.station.data,
+                            "workcenter": form_workcenter,
+                            "station": form_station,
                             "datetime": get_datetime(),
                             "description": form.description.data}]
             conn.execute(query, values_list)
         else:
             engine.dispose()
             flash("The system {}.{}.{}.{} already exists.".format(
-                payload["domain"], payload["enterprise"], form.workcenter.data, form.station.data), "danger")
+                payload["domain"], payload["enterprise"], form_workcenter, form_station), "danger")
             return redirect(url_for("company.show_company", company_uuid=company_uuid))
 
         system_name = "{}.{}.{}.{}".format(payload["domain"], payload["enterprise"],
-                                           form.workcenter.data, form.station.data)
+                                           form_workcenter, form_station)
         transaction = conn.begin()
         try:
             # Create new is_admin_of instance
@@ -336,7 +338,7 @@ def add_agent_system(system_uuid):
     payload = permitted_systems[0]
 
     if request.method == "POST" and form.validate():
-        email = form.email.data
+        email = form.email.data.strip()
 
         # Check if the user is registered
         query = """SELECT * FROM users WHERE email='{}';""".format(email)

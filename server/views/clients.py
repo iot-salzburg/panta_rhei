@@ -143,6 +143,8 @@ def add_client_for_system(system_uuid):
 
     # The basic client form is used
     form = ClientForm(request.form)
+    form_name = form.name.data.strip()
+    form_metadata_uri = form.metadata_uri.data.strip()
 
     # Fetch clients of the system, for with the user is agent
     engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
@@ -178,7 +180,7 @@ def add_client_for_system(system_uuid):
         query = """SELECT system_uuid, name 
         FROM systems
         INNER JOIN clients ON clients.system_uuid=systems.uuid
-        WHERE system_uuid='{}' AND name='{}';""".format(system_uuid, form.name.data)
+        WHERE system_uuid='{}' AND name='{}';""".format(system_uuid, form_name)
         result_proxy = conn.execute(query)
 
         system_name = "{}.{}.{}.{}".format(payload["domain"], payload["enterprise"],
@@ -186,10 +188,10 @@ def add_client_for_system(system_uuid):
 
         if len(result_proxy.fetchall()) == 0:
             query = db.insert(app.config["tables"]["clients"])
-            values_list = [{'name': form.name.data,
+            values_list = [{'name': form_name,
                             'system_uuid': system_uuid,
                             'metadata_name': form.metadata_name.data,
-                            'metadata_uri': form.metadata_uri.data,
+                            'metadata_uri': form_metadata_uri,
                             'creator_uuid': user_uuid,
                             "description": form.description.data,
                             'datetime': get_datetime(),
@@ -197,14 +199,14 @@ def add_client_for_system(system_uuid):
             conn.execute(query, values_list)
             engine.dispose()
             # Create keyfile based on the given information
-            create_keyfile(name=form.name.data, system_uuid=system_uuid)
-            msg = "The user '{}' was added to system '{}' as client.".format(form.name.data, system_name)
+            create_keyfile(name=form_name, system_uuid=system_uuid)
+            msg = "The user '{}' was added to system '{}' as client.".format(form_name, system_name)
             app.logger.info(msg)
             flash(msg, "success")
-            return redirect(url_for("client.show_client", system_uuid=system_uuid, client_name=form.name.data))
+            return redirect(url_for("client.show_client", system_uuid=system_uuid, client_name=form_name))
         else:
             engine.dispose()
-            msg = "The client with name '{}' was already created for system '{}'.".format(form.name.data, system_name)
+            msg = "The client with name '{}' was already created for system '{}'.".format(form_name, system_name)
             app.logger.info(msg)
             flash(msg, "danger")
             return redirect(url_for("client.add_client", system_uuid=system_uuid))

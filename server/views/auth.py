@@ -35,6 +35,7 @@ class RegisterForm(Form):
 @auth.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegisterForm(request.form)
+    email = form.email.data.strip()
     # form.birthdate.label = "Birthdate"
     if request.method == 'POST' and form.validate():
         # Create cursor
@@ -43,10 +44,10 @@ def register():
 
         query = db.insert(app.config["tables"]["users"])
         values_list = [{'uuid': get_uid(),
-                        'first_name': request.form["first_name"],
-                        'sur_name': request.form["name"],
+                        'first_name': form.first_name.data.strip(),
+                        'sur_name': form.name.data.strip(),
                         'birthdate': request.form.get("birthdate"),  # is optional
-                        'email': request.form["email"],
+                        'email': email,
                         'password': sha256_crypt.encrypt(str(request.form["password"]))}]
         try:
             ResultProxy = conn.execute(query, values_list)
@@ -67,7 +68,7 @@ def register():
 def login():
     if request.method == 'POST':
         # Get Form Fields
-        email = request.form['email']
+        email = request.form['email'].strip()
         password_candidate = request.form['password']
 
         # Create cursor

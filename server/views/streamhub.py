@@ -97,6 +97,14 @@ class StreamhubForm(Form):
     description = TextAreaField("Description", [validators.Length(max=16 * 1024)])
 
 
+# Add stream in all_streams view, redirect to systems
+@streamhub_bp.route("/add_stream")
+@is_logged_in
+def add_stream():
+    # redirect to systems
+    flash("Specify the system to which a new stream should be added.", "info")
+    return redirect(url_for("system.show_all_systems"))
+
 # Add client in system view
 @streamhub_bp.route("/add_stream/<string:system_uuid>", methods=["GET", "POST"])
 @is_logged_in
@@ -106,6 +114,8 @@ def add_stream_for_system(system_uuid):
 
     # The basic client form is used
     form = StreamhubForm(request.form)
+    form_output_system = form.output_system.data.strip()
+    form_name = form.name.data.strip()
 
     # Fetch all streams for the requested system and user agent
     engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
@@ -141,21 +151,28 @@ def add_stream_for_system(system_uuid):
 
     # Create a new stream using the form's input
     if request.method == "POST" and form.validate():
+        # Check if source and target system are different
+        if payload["input_system"] == form_output_system:
+            msg = "The source and target system can't be the equal."
+            app.logger.info(msg)
+            flash(msg, "danger")
+            return redirect(url_for("streamhub.add_stream_for_system", system_uuid=system_uuid))
+
         # Create stream and check if the combination of the system_uuid and name exists
         query = """SELECT system_uuid, name
         FROM systems
         INNER JOIN streams ON streams.system_uuid=systems.uuid
-        WHERE system_uuid='{}' AND name='{}';""".format(system_uuid, form.name.data)
+        WHERE system_uuid='{}' AND name='{}';""".format(system_uuid, form_name)
         result_proxy = conn.execute(query)
 
         system_name = payload["input_system"]
 
         if len(result_proxy.fetchall()) == 0:
             query = db.insert(app.config["tables"]["streams"])
-            values_list = [{'name': form.name.data,
+            values_list = [{'name': form_name,
                             'system_uuid': system_uuid,
                             'input_system': system_name,
-                            'output_system': form.output_system.data,
+                            'output_system': form_output_system,
                             'filter': form.filter_logic.data,
                             'creator_uuid': user_uuid,
                             'datetime': get_datetime(),
@@ -163,13 +180,13 @@ def add_stream_for_system(system_uuid):
             conn.execute(query, values_list)
             engine.dispose()
 
-            msg = "The stream '{}' was added to system '{}'.".format(form.name.data, system_name)
+            msg = "The stream '{}' was added to system '{}'.".format(form_name, system_name)
             app.logger.info(msg)
             flash(msg, "success")
-            return redirect(url_for("streamhub.show_stream", system_uuid=system_uuid, stream_name=form.name.data))
+            return redirect(url_for("streamhub.show_stream", system_uuid=system_uuid, stream_name=form_name))
         else:
             engine.dispose()
-            msg = "The stream with name '{}' was already created for system '{}'.".format(form.name.data, system_name)
+            msg = "The stream with name '{}' was already created for system '{}'.".format(form_name, system_name)
             app.logger.info(msg)
             flash(msg, "danger")
             return redirect(url_for("streamhub.add_stream_for_system", system_uuid=system_uuid))

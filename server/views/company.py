@@ -96,6 +96,8 @@ def add_company():
     # The basic company form is used
     form = CompanyForm(request.form)
     form.enterprise.label = "Enterprise short-name"
+    form_domain = form.domain.data.strip()
+    form_enterprise = form.enterprise.data.strip()
 
     if request.method == "POST" and form.validate():
         # Create a new company and admin-relation using the form"s input
@@ -112,18 +114,18 @@ def add_company():
             company_uuids = result_proxy.fetchall()
 
         query = """SELECT domain, enterprise FROM companies 
-                    WHERE domain='{}' AND enterprise='{}';""".format(form.domain.data, form.enterprise.data)
+                    WHERE domain='{}' AND enterprise='{}';""".format(form_domain, form_enterprise)
         result_proxy = conn.execute(query)
         if len(result_proxy.fetchall()) == 0:
             query = db.insert(app.config["tables"]["companies"])
             values_list = [{"uuid": company_uuid,
-                            "domain": form.domain.data,
-                            "enterprise": form.enterprise.data,
+                            "domain": form_domain,
+                            "enterprise": form_enterprise,
                             "description": form.description.data}]
             conn.execute(query, values_list)
         else:
             engine.dispose()
-            flash("The company '{}.{}' already exists.".format(form.domain.data, form.enterprise.data), "danger")
+            flash("The company '{}.{}' already exists.".format(form_domain, form_enterprise), "danger")
             return redirect(url_for("company.show_all_companies"))
 
         # Create new is_admin_of instance
@@ -135,7 +137,7 @@ def add_company():
         try:
             conn.execute(query, values_list)
             engine.dispose()
-            company_name = "{}.{}".format(form.domain.data, form.enterprise.data)
+            company_name = "{}.{}".format(form_domain, form_enterprise)
             app.logger.info("The company '{}' was created.".format(company_name))
             flash("The company '{}' was created.".format(company_name), "success")
             return redirect(url_for("company.show_all_companies"))
@@ -262,7 +264,7 @@ def add_admin_company(company_uuid):
     enterprise = selected_company["enterprise"]
 
     if request.method == "POST" and form.validate():
-        email = form.email.data
+        email = form.email.data.strip()
 
         # Create cursor
         engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
