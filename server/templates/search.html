@@ -1,0 +1,128 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+
+
+{% if companies %}
+<h1> <small> Found term in companies </small></h1>
+  <hr>
+  <table class="table table-striped">
+    <tr>
+      <th>uuid</th>
+      <th>Domain</th>
+      <th>Enterprise</th>
+      <th>Creator</th>
+      <th></th>
+<!--      <th></th>-->
+    </tr>
+      {% for company in companies %}
+      <tr>
+        <td><a href="show_company/{{company.company_uuid}}" class="btn btn-block">{{company.company_uuid}}</a></td>
+        <td><a href="show_company/{{company.company_uuid}}" class="btn btn-block">{{company.domain}}</a></td>
+        <td><a href="show_company/{{company.company_uuid}}" class="btn btn-block">{{company.enterprise}}</a></td>
+        <td><a href="show_company/{{company.company_uuid}}" class="btn btn-block">{{company.contact_mail}}</a></td>
+<!--        <td>{{company.contact_mail}}</td>-->
+        <td><a href="show_company/{{company.company_uuid}}" class="btn btn-info float-right"
+        data-toggle="tooltip" title="Manage this company.">manage company</a></td>
+<!--        <td><a class="btn btn-danger" href="/delete_company/{{company.company_uuid}}"> delete</a></td>-->
+      </tr>
+    {% endfor %}
+  </table>
+  <a class="btn btn-success" href="/add_company"
+     data-toggle="tooltip" title="Add a new company."> Add Company</a>
+
+<br>
+<br>
+{% endif %}
+
+
+<!-------------------------------------------------------------------------------------------------------->
+{% if systems %}
+ <h1> <small> Found term in systems </small></h1>
+  <hr>
+  <table class="table table-striped">
+    <tr>
+      <th>uuid</th>
+      <th>Company</th>
+      <th>System</th>
+      <th>Creator</th>
+      <th></th>
+    </tr>
+      {% for system in systems %}
+      <tr>
+        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.system_uuid}}</a></td>
+        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.domain}}.{{system.enterprise}}</a></td>
+        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.workcenter}}.{{system.station}}</a></td>
+        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.contact_mail}}</a></td>
+        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-info float-right"
+        data-toggle="tooltip" title="Manage this system.">manage system</a></td>
+      </tr>
+    {% endfor %}
+  </table>
+  <a class="btn btn-success" href="/add_system"
+     data-toggle="tooltip" title="Add a new system to this company."> Add System</a>
+<br>
+<br>
+{% endif %}
+
+<!-------------------------------------------------------------------------------------------------------->
+{% if clients %}
+ <h1> <small> Found term in clients </small></h1>
+  <hr>
+  <table class="table table-striped">
+    <tr>
+      <th>Name</th>
+      <th>Company</th>
+      <th>System</th>
+      <th>Creator</th>
+      <th></th>
+    </tr>
+      {% for client in clients %}
+      <tr>
+        <td><a href="show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-block">{{client.name}}</a></td>
+        <td><a href="show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-block">{{client.domain}}.{{client.enterprise}}</a></td>
+        <td><a href="show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-block">{{client.workcenter}}.{{client.station}}</a></td>
+        <td><a href="show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-block">{{client.contact_mail}}</a></td>
+        <td><a href="show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-info float-right"
+                data-toggle="tooltip" title="Manage this client application.">manage client</a></td>
+      </tr>
+    {% endfor %}
+  </table>
+  <a class="btn btn-success" href="/add_client"
+     data-toggle="tooltip" title="Add a new client application to this system."> Add Client</a>
+<br>
+<br>
+{% endif %}
+
+
+<!-------------------------------------------------------------------------------------------------------->
+{% if streams %}
+ <h1> <small> Found term in streams </small></h1>
+  <hr>
+  <table class="table table-striped">
+    <tr>
+      <th>Name</th>
+      <th>Source System</th>
+      <th>Target System</th>
+      <th>Creator</th>
+      <th></th>
+    </tr>
+      {% for stream in streams %}
+      <tr>
+        <td><a href="show_stream/{{stream.system_uuid}}/{{stream.name}}" class="btn btn-block">{{stream.name}}</a></td>
+        <td><a href="show_stream/{{stream.system_uuid}}/{{stream.name}}" class="btn btn-block">{{stream.input_system}}</a></td>
+        <td><a href="show_stream/{{stream.system_uuid}}/{{stream.name}}" class="btn btn-block">{{stream.output_system}}</a></td>
+        <td><a href="show_stream/{{stream.system_uuid}}/{{stream.name}}" class="btn btn-block">{{stream.contact_mail}}</a></td>
+
+        <td><a href="show_stream/{{stream.system_uuid}}/{{stream.name}}" class="btn btn-info float-right"
+                data-toggle="tooltip" title="Manage this stream.">manage stream</a></td>
+      </tr>
+    {% endfor %}
+  </table>
+  <a class="btn btn-success" href="/add_stream"
+     data-toggle="tooltip" title="Add a new stream application to this system."> Add Stream</a>
+
+<br>
+<br>
+{% endif %}
+{% endblock %}
