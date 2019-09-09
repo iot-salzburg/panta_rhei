@@ -105,6 +105,7 @@ def create_tables(app):
         db.Column('input_system', db.VARCHAR(72), nullable=False),
         db.Column('output_system', db.VARCHAR(72), nullable=False),
         db.Column('filter', db.VARCHAR(1024), nullable=True),
+        db.Column('status', db.VARCHAR(20), nullable=False, default="initialization"),
         db.Column('datetime', db.DateTime, nullable=True),
         db.Column('creator_uuid', db.ForeignKey("users.uuid"), nullable=False),
         db.Column('description', db.VARCHAR(1024), nullable=True)
@@ -305,6 +306,7 @@ def insert_sample():
          'input_system': "cz.icecars.iot-iot4cps-wp5.CarFleet",
          'output_system': "at.datahouse.iot-iot4cps-wp5.RoadAnalytics",
          'filter': None,
+         'status': "initialization",
          'creator_uuid': uuid_sue,
          'datetime': get_datetime(),
          'description': lorem_ipsum},
@@ -313,6 +315,7 @@ def insert_sample():
          'input_system': "is.iceland.iot-iot4cps-wp5.WeatherService",
          'output_system': "cz.icecars.iot-iot4cps-wp5.CarFleet",
          'filter': None,
+         'status': "initialization",
          'creator_uuid': uuid_stefan,
          'datetime': get_datetime(),
          'description': lorem_ipsum},
@@ -321,6 +324,7 @@ def insert_sample():
          'input_system': "is.iceland.iot-iot4cps-wp5.WeatherService",
          'output_system': "at.datahouse.iot-iot4cps-wp5.RoadAnalytics",
          'filter': None,
+         'status': "initialization",
          'creator_uuid': uuid_stefan,
          'datetime': get_datetime(),
          'description': lorem_ipsum}]
