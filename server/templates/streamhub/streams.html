@@ -1,0 +1,32 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+  <h1> <small> List of dedicated streams </small></h1>
+  <hr>
+  <table class="table table-striped">
+    <tr>
+      <th>Name</th>
+      <th>Input System</th>
+      <th>Output System</th>
+      <th>Creator</th>
+<!--      <th>Creator</th>-->
+      <th></th>
+    </tr>
+      {% for stream in streams %}
+      <tr>
+        <td><a href="show_stream/{{stream.system_uuid}}/{{stream.name}}" class="btn btn-block">{{stream.name}}</a></td>
+        <td><a href="show_stream/{{stream.system_uuid}}/{{stream.name}}" class="btn btn-block">{{stream.input_system}}</a></td>
+        <td><a href="show_stream/{{stream.system_uuid}}/{{stream.name}}" class="btn btn-block">{{stream.output_system}}</a></td>
+        <td><a href="show_stream/{{stream.system_uuid}}/{{stream.name}}" class="btn btn-block">{{stream.contact_mail}}</a></td>
+
+        <td><a href="show_stream/{{stream.system_uuid}}/{{stream.name}}" class="btn btn-info float-right"
+                data-toggle="tooltip" title="Manage this stream.">manage</a></td>
+      </tr>
+    {% endfor %}
+  </table>
+  <a class="btn btn-success" href="/add_stream"
+      data-toggle="tooltip" title="Add a new stream application to this system."> Add Stream</a>
+
+  <br>
+  <br>
+{% endblock %}

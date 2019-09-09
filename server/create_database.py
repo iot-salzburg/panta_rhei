@@ -29,6 +29,7 @@ def drop_tables():
     DROP TABLE IF EXISTS companies CASCADE;
     DROP TABLE IF EXISTS systems CASCADE;
     DROP TABLE IF EXISTS clients CASCADE;
+    DROP TABLE IF EXISTS streams CASCADE;
     DROP TABLE IF EXISTS gost_ds CASCADE;
     DROP TABLE IF EXISTS gost_thing CASCADE;
     DROP TABLE IF EXISTS is_admin_of CASCADE;
@@ -54,7 +55,7 @@ def create_tables(app):
         db.Column('birthdate', db.DATE, nullable=True),
         db.Column('email', db.VARCHAR(35), nullable=False, unique=True),
         db.Column('password', db.VARCHAR(80), nullable=False)
-        )
+    )
     app.config["tables"]["companies"] = db.Table(
         'companies', app.config['metadata'],
         db.Column('uuid', db.VARCHAR(12), primary_key=True, unique=True),
@@ -62,7 +63,7 @@ def create_tables(app):
         db.Column('enterprise', db.VARCHAR(15), nullable=False),
         db.Column('datetime', db.DateTime, nullable=True),
         db.Column('description', db.VARCHAR(1024), nullable=True)
-        )
+    )
     app.config["tables"]["systems"] = db.Table(
         'systems', app.config['metadata'],
         db.Column('uuid', db.VARCHAR(12), primary_key=True, unique=True),
@@ -71,34 +72,43 @@ def create_tables(app):
         db.Column('station', db.VARCHAR(20), nullable=False),
         db.Column('datetime', db.DateTime, nullable=True),
         db.Column('description', db.VARCHAR(1024), nullable=True)
-        )
+    )
     app.config["tables"]["is_admin_of"] = db.Table(
         'is_admin_of', app.config['metadata'],
         db.Column('user_uuid', db.ForeignKey("users.uuid"), primary_key=True),
         db.Column('company_uuid', db.ForeignKey('companies.uuid'), primary_key=True),
         db.Column('creator_uuid', db.ForeignKey("users.uuid"), nullable=False),
         db.Column('datetime', db.DateTime, nullable=True)
-        )
+    )
     app.config["tables"]["is_agent_of"] = db.Table(
         'is_agent_of', app.config['metadata'],
         db.Column('user_uuid', db.ForeignKey("users.uuid"), primary_key=True),
         db.Column('system_uuid', db.ForeignKey('systems.uuid'), primary_key=True),
         db.Column('creator_uuid', db.ForeignKey("users.uuid"), nullable=False),
         db.Column('datetime', db.DateTime, nullable=True)
-        )
+    )
     app.config["tables"]["clients"] = db.Table(
         'clients', app.config['metadata'],
-        db.Column('name', db.VARCHAR(25), primary_key=True, unique=True),
-        db.Column('system_uuid', db.ForeignKey('systems.uuid'), nullable=False),
+        db.Column('name', db.VARCHAR(25), primary_key=True),
+        db.Column('system_uuid', db.ForeignKey('systems.uuid'), primary_key=True),
         db.Column('metadata_name', db.VARCHAR(50), nullable=False),
         db.Column('metadata_uri', db.VARCHAR(256), nullable=False),
         db.Column('keyfile_av', db.BOOLEAN, nullable=False, default=False),
         db.Column('datetime', db.DateTime, nullable=True),
         db.Column('creator_uuid', db.ForeignKey("users.uuid"), nullable=False),
         db.Column('description', db.VARCHAR(1024), nullable=True)
-        )
-
-
+    )
+    app.config["tables"]["streams"] = db.Table(
+        'streams', app.config['metadata'],
+        db.Column('name', db.VARCHAR(25), primary_key=True),
+        db.Column('system_uuid', db.ForeignKey('systems.uuid'), primary_key=True),
+        db.Column('input_system', db.VARCHAR(72), nullable=False),
+        db.Column('output_system', db.VARCHAR(72), nullable=False),
+        db.Column('filter', db.VARCHAR(1024), nullable=True),
+        db.Column('datetime', db.DateTime, nullable=True),
+        db.Column('creator_uuid', db.ForeignKey("users.uuid"), nullable=False),
+        db.Column('description', db.VARCHAR(1024), nullable=True)
+    )
     # Creates the tables
     app.config['metadata'].create_all(engine)
     engine.dispose()
@@ -126,35 +136,35 @@ def insert_sample():
     query = db.insert(app.config["tables"]["users"])
     values_list = [
         {'uuid': uuid_sue,
-        'first_name':'Sue',
-        'sur_name': 'Smith',
-        'birthdate': '1967-04-01',
-        'email': 'sue.smith@gmail.com',
-        'password': sha256_crypt.encrypt('asdf')},
-       {'uuid': uuid_stefan,
-        'first_name': 'Stefan',
-        'sur_name': 'Gunnarsson',
-        'birthdate': '1967-03-01',
-        'email': 'stefan.gunnarsson@gmail.com',
-        'password': sha256_crypt.encrypt('asdf')},
-       {'uuid': uuid_peter,
-        'first_name': 'Peter',
-        'sur_name': 'Novak',
-        'birthdate': '1990-02-01',
-        'email': 'peter.novak@gmail.com',
-        'password': sha256_crypt.encrypt('asdf')},
-       {'uuid': uuid_anna,
-        'first_name': 'Anna',
-        'sur_name': 'Gruber',
-        'birthdate': '1994-01-01',
-        'email': 'anna.gruber@gmail.com',
-        'password': sha256_crypt.encrypt('asdf')},
-       {'uuid': uuid_chris,
-        'first_name': 'Chris',
-        'sur_name': 'Schranz',
-        'birthdate': '1993-04-23',
-        'email': 'christoph.s.23@gmx.at',
-        'password': sha256_crypt.encrypt('asdf')}]
+         'first_name': 'Sue',
+         'sur_name': 'Smith',
+         'birthdate': '1967-04-01',
+         'email': 'sue.smith@gmail.com',
+         'password': sha256_crypt.encrypt('asdf')},
+        {'uuid': uuid_stefan,
+         'first_name': 'Stefan',
+         'sur_name': 'Gunnarsson',
+         'birthdate': '1967-03-01',
+         'email': 'stefan.gunnarsson@gmail.com',
+         'password': sha256_crypt.encrypt('asdf')},
+        {'uuid': uuid_peter,
+         'first_name': 'Peter',
+         'sur_name': 'Novak',
+         'birthdate': '1990-02-01',
+         'email': 'peter.novak@gmail.com',
+         'password': sha256_crypt.encrypt('asdf')},
+        {'uuid': uuid_anna,
+         'first_name': 'Anna',
+         'sur_name': 'Gruber',
+         'birthdate': '1994-01-01',
+         'email': 'anna.gruber@gmail.com',
+         'password': sha256_crypt.encrypt('asdf')},
+        {'uuid': uuid_chris,
+         'first_name': 'Chris',
+         'sur_name': 'Schranz',
+         'birthdate': '1993-04-23',
+         'email': 'christoph.s.23@gmx.at',
+         'password': sha256_crypt.encrypt('asdf')}]
     ResultProxy = conn.execute(query, values_list)
 
     # Insert companies
@@ -179,7 +189,6 @@ def insert_sample():
          'description': lorem_ipsum,
          'datetime': get_datetime()}]
     ResultProxy = conn.execute(query, values_list)
-
 
     # Insert is_admin_of
     query = db.insert(app.config["tables"]["is_admin_of"])
@@ -284,6 +293,35 @@ def insert_sample():
          'metadata_name': "sensorthings",
          'metadata_uri': "http://localhost:8084",
          'creator_uuid': uuid_anna,
+         'datetime': get_datetime(),
+         'description': lorem_ipsum}]
+    ResultProxy = conn.execute(query, values_list)
+
+    # Insert streams
+    query = db.insert(app.config["tables"]["streams"])
+    values_list = [
+        {'name': "cars2analytics",
+         'system_uuid': uuid_carfleet,
+         'input_system': "cz.icecars.iot-iot4cps-wp5.CarFleet",
+         'output_system': "at.datahouse.iot-iot4cps-wp5.RoadAnalytics",
+         'filter': None,
+         'creator_uuid': uuid_sue,
+         'datetime': get_datetime(),
+         'description': lorem_ipsum},
+        {'name': "weather2cars",
+         'system_uuid': uuid_weatherservice,
+         'input_system': "is.iceland.iot-iot4cps-wp5.WeatherService",
+         'output_system': "cz.icecars.iot-iot4cps-wp5.CarFleet",
+         'filter': None,
+         'creator_uuid': uuid_stefan,
+         'datetime': get_datetime(),
+         'description': lorem_ipsum},
+        {'name': "weather2analytics",
+         'system_uuid': uuid_weatherservice,
+         'input_system': "is.iceland.iot-iot4cps-wp5.WeatherService",
+         'output_system': "at.datahouse.iot-iot4cps-wp5.RoadAnalytics",
+         'filter': None,
+         'creator_uuid': uuid_stefan,
          'datetime': get_datetime(),
          'description': lorem_ipsum}]
     ResultProxy = conn.execute(query, values_list)

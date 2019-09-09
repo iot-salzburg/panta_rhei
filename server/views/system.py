@@ -85,9 +85,26 @@ def show_system(system_uuid):
     engine.dispose()
     clients = [dict(c.items()) for c in result_proxy.fetchall()]
 
+    # Fetch streams, for which systems the current user is agent of
+    engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
+    conn = engine.connect()
+    query = """
+    SELECT sys.uuid AS system_uuid, streams.name AS name, input_system, output_system, creator.email AS contact_mail
+    FROM streams
+    INNER JOIN users as creator ON creator.uuid=streams.creator_uuid
+    INNER JOIN systems AS sys ON streams.system_uuid=sys.uuid
+    INNER JOIN companies AS com ON sys.company_uuid=com.uuid
+    INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid 
+    INNER JOIN users as agent ON agent.uuid=agf.user_uuid
+    WHERE agent.uuid='{}';""".format(user_uuid)
+    result_proxy = conn.execute(query)
+    engine.dispose()
+    streams = [dict(c.items()) for c in result_proxy.fetchall()]
+
     # if not, agents has at least one item
     payload = agents[0]
-    return render_template("/systems/show_system.html", agents=agents, payload=payload, clients=clients)
+    return render_template("/systems/show_system.html", agents=agents, payload=payload,
+                           clients=clients, streams=streams)
 
 
 # System Form Class

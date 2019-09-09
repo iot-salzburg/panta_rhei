@@ -1,0 +1,55 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+
+  <table class="table">
+  <td>
+    <h1> <small> Stream: {{payload.name}} </small></h1>
+    <h3> <small> Part of the system: {{payload.input_system}} </small></h3>
+    <h3> <small> Sends data to system: {{payload.output_system}} </small></h3>
+<!--    <h5> <small> Metadata URI: {{payload.metadata_uri}}</small></h5>-->
+    {% if payload.description %}
+    {{payload.description}}
+    {% endif %}
+  </td>
+    <td>
+<!--     <a class="btn btn-info float-right mb-2" href="/edit_stream/{{payload.system_uuid}}/{{payload.name}}"> edit description </a>-->
+     <a class="btn btn-danger float-right" href="/delete_client/{{payload.system_uuid}}/{{payload.name}}"
+        data-toggle="tooltip" title="Delete this stream application."> delete stream </a>
+      <br>
+      <br>
+      <h3> <small> Stream filter logic: </small></h3>
+      <pre id="json"></pre>
+  </td>
+  </table>
+
+  <script>
+    var data = {
+        "filter": '{{payload.filter}}'};
+    document.getElementById("json").innerHTML = JSON.stringify(data, undefined, 2);
+  </script>
+
+
+  <hr>
+  <table class="table table-striped">
+    <tr>
+      <th>Name of the Stream</th>
+      <th>Input System</th>
+      <th>Output System</th>
+      <th>Creator's mail</th>
+      <th>Created at</th>
+<!--      <th>Creator</th>-->
+    </tr>
+      <tr>
+        <td><a href="/show_stream/{{payload.system_uuid}}/{{payload.name}}" class="btn btn-block">{{payload.name}}</a></td>
+        <td><a href="/show_stream/{{payload.system_uuid}}/{{payload.name}}" class="btn btn-block">{{payload.input_system}}</a></td>
+        <td><a href="/show_stream/{{payload.system_uuid}}/{{payload.name}}" class="btn btn-block">{{payload.output_system}}</a></td>
+        <td><a href="/show_stream/{{payload.system_uuid}}/{{payload.name}}" class="btn btn-block">{{payload.contact_mail}}</a></td>
+        <td><a href="/show_stream/{{payload.system_uuid}}/{{payload.name}}" class="btn btn-block">{{payload.datetime}}</a></td>
+
+      </tr>
+  </table>
+
+  <br>
+  <br>
+{% endblock %}
