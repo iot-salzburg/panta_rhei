@@ -235,7 +235,7 @@ def delete_client(system_uuid, client_name):
     result_proxy = conn.execute(query)
     clients = [dict(c.items()) for c in result_proxy.fetchall()]
 
-    # Check if the system exists and you are an admin
+    # Check if the system exists and you are an agent
     if len(clients) == 0:
         engine.dispose()
         flash("It seems that this system doesn't exist.", "danger")
@@ -255,7 +255,7 @@ def delete_client(system_uuid, client_name):
 
     system_name = "{}.{}.{}.{}".format(clients[0]["domain"], clients[0]["enterprise"],
                                        clients[0]["workcenter"], clients[0]["station"])
-    msg = "The user '{}' was removed from system '{}' as client.".format(client_name, system_name)
+    msg = "The client '{}' of the system '{}' was deleted.".format(client_name, system_name)
     app.logger.info(msg)
     flash(msg, "success")
 

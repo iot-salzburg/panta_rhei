@@ -67,4 +67,15 @@ def valid_url(form, field):
         raise ValidationError("The URL seems to be malformed.")
 
 
+# Validator for systems
+def valid_system(form, field):
+    import re
+    from wtforms import ValidationError
+    if " " in field.data:
+        raise ValidationError("Whitespaces are not allowed in the url.")
+    if not re.match("^[a-zA-Z0-9-.]*$", field.data):
+        raise ValidationError("Only alphanumeric characters, '-' and '.' are allowed.")
+    if field.data.count(".") != 3:
+        raise ValidationError("The System doesn't match the pattern: [domain].[enterprice].[work-center].[station]")
+
 # DO create is_admin and is_agent
