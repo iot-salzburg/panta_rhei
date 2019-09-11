@@ -26,7 +26,7 @@ def check_kafka(app):
         if PLATFORM_TOPIC in topics.keys():
             return True
         else:
-            kac.create_topics([confluent_kafka.admin.NewTopic(PLATFORM_TOPIC, 3, 1)])
+            kac.create_topics([kafka_admin.NewTopic(PLATFORM_TOPIC, 3, 1)])
             app.logger.info("Created new topic with name '{}'.".format(PLATFORM_TOPIC))
             return True
     except cimpl.KafkaException:
@@ -37,18 +37,20 @@ def check_kafka(app):
 
 def create_system_topics(app, system_name):
     if not app.config["KAFKA_BOOTSTRAP_SERVER"]:
+        app.logger.debug("Skipped to create system topics")
         return None
     if check_kafka(app):
         # Create system topics
         kac = kafka_admin.AdminClient({'bootstrap.servers': app.config["KAFKA_BOOTSTRAP_SERVER"]})
-        kac.create_topics([confluent_kafka.admin.NewTopic(system_name + ".log", 3, 1),
-                           confluent_kafka.admin.NewTopic(system_name + ".int", 3, 1),
-                           confluent_kafka.admin.NewTopic(system_name + ".ext", 3, 1)])
+        kac.create_topics([kafka_admin.NewTopic(system_name + ".log", 3, 1),
+                           kafka_admin.NewTopic(system_name + ".int", 3, 1),
+                           kafka_admin.NewTopic(system_name + ".ext", 3, 1)])
         app.logger.info("Created system topics for '{}'".format(system_name))
 
 
 def create_default_topics(app):
     if not app.config["KAFKA_BOOTSTRAP_SERVER"]:
+        app.logger.debug("Skipped to create system topics")
         return None
     if check_kafka(app):
         # Create default system topics
@@ -60,6 +62,7 @@ def create_default_topics(app):
 
 def delete_system_topics(app, system_name):
     if not app.config["KAFKA_BOOTSTRAP_SERVER"]:
+        app.logger.debug("Skipped to delete system topics for '{}'".format(system_name))
         return None
     # Delete system topics
     if check_kafka(app):

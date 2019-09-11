@@ -151,12 +151,12 @@ Now it can be started:
     python3 demo_applications/InfraProvider/datastack_adapter.py 
     
 Available Services:
-* [localhost:9200](localhost:9200) Elasticsearch status
-* [localhost:9600](localhost:9600) Logstash status
-* [localhost:5000](localhost:5000) Logstash TCP data input
-* **[localhost:5601](localhost:5601) Kibana Data Visualisation UI**
-* **[localhost:3000](localhost:3000) Grafana Data Visualisation UI**
-* **[localhost:8888](localhost:8888) Jupyterlab DataScience Notebooks**
+* [localhost:9200](http://localhost:9200) Elasticsearch status
+* [localhost:9600](http://localhost:9600) Logstash status
+* [localhost:5000](http://localhost:5000) Logstash TCP data input
+* **[localhost:5601](http://localhost:5601) Kibana Data Visualisation UI**
+* **[localhost:3000](http://localhost:3000) Grafana Data Visualisation UI**
+* **[localhost:8888](http://localhost:8888) Jupyterlab DataScience Notebooks**
 
 As no StreamHub application runs for now, no data is consumed by the `datastack-adapter` 
 that ingests it into the DataStack. 

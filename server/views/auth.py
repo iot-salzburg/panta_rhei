@@ -107,7 +107,7 @@ def login():
                 return redirect(url_for('home.dashboard'))
             else:
                 error = 'Invalid login.'
-                app.logger.info("Invalid login: {}".format(session['email']))
+                app.logger.info("Invalid login: {}".format(email))
                 return render_template('/auth/login.html', error=error)
 
     return render_template('/auth/login.html')
