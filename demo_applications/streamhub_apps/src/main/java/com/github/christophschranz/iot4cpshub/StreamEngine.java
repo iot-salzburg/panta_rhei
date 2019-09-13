@@ -20,6 +20,7 @@ import java.util.Properties;
 public class StreamEngine {
 
     public static void main(String[] args) {
+        System.out.println("Starting a new stream with the parameters:");
         // parse input to options and check completeness
         if ((args.length == 0) || (1 == args.length % 2)) {
             System.out.println("Error: Expected key val pairs as arguments.");
@@ -29,7 +30,7 @@ public class StreamEngine {
         for (int i=0; i<args.length; i+=2){
             String key = args[i].replace("--", "");
             options.setProperty(key, args[i+1]);
-//            System.out.println("Get option: " + key + " = " + options.getProperty(key));
+            System.out.println("Got option: " + key + " = " + options.getProperty(key));
         }
         System.out.println(options.stringPropertyNames());
         String[] keys = {"stream-name", "source-system", "target-system", "bootstrap-server", "filter-logic"};
@@ -42,7 +43,7 @@ public class StreamEngine {
 
 
         // create input and output topics from system name
-        final String inputTopicName = options.getProperty("source-system") + ".int";
+        String inputTopicName = options.getProperty("source-system") + ".int";
         String targetTopic = options.getProperty("target-system") + ".ext";
 
         // create properties
