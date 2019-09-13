@@ -23,7 +23,7 @@ def show_all_streams():
     engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
     conn = engine.connect()
     query = """
-    SELECT sys.uuid AS system_uuid, streams.name AS name, input_system, output_system, creator.email AS contact_mail
+    SELECT sys.uuid AS system_uuid, streams.name, status, input_system, output_system, creator.email AS contact_mail
     FROM streams
     INNER JOIN users as creator ON creator.uuid=streams.creator_uuid
     INNER JOIN systems AS sys ON streams.system_uuid=sys.uuid
@@ -50,7 +50,7 @@ def show_stream(system_uuid, stream_name):
     engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
     conn = engine.connect()
     query = """
-    SELECT sys.uuid AS system_uuid, com.uuid AS company_uuid, streams.name AS name, input_system, output_system, 
+    SELECT sys.uuid AS system_uuid, com.uuid AS company_uuid, streams.name, status, input_system, output_system, 
     creator.email AS contact_mail, streams.description, agent.uuid AS agent_uuid, streams.datetime AS datetime
     FROM streams
     INNER JOIN users as creator ON creator.uuid=streams.creator_uuid
@@ -67,13 +67,13 @@ def show_stream(system_uuid, stream_name):
     if len(streams) == 0:
         engine.dispose()
         flash("It seems that this stream doesn't exist.", "danger")
-        return redirect(url_for("streamhub_bp.show_all_streams"))
+        return redirect(url_for("streamhub.show_all_streams"))
 
     # Check if the current user is agent of the client's system
     if user_uuid not in [c["agent_uuid"] for c in streams]:
         engine.dispose()
         flash("You are not permitted see details this stream.", "danger")
-        return redirect(url_for("streamhub_bp.show_all_streams"))
+        return redirect(url_for("streamhub.show_all_streams"))
 
     # if not, agents has at least one item
     payload = streams[0]
@@ -222,13 +222,13 @@ def delete_stream(system_uuid, stream_name):
     if len(streams) == 0:
         engine.dispose()
         flash("It seems that this stream doesn't exist.", "danger")
-        return redirect(url_for("streamhub_bp.show_all_streams"))
+        return redirect(url_for("streamhub.show_all_streams"))
 
     # Check if the current user is agent of the system
     if user_uuid not in [c["agent_uuid"] for c in streams]:
         engine.dispose()
         flash("You are not permitted to delete streams of this system.", "danger")
-        return redirect(url_for("streamhub_bp.show_stream", system_uuid=system_uuid, client_name=stream_name))
+        return redirect(url_for("streamhub.show_stream", system_uuid=system_uuid, client_name=stream_name))
 
     # Delete the specified stream
     query = """DELETE FROM streams

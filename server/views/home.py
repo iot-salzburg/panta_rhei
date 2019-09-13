@@ -31,7 +31,11 @@ def dashboard():
     # fetch name of user
     query = """SELECT first_name, sur_name FROM users WHERE uuid='{}';""".format(user_uuid)
     result_proxy = conn.execute(query)
-    user = [dict(c.items()) for c in result_proxy.fetchall()][0]
+    users = [dict(c.items()) for c in result_proxy.fetchall()]
+    if users == list():
+        flash("Please login.", "danger")
+        return redirect(url_for("auth.login"))
+    user = users[0]
     session["first_name"] = user["first_name"]
     session["sur_name"] = user["sur_name"]
 
