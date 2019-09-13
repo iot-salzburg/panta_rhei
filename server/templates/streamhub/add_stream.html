@@ -3,7 +3,7 @@
 {% block body %}
 
 <h1><small>Add new stream to system </small> <br>
-    {{payload.input_system}}</h1>
+    {{payload.source_system}}</h1>
     <br>
 
     <p>The name of the stream application will be immutable.</p>
@@ -15,7 +15,7 @@
             {{render_field(form.name, class_="form-control")}}
         </div>
         <div class="form-group">
-            {{render_field(form.output_system, class_="form-control")}}
+            {{render_field(form.target_system, class_="form-control")}}
         </div>
         <div class="form-group">
             {{render_field(form.filter_logic, class_="form-control")}}

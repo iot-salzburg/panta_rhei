@@ -5,34 +5,15 @@
   <table class="table">
     <td>
       <h1> <small>Stream name: </small>{{payload.name}}</h1>
-
       {% if payload.description %}
       {{payload.description}}
       {% endif %}
-
         <br>
-
     </td>
 
     <td>
-      {% if payload.status == "ok" %}
-       <td><a class="btn btn-success float-right mb-2" href="/show_stream/{{payload.system_uuid}}/{{payload.name}}"
-          data-toggle="tooltip" title="The stream seems to be ok.">ok</a></td>
-      {% elif payload.status == "init" %}
-       <td><a class="btn btn-info float-right mb-2" href="/show_stream/{{payload.system_uuid}}/{{payload.name}}"
-          data-toggle="tooltip" title="The stream wasn't deployed yet.">idle</a></td>
-      {% elif payload.status == "failing" %}
-       <td><a class="btn btn-danger float-right mb-2" href="/show_stream/{{payload.system_uuid}}/{{payload.name}}"
-          data-toggle="tooltip" title="This stream is failing.">failing</a></td>
-      {% elif payload.status == "stopped" %}
-       <td><a class="btn btn-warning float-right mb-2" href="/show_stream/{{payload.system_uuid}}/{{payload.name}}"
-          data-toggle="tooltip" title="This stream is failing.">stopped</a></td>
-      {% else %}
-       <a class="btn btn-warning float-right mb-2" href="/show_stream/{{payload.system_uuid}}/{{payload.name}}"
-          data-toggle="tooltip" title="This stream is failing.">unknown</a>
-      {% endif %}
-        <br>
-        <br>
+       <a class="btn btn-danger float-right mb-2" href="/delete_stream/{{payload.system_uuid}}/{{payload.name}}"
+          data-toggle="tooltip" title="Delete this stream application.">delete stream</a>
     </td>
   </table>
 
@@ -49,13 +30,37 @@
 <!--      <th>Creator</th>-->
     </tr>
       <tr>
-        <td><a href="/show_stream/{{payload.system_uuid}}/{{payload.name}}" class="btn btn-block">{{payload.input_system}}</a></td>
-        <td><a href="/show_stream/{{payload.system_uuid}}/{{payload.name}}" class="btn btn-block">{{payload.output_system}}</a></td>
+        <td><a href="/show_stream/{{payload.system_uuid}}/{{payload.name}}" class="btn btn-block">{{payload.source_system}}</a></td>
+        <td><a href="/show_stream/{{payload.system_uuid}}/{{payload.name}}" class="btn btn-block">{{payload.target_system}}</a></td>
         <td><a href="/show_stream/{{payload.system_uuid}}/{{payload.name}}" class="btn btn-block">{{payload.contact_mail}}</a></td>
         <td><a href="/show_stream/{{payload.system_uuid}}/{{payload.name}}" class="btn btn-block">{{payload.datetime}}</a></td>
 
-        <td><a href="/show_stream/{{payload.system_uuid}}/{{payload.name}}" class="btn btn-block">{{payload.status}}</a></td>
-        {% if payload.status == "ok" %}
+<!--        <td><a href="/show_stream/{{payload.system_uuid}}/{{payload.name}}" class="btn btn-block">{{payload.status}}</a></td>-->
+
+      {% if payload.status == "init" %}
+       <td><a class="btn btn-info float-right mb-2" href="/show_stream/{{payload.system_uuid}}/{{payload.name}}"
+          data-toggle="tooltip" title="The stream wasn't deployed yet.">{{payload.status}}</a></td>
+      {% elif payload.status == "starting" %}
+       <td><a class="btn btn-warning float-right mb-2" href="/show_stream/{{payload.system_uuid}}/{{payload.name}}"
+          data-toggle="tooltip" title="The stream is starting.">{{payload.status}}</a></td>
+      {% elif payload.status == "running" %}
+       <td><a class="btn btn-success float-right mb-2" href="/show_stream/{{payload.system_uuid}}/{{payload.name}}"
+          data-toggle="tooltip" title="The stream is running.">{{payload.status}}</a></td>
+      {% elif payload.status == "stopping" %}
+       <td><a class="btn btn-warning float-right mb-2" href="/show_stream/{{payload.system_uuid}}/{{payload.name}}"
+          data-toggle="tooltip" title="This stream will stopping.">{{payload.status}}</a></td>
+      {% elif payload.status == "idle" %}
+       <td><a class="btn btn-primary float-right mb-2" href="/show_stream/{{payload.system_uuid}}/{{payload.name}}"
+          data-toggle="tooltip" title="This stream is idle.">{{payload.status}}</a></td>
+      {% elif payload.status == "failing" %}
+       <td><a class="btn btn-danger float-right mb-2" href="/show_stream/{{payload.system_uuid}}/{{payload.name}}"
+          data-toggle="tooltip" title="This stream is failing.">{{payload.status}}</a></td>
+      {% else %}
+       <td></td><a class="btn btn-warning float-right mb-2" href="/show_stream/{{payload.system_uuid}}/{{payload.name}}"
+          data-toggle="tooltip" title="This stream status is unknown.">{{payload.status}}</a></td>
+      {% endif %}
+
+        {% if payload.status == "running" or payload.status == "starting" %}
          <td><a class="btn btn-warning float-right mb-2" href="/stop_stream/{{payload.system_uuid}}/{{payload.name}}"
             data-toggle="tooltip" title="Stop this stream application.">stop stream</a></td>
         {% else %}
@@ -64,6 +69,7 @@
         {% endif %}
       </tr>
   </table>
+
 
   <hr>
   <h2> <small> Stream filter logic: </small></h2>

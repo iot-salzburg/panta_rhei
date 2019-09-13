@@ -15,12 +15,15 @@ import java.util.Properties;
 //TARGET_SYSTEM="at.datahouse.iot-iot4cps-wp5.RoadAnalytics"
 //KAFKA_BOOTSTRAP_SERVERS="127.0.0.1:9092"
 // input parameters
-// --stream-name whoami --source-system cz.icecars.iot-iot4cps-wp5.CarFleet --target-system at.datahouse.iot-iot4cps-wp5.RoadAnalytics --bootstrap-server 127.0.0.1:9092 --filter-logic {}
+// --stream-name whoami --source-system cz.icecars.iot-iot4cps-wp5.CarFleet
+// --target-system at.datahouse.iot-iot4cps-wp5.RoadAnalytics --bootstrap-server 127.0.0.1:9092
+// --filter-logic {}
 
 public class StreamEngine {
 
     public static void main(String[] args) {
         System.out.println("Starting a new stream with the parameters:");
+
         // parse input to options and check completeness
         if ((args.length == 0) || (1 == args.length % 2)) {
             System.out.println("Error: Expected key val pairs as arguments.");
@@ -32,7 +35,6 @@ public class StreamEngine {
             options.setProperty(key, args[i+1]);
             System.out.println("Got option: " + key + " = " + options.getProperty(key));
         }
-        System.out.println(options.stringPropertyNames());
         String[] keys = {"stream-name", "source-system", "target-system", "bootstrap-server", "filter-logic"};
         for (String key: keys) {
             if (!options.stringPropertyNames().contains(key)) {
@@ -40,7 +42,6 @@ public class StreamEngine {
                 System.exit(3);
             }
         }
-
 
         // create input and output topics from system name
         String inputTopicName = options.getProperty("source-system") + ".int";

@@ -89,7 +89,7 @@ def show_system(system_uuid):
     engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
     conn = engine.connect()
     query = """
-    SELECT sys.uuid AS system_uuid, streams.name AS name, input_system, output_system, creator.email AS contact_mail
+    SELECT sys.uuid AS system_uuid, streams.name AS name, source_system, target_system, creator.email AS contact_mail
     FROM streams
     INNER JOIN users as creator ON creator.uuid=streams.creator_uuid
     INNER JOIN systems AS sys ON streams.system_uuid=sys.uuid
