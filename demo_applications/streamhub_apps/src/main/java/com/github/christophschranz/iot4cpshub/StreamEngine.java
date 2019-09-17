@@ -17,35 +17,40 @@ public class StreamEngine {
         System.out.println("Starting a new stream with the parameter:");
 
         Properties options = new Properties();
-        options.setProperty("stream-name", System.getenv("STREAM_NAME"));
-        options.setProperty("source-system", System.getenv("SOURCE_SYSTEM"));
-        options.setProperty("target-system", System.getenv("TARGET_SYSTEM"));
-        options.setProperty("bootstrap-server", System.getenv("KAFKA_BOOTSTRAP_SERVERS"));
-        options.setProperty("filter-logic", System.getenv("FILTER_LOGIC"));
+        if (System.getenv().containsKey("STREAM_NAME"))
+            options.setProperty("stream-name", System.getenv("STREAM_NAME"));
+        if (System.getenv().containsKey("SOURCE_SYSTEM"))
+            options.setProperty("source-system", System.getenv("SOURCE_SYSTEM"));
+        if (System.getenv().containsKey("TARGET_SYSTEM"))
+            options.setProperty("target-system", System.getenv("TARGET_SYSTEM"));
+        if (System.getenv().containsKey("KAFKA_BOOTSTRAP_SERVERS"))
+            options.setProperty("bootstrap-server", System.getenv("KAFKA_BOOTSTRAP_SERVERS"));
+        if (System.getenv().containsKey("FILTER_LOGIC"))
+            options.setProperty("filter-logic", System.getenv("FILTER_LOGIC"));
 
+        // parse input to options and check completeness
+        if (1 == args.length % 2) {
+            System.out.println("Error: Expected key val pairs as arguments.");
+            System.out.println("Usage: java -jar path/to/streamhub_apps.jar --key1 val1 .. --keyN valN");
+            System.exit(2);
+        }
+        for (int i=0; i<args.length; i+=2){
+            String key = args[i].replace("--", "");
+            options.setProperty(key, args[i+1]);
+        }
+        String[] keys = {"stream-name", "source-system", "target-system", "bootstrap-server", "filter-logic"};
+        for (String key: keys) {
+            if (!options.stringPropertyNames().contains(key)) {
+                System.out.println("Error: You have to define the parameter " + key +
+                " either as environment variable or pass it in the arguments.");
+                System.out.println("Usage: java -jar path/to/streamhub_apps.jar --key1 val1 .. --keyN valN");
+                System.exit(3);
+            }
+        }
         Set<String> optionSet = options.stringPropertyNames();
         for (String key: optionSet) {
             System.out.println("  " + key + ": " + options.getProperty(key));
         }
-
-//        // parse input to options and check completeness
-//        if ((args.length == 0) || (1 == args.length % 2)) {
-//            System.out.println("Error: Expected key val pairs as arguments.");
-//            System.exit(2);
-//        }
-//        Properties options = new Properties();
-//        for (int i=0; i<args.length; i+=2){
-//            String key = args[i].replace("--", "");
-//            options.setProperty(key, args[i+1]);
-//            System.out.println("Got option: " + key + " = " + options.getProperty(key));
-//        }
-//        String[] keys = {"stream-name", "source-system", "target-system", "bootstrap-server", "filter-logic"};
-//        for (String key: keys) {
-//            if (!options.stringPropertyNames().contains(key)) {
-//                System.out.println("Error: You have to define the parameter " + key);
-//                System.exit(3);
-//            }
-//        }
 
         // create input and output topics from system name
         String inputTopicName = options.getProperty("source-system") + ".int";

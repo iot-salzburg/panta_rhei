@@ -55,8 +55,8 @@ def create_default_topics(app):
     if check_kafka(app):
         # Create default system topics
         for system_name in ["cz.icecars.iot-iot4cps-wp5.CarFleet",
-                            "is.iceland.iot-iot4cps-wp5.InfraProv",
-                            "at.datahouse.iot-iot4cps-wp5.WeatherService"]:
+                            "is.iceland.iot-iot4cps-wp5.WeatherService",
+                            "at.datahouse.iot-iot4cps-wp5.RoadAnalytics"]:
             create_system_topics(app, system_name)
 
 

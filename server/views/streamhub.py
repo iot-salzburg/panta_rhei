@@ -1,15 +1,13 @@
-import os
 import json
 import subprocess
-import time
 
 import sqlalchemy as db
-from flask import Blueprint, render_template, flash, redirect, url_for, session, request, send_file
-# Must be imported to use the app config
-from flask import current_app as app, jsonify
+from flask import Blueprint, render_template, flash, redirect, url_for, session, request
+
+from flask import current_app as app
 from wtforms import Form, StringField, validators, TextAreaField
 
-from .useful_functions import get_datetime, is_logged_in, valid_level_name, valid_name, valid_system
+from .useful_functions import get_datetime, is_logged_in, valid_name, valid_system
 
 streamhub_bp = Blueprint("streamhub", __name__)
 
@@ -47,12 +45,13 @@ def show_stream(system_uuid, stream_name):
     user_uuid = session["user_uuid"]
 
     payload = get_stream_payload(user_uuid, system_uuid, stream_name)
+    print("Payload: {}".format(payload))
     if not isinstance(payload, dict):
         return payload
 
     # load stream configs
     pid, cmd = load_stream(system_uuid, stream_name)
-    app.logger.debug("Got pid {} and args {}...".format(pid, cmd[:40]))
+    # app.logger.debug("Got pid {} and args {}...".format(pid, cmd[:40]))
 
     # Check if the process is running
     if check_if_proc_runs(system_uuid, stream_name):
@@ -71,10 +70,10 @@ def show_stream(system_uuid, stream_name):
         status = [dict(c.items()) for c in result_proxy.fetchall()][0]["status"]
         app.logger.debug("The stream '{}' has the SOLL status {}.".format(stream_name, status))
 
-        if status == "running":
+        if status == "running" or status == "starting":
             set_status_to(system_uuid, stream_name, "failing")
-        else:
-            set_status_to(system_uuid, stream_name, "idle")
+        # else:
+        #     set_status_to(system_uuid, stream_name, "idle")
 
     # TODO update filter_logic
     # TODO show docker status of filter_logic
@@ -120,38 +119,31 @@ def add_stream_for_system(system_uuid):
     engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
     conn = engine.connect()
     query = """
-    SELECT sys.uuid AS system_uuid, com.uuid AS company_uuid, streams.name AS name, source_system, target_system, 
-    creator.email AS contact_mail, streams.description, agent.uuid AS agent_uuid, streams.datetime AS datetime
-    FROM streams
-    INNER JOIN users as creator ON creator.uuid=streams.creator_uuid
-    INNER JOIN systems AS sys ON streams.system_uuid=sys.uuid
+    SELECT sys.uuid AS system_uuid, domain, enterprise, workcenter, station, agent.uuid AS agent_uuid
+    FROM systems AS sys
     INNER JOIN companies AS com ON sys.company_uuid=com.uuid
     INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid 
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
-    WHERE sys.uuid='{}' AND agent.uuid='{}';""".format(system_uuid, user_uuid)
+    WHERE agent.uuid='{}' AND sys.uuid='{}';""".format(user_uuid, system_uuid)
     result_proxy = conn.execute(query)
-    streams = [dict(c.items()) for c in result_proxy.fetchall()]
-    print("Fetched streams: {}".format(streams))
+    clients = [dict(c.items()) for c in result_proxy.fetchall()]
+    print("Fetched streams: {}".format(clients))
 
     # Check if the system exists and has agents
-    if len(streams) == 0:
+    if len(clients) == 0:
         engine.dispose()
-        flash("It seems that this stream doesn't exist.", "danger")
-        return redirect(url_for("streamhub.show_all_streams"))
-
-    # Check if the current user is agent of the client's system
-    if user_uuid not in [c["agent_uuid"] for c in streams]:
-        engine.dispose()
-        flash("You are not permitted see details this stream.", "danger")
+        flash("It seems that this stream doesn't exist or you are not permitted see details this stream.", "danger")
         return redirect(url_for("streamhub.show_all_streams"))
 
     # if not, streams has at least one item
-    payload = streams[0]
+    payload = clients[0]
+    source_system = "{}.{}.{}.{}".format(payload["domain"], payload["enterprise"],
+                                         payload["workcenter"], payload["station"])
 
     # Create a new stream using the form's input
     if request.method == "POST" and form.validate():
         # Check if source and target system are different
-        if payload["source_system"] == form_target_system:
+        if source_system == form_target_system:
             msg = "The source and target system can't be the equal."
             app.logger.info(msg)
             flash(msg, "danger")
@@ -164,13 +156,11 @@ def add_stream_for_system(system_uuid):
         WHERE system_uuid='{}' AND name='{}';""".format(system_uuid, form_name)
         result_proxy = conn.execute(query)
 
-        system_name = payload["source_system"]
-
         if len(result_proxy.fetchall()) == 0:
             query = db.insert(app.config["tables"]["streams"])
             values_list = [{'name': form_name,
                             'system_uuid': system_uuid,
-                            'source_system': system_name,
+                            'source_system': source_system,
                             'target_system': form_target_system,
                             'filter_logic': form.filter_logic.data,
                             'creator_uuid': user_uuid,
@@ -179,13 +169,13 @@ def add_stream_for_system(system_uuid):
             conn.execute(query, values_list)
             engine.dispose()
 
-            msg = "The stream '{}' was added to system '{}'.".format(form_name, system_name)
+            msg = "The stream '{}' was added to system '{}'.".format(form_name, source_system)
             app.logger.info(msg)
             flash(msg, "success")
             return redirect(url_for("streamhub.show_stream", system_uuid=system_uuid, stream_name=form_name))
         else:
             engine.dispose()
-            msg = "The stream with name '{}' was already created for system '{}'.".format(form_name, system_name)
+            msg = "The stream with name '{}' was already created for system '{}'.".format(form_name, source_system)
             app.logger.info(msg)
             flash(msg, "danger")
             return redirect(url_for("streamhub.add_stream_for_system", system_uuid=system_uuid))
@@ -265,13 +255,11 @@ def get_stream_payload(user_uuid, system_uuid, stream_name):
 
     # Check if the system exists and has agents
     if len(streams) == 0:
-        engine.dispose()
         flash("It seems that this stream doesn't exist.", "danger")
         return redirect(url_for("streamhub.show_all_streams"))
 
     # Check if the current user is agent of the client's system
     if user_uuid not in [c["agent_uuid"] for c in streams]:
-        engine.dispose()
         flash("You are not permitted see details this stream.", "danger")
         return redirect(url_for("streamhub.show_all_streams"))
 
@@ -288,6 +276,9 @@ def start_stream(system_uuid, stream_name):
     user_uuid = session["user_uuid"]
 
     payload = get_stream_payload(user_uuid, system_uuid, stream_name)
+    if len(payload["filter_logic"]) <= 1:  # TODO check if filter_logic is valid
+        payload["filter_logic"] = "{}"
+
     if not isinstance(payload, dict):
         return payload
 
@@ -303,15 +294,16 @@ def start_stream(system_uuid, stream_name):
     transaction = conn.begin()
     # try:
     # Start the jar file
-    cmd = ['java', '-jar', 'views/StreamEngine.jar']
-    cmd += ['--stream-name', stream_name]
-    cmd += ['--source-system', payload["source_system"]]
-    cmd += ['--target-system', payload["target_system"]]
-    cmd += ['--bootstrap-server', app.config["KAFKA_BOOTSTRAP_SERVER"]]
-    cmd += ['--filter-logic', payload["filter_logic"]]
-    app.logger.debug("Try to deploy '{}'".format(" ".join(cmd)))
+    cmd_list = ['java', '-jar', 'views/StreamEngine.jar']
+    cmd_list += ['--stream-name', stream_name]
+    cmd_list += ['--source-system', payload["source_system"]]
+    cmd_list += ['--target-system', payload["target_system"]]
+    cmd_list += ['--bootstrap-server', app.config["KAFKA_BOOTSTRAP_SERVER"]]
+    cmd_list += ['--filter-logic', payload["filter_logic"]]
+    cmd = " ".join(cmd_list)
+    app.logger.debug("Try to deploy '{}'".format(cmd))
 
-    proc = subprocess.Popen(" ".join(cmd), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     store_stream(system_uuid, stream_name, proc)
 
     app.logger.debug("Deployed stream {} with pid: {}".format(stream_name, proc.pid))
@@ -331,8 +323,6 @@ def start_stream(system_uuid, stream_name):
 @streamhub_bp.route("/stop_stream/<string:system_uuid>/<string:stream_name>", methods=["GET"])
 @is_logged_in
 def stop_stream(system_uuid, stream_name):
-    app.logger.debug("Called stop_stream")
-
     # Get current user_uuid
     user_uuid = session["user_uuid"]
 
@@ -342,25 +332,33 @@ def stop_stream(system_uuid, stream_name):
 
     # load configs of stream
     pid, cmd = load_stream(system_uuid, stream_name)
-
-    if pid == 0 or not check_if_proc_runs(system_uuid, stream_name):
-        set_status_to(system_uuid, stream_name, "idle")
-        msg = "The stream '{}' doesn't run.".format(payload["name"])
-        app.logger.info(msg)
-        flash(msg, "info")
-        return redirect(url_for("streamhub.show_stream", system_uuid=system_uuid, stream_name=payload["name"]))
+    #
+    # if pid == 0 or not check_if_proc_runs(system_uuid, stream_name):
+    #     set_status_to(system_uuid, stream_name, "idle")
+    #     msg = "The stream '{}' doesn't run.".format(payload["name"])
+    #     app.logger.info(msg)
+    #     flash(msg, "info")
+    #     return redirect(url_for("streamhub.show_stream", system_uuid=system_uuid, stream_name=payload["name"]))
 
     engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
     conn = engine.connect()
     transaction = conn.begin()
     try:
-        pipe = subprocess.Popen("ps -ef | grep '{}'".format(cmd), shell=True, stdout=subprocess.PIPE)
-        output = pipe.communicate()
-        res = output[0].decode("utf-8")
-        ppid = res.split()[1]
-        app.logger.info("Stopping stream with ppid: {} and name: {}".format(ppid, stream_name))
-
-        pipe = subprocess.Popen("kill -9 {}".format(ppid), shell=True, stdout=subprocess.PIPE).communicate()
+        # Stop the stream
+        procps = subprocess.Popen("ps -ef | grep '{}'".format(cmd), shell=True,
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        res = procps.communicate()[0].decode()
+        for proc_line in res.split("\n"):
+            if proc_line == "":
+                continue
+            # app.logger.debug("proc_line: {}".format(proc_line))
+            proc_pid = proc_line.split()[1]
+            prockill_res = subprocess.Popen("kill -9 {}".format(proc_pid), shell=True,
+                                        stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+            if not prockill_res[1]:
+                app.logger.debug("Successfully killed process with pid {}".format(proc_pid))
+            else:
+                app.logger.debug("Can't remove process with pid {}: {}".format(proc_pid, prockill_res[1].decode()))
 
         # Set status
         set_status_to(system_uuid, stream_name, "idle")
@@ -377,6 +375,7 @@ def stop_stream(system_uuid, stream_name):
 
 
 def check_if_proc_runs(system_uuid, stream_name):
+    app.logger.debug("check_if_proc_runs")
     # load config
     pid, cmd = load_stream(system_uuid, stream_name)
     if pid is None:
@@ -387,12 +386,16 @@ def check_if_proc_runs(system_uuid, stream_name):
     try:
         output = pipe.communicate()
         res = output[0].decode("utf-8")
+        app.logger.debug(res)
         # if "StreamEngine.jar" not in res:
-        if "streamengine.jar" not in res.lower():
-            app.logger.debug("StreamEngine.jar not in process name.")
-            return False
-        app.logger.debug("The stream '{}' runs.".format(stream_name))
-        return True
+        for proc_line in res.split("\n"):
+            if proc_line == "":
+                continue
+            if "grep" not in proc_line.replace(cmd, ""):
+                app.logger.debug("The process is running.")
+                return True
+        app.logger.debug("The process is not running.")
+        return False
     except ValueError:
         app.logger.debug("Process with pid {} doesn't exist.".format(pid))
         return False
@@ -400,6 +403,7 @@ def check_if_proc_runs(system_uuid, stream_name):
 
 def set_status_to(system_uuid, stream_name, status):
     # Set status
+    app.logger.debug("Set status to {}".format(status))
     engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
     conn = engine.connect()
     query = """UPDATE streams SET status='{status}' WHERE system_uuid='{system_uuid}' AND name='{stream_name}';""". \

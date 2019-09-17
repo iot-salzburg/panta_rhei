@@ -162,13 +162,7 @@ def add_client_for_system(system_uuid):
     # Check if the system exists and you are an admin
     if len(clients) == 0:
         engine.dispose()
-        flash("It seems that this system doesn't exist.", "danger")
-        return redirect(url_for("system.show_all_systems"))
-
-    # Check if the current user is agent of the system
-    if user_uuid not in [c["agent_uuid"] for c in clients]:
-        engine.dispose()
-        flash("You are not permitted to add clients for this system.", "danger")
+        flash("It seems that this system doesn't exist or you are not permitted to add clients to it.", "danger")
         return redirect(url_for("system.show_all_systems"))
 
     # if not, clients has at least one item
