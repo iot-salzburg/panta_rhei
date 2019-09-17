@@ -144,6 +144,9 @@ class DigitalTwinClient:
         self.produce("logging", msg)
         self.logger.info("register: " + msg)
 
+    def register(self, instance_file):
+        self.register_new(instance_file)
+
     def register_new(self, instance_file):
         """
         Post or path instances using the RegisterHanlder class.

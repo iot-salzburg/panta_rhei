@@ -18,7 +18,7 @@ This repository is comprised of 3 main directories:
 
 The usage of the Digital Twin Client is thereby as simple as that:
 
-```python3
+```python
 from client.digital_twin_client import DigitalTwinClient
 config = {"client_name": "car_1",
           "system": "at.srfg.iot-iot4cps-wp5.CarFleet",
@@ -30,7 +30,7 @@ client = DigitalTwinClient(**config)
 client.register(instance_file="instances.json")
 client.produce(quantity="demo_temperature", result=23.4)
 
-client.subscribe(subscription_file=“subscriptions.json”}
+client.subscribe(subscription_file="subscriptions.json")
 received_quantities = client.consume(timeout=1.0)
 ```
 
