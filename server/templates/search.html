@@ -110,8 +110,8 @@
       {% for stream in streams %}
       <tr>
         <td><a href="show_stream/{{stream.system_uuid}}/{{stream.name}}" class="btn btn-block">{{stream.name}}</a></td>
-        <td><a href="show_stream/{{stream.system_uuid}}/{{stream.name}}" class="btn btn-block">{{stream.input_system}}</a></td>
-        <td><a href="show_stream/{{stream.system_uuid}}/{{stream.name}}" class="btn btn-block">{{stream.output_system}}</a></td>
+        <td><a href="show_stream/{{stream.system_uuid}}/{{stream.name}}" class="btn btn-block">{{stream.source_system}}</a></td>
+        <td><a href="show_stream/{{stream.system_uuid}}/{{stream.name}}" class="btn btn-block">{{stream.target_system}}</a></td>
         <td><a href="show_stream/{{stream.system_uuid}}/{{stream.name}}" class="btn btn-block">{{stream.contact_mail}}</a></td>
 
         <td><a href="show_stream/{{stream.system_uuid}}/{{stream.name}}" class="btn btn-info float-right"
