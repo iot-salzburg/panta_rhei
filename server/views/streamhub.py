@@ -45,13 +45,8 @@ def show_stream(system_uuid, stream_name):
     user_uuid = session["user_uuid"]
 
     payload = get_stream_payload(user_uuid, system_uuid, stream_name)
-    print("Payload: {}".format(payload))
     if not isinstance(payload, dict):
         return payload
-
-    # load stream configs
-    pid, cmd = load_stream(system_uuid, stream_name)
-    # app.logger.debug("Got pid {} and args {}...".format(pid, cmd[:40]))
 
     # Check if the process is running
     if check_if_proc_runs(system_uuid, stream_name):
@@ -354,7 +349,7 @@ def stop_stream(system_uuid, stream_name):
             # app.logger.debug("proc_line: {}".format(proc_line))
             proc_pid = proc_line.split()[1]
             prockill_res = subprocess.Popen("kill -9 {}".format(proc_pid), shell=True,
-                                        stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+                                            stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
             if not prockill_res[1]:
                 app.logger.debug("Successfully killed process with pid {}".format(proc_pid))
             else:
@@ -432,7 +427,7 @@ def store_stream(system_uuid, stream_name, proc):
     try:
         with open("templates/streamhub/streamhub.json") as f:
             content = json.loads(f.read())
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         content = dict()
 
     if system_uuid not in content.keys():

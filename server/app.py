@@ -13,6 +13,7 @@ from server.views.home import home_bp
 
 # Import application-specific functions
 from server.views.kafka_interface import check_kafka, create_default_topics, KafkaHandler
+from server.views.kafka_interface import create_system_topics, delete_system_topics
 from server.views.streamhub import streamhub_bp
 from server.views.system import system
 
@@ -55,9 +56,9 @@ if __name__ == '__main__':
     create_tables(app)
     create_default_topics(app)
 
-    # # Test creation and deletion of topics
-    # create_system_topics(app, "test.test.test.test")
-    # delete_system_topics(app, "test.test.test.test")
+    # Test the Kafka Interface by creating and deleting a test topic
+    create_system_topics(app, "test.test.test.test")
+    delete_system_topics(app, "test.test.test.test")
 
     # Run application
     app.run(debug=app.config["DEBUG"], port=1908)

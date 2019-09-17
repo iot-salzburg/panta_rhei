@@ -27,15 +27,12 @@
       <th>Created at</th>
       <th>Status</th>
       <th>Action</th>
-<!--      <th>Creator</th>-->
     </tr>
       <tr>
         <td><a href="/show_stream/{{payload.system_uuid}}/{{payload.name}}" class="btn btn-block">{{payload.source_system}}</a></td>
         <td><a href="/show_stream/{{payload.system_uuid}}/{{payload.name}}" class="btn btn-block">{{payload.target_system}}</a></td>
         <td><a href="/show_stream/{{payload.system_uuid}}/{{payload.name}}" class="btn btn-block">{{payload.contact_mail}}</a></td>
         <td><a href="/show_stream/{{payload.system_uuid}}/{{payload.name}}" class="btn btn-block">{{payload.datetime}}</a></td>
-
-<!--        <td><a href="/show_stream/{{payload.system_uuid}}/{{payload.name}}" class="btn btn-block">{{payload.status}}</a></td>-->
 
       {% if payload.status == "init" %}
        <td><a class="btn btn-info float-right mb-2" href="/show_stream/{{payload.system_uuid}}/{{payload.name}}"

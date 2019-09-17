@@ -120,3 +120,4 @@ demo_applications/Analytics/jupyter/share
 *__pycache__*
 server/views/keys/ssl*
 *fuse_hidden*
+/server/templates/streamhub/streamhub.json
