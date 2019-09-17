@@ -7,41 +7,45 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
 
-import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 
-//STREAM_NAME="whoami"
-//SYSTEM_NAME="cz.icecars.iot-iot4cps-wp5.CarFleet"
-//TARGET_SYSTEM="at.datahouse.iot-iot4cps-wp5.RoadAnalytics"
-//KAFKA_BOOTSTRAP_SERVERS="127.0.0.1:9092"
-// input parameters
-// --stream-name whoami --source-system cz.icecars.iot-iot4cps-wp5.CarFleet
-// --target-system at.datahouse.iot-iot4cps-wp5.RoadAnalytics --bootstrap-server 127.0.0.1:9092
-// --filter-logic {}
 
 public class StreamEngine {
 
     public static void main(String[] args) {
-        System.out.println("Starting a new stream with the parameters:");
+        System.out.println("Starting a new stream with the parameter:");
 
-        // parse input to options and check completeness
-        if ((args.length == 0) || (1 == args.length % 2)) {
-            System.out.println("Error: Expected key val pairs as arguments.");
-            System.exit(2);
-        }
         Properties options = new Properties();
-        for (int i=0; i<args.length; i+=2){
-            String key = args[i].replace("--", "");
-            options.setProperty(key, args[i+1]);
-            System.out.println("Got option: " + key + " = " + options.getProperty(key));
+        options.setProperty("stream-name", System.getenv("STREAM_NAME"));
+        options.setProperty("source-system", System.getenv("SOURCE_SYSTEM"));
+        options.setProperty("target-system", System.getenv("TARGET_SYSTEM"));
+        options.setProperty("bootstrap-server", System.getenv("KAFKA_BOOTSTRAP_SERVERS"));
+        options.setProperty("filter-logic", System.getenv("FILTER_LOGIC"));
+
+        Set<String> optionSet = options.stringPropertyNames();
+        for (String key: optionSet) {
+            System.out.println("  " + key + ": " + options.getProperty(key));
         }
-        String[] keys = {"stream-name", "source-system", "target-system", "bootstrap-server", "filter-logic"};
-        for (String key: keys) {
-            if (!options.stringPropertyNames().contains(key)) {
-                System.out.println("Error: You have to define the parameter " + key);
-                System.exit(3);
-            }
-        }
+
+//        // parse input to options and check completeness
+//        if ((args.length == 0) || (1 == args.length % 2)) {
+//            System.out.println("Error: Expected key val pairs as arguments.");
+//            System.exit(2);
+//        }
+//        Properties options = new Properties();
+//        for (int i=0; i<args.length; i+=2){
+//            String key = args[i].replace("--", "");
+//            options.setProperty(key, args[i+1]);
+//            System.out.println("Got option: " + key + " = " + options.getProperty(key));
+//        }
+//        String[] keys = {"stream-name", "source-system", "target-system", "bootstrap-server", "filter-logic"};
+//        for (String key: keys) {
+//            if (!options.stringPropertyNames().contains(key)) {
+//                System.out.println("Error: You have to define the parameter " + key);
+//                System.exit(3);
+//            }
+//        }
 
         // create input and output topics from system name
         String inputTopicName = options.getProperty("source-system") + ".int";
