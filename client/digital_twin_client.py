@@ -10,8 +10,8 @@ from datetime import datetime
 # confluent_kafka is based on librdkafka, details in install_kafka_requirements.sh
 import confluent_kafka
 
-from client.registerHelper import RegisterHelper
-from client.type_mappings import type_mappings
+from panta_rhei.client.registerHelper import RegisterHelper
+from panta_rhei.client.type_mappings import type_mappings
 
 
 class DigitalTwinClient:
@@ -80,6 +80,7 @@ class DigitalTwinClient:
             # Create Kafka Producer
             self.producer = confluent_kafka.Producer({'bootstrap.servers': self.config["kafka_bootstrap_servers"],
                                                       'client.id': self.config["client_name"],
+
                                                       'default.topic.config': {'acks': 'all'}})
 
         else:
