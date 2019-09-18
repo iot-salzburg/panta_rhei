@@ -1,7 +1,8 @@
 # Digital Twin Stack
 ### An open source platform for IoT data-streaming and metadata management, that reduces the complexity of modern data problems.
 
-![Architecture](/extra/dataflows.png) 
+![Architecture](/extra/dataflows.png)
+
 An exemplary dataflow as they occur across teams. 
 
 This repository comprises the following parts:
