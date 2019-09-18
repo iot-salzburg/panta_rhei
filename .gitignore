@@ -82,7 +82,7 @@ celerybeat-schedule
 *.sage.py
 
 # Environments
-.env
+#.env
 .venv
 env/
 venv/
@@ -119,5 +119,6 @@ demo_applications/Analytics/jupyter/share
 
 *__pycache__*
 server/views/keys/ssl*
+server/venv
 *fuse_hidden*
 /server/templates/streamhub/streamhub.json

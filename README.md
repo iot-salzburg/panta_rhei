@@ -1,64 +1,75 @@
 # Digital Twin Stack
-### A scalable streaming platform that enables the flexible sharing of IoT data and provides Data Analytics functionality.
+### An open source platform for IoT data-streaming and metadata management, that reduces the complexity of modern data problems.
 
-This repository is comprised of 3 main directories:
+![Architecture](/extra/dataflows.png) 
+An exemplary dataflow as they occur across teams. 
+
+This repository comprises the following parts:
+
 * **Digital Twin Messaging Layer** which unifies [Apache Kafka](https://kafka.apache.org/)
  with [SensorThings](http://developers.sensorup.com/docs/) and can be found in the `setup` directory.
+ 
 * **Digital Twin Client** to easily access the Messaging Layer with only an hand full lines of code, 
-    which is in the `client` directory. 
-* **Demo Application** to get started as fast as possible and change them to your own demands.
-    In the demo-scenario there are 3 companies that interchange data with the Digital Twin Platform
-    1) The CarFleet is a prosumer (producer and consumer) of data.
-    2) The Weather Service Provider produces weather-related data.
-    3) The Infrastructure Provider wants to enhance the road quality by analyzing all of the data.
+    which is in the `client` directory. The usage of the Digital Twin Client is thereby as simple as that:
 
-![Architecture](/extra/architecture.png) 
-
-[comment]: <> (#TODO: change the architecture to the new scenario)
-
-The usage of the Digital Twin Client is thereby as simple as that:
-
-```python
-from client.digital_twin_client import DigitalTwinClient
-config = {"client_name": "car_1",
+    ```python
+    from client.digital_twin_client import DigitalTwinClient
+  
+    config = {"client_name": "car_1",
           "system": "at.srfg.iot-iot4cps-wp5.CarFleet",
           "gost_servers": "localhost:8084",
           "kafka_bootstrap_servers": "localhost:9092"}
-          
-client = DigitalTwinClient(**config)
+    client = DigitalTwinClient(**config)
+    
+    client.register(instance_file="instances.json")
+    client.produce(quantity="demo_temperature", result=23.4)
+    
+    client.subscribe(subscription_file="subscriptions.json")
+    received_quantities = client.consume(timeout=1.0)
+    ```
+  
+* **Demo Applications** to get started as fast as possible and change them to your own demands.
+    In the demo-scenario there are 3 companies that interchange data via the Digital Twin Platform
+    1) The CarFleet is a prosumer (producer and consumer) of data.
+    2) The Weather Service Provider produces weather-related data.
+    3) The Analytics provider wants to enhance the road quality by analyzing all of the data.
+    In `demo_applications/Analytics` there is a DataStack that comes with the 
+    [Elastic Stack](https://www.elastic.co/), [Grafana](https://grafana.com/) and a data science environment with a
+    [Jupyter](https://jupyter.org/) notebook UI and a connection to the Elasticsearch datasource.
+* **Platform User Interface** that deals with the registration of users, companies, systems and client applications.
+    It is also possible to deploy so-called *stream-applications* here, that allows to share data between existing
+    systems:
+    ![System View](/extra/system_view.png) 
 
-client.register(instance_file="instances.json")
-client.produce(quantity="demo_temperature", result=23.4)
-
-client.subscribe(subscription_file="subscriptions.json")
-received_quantities = client.consume(timeout=1.0)
-```
+***
 
 ## Contents
 
-1. [Requirements](#requirements)
-2. [Setup and Run](#setup-and-run)
+1. [Setup Messaging Layer](#setup-messaging-layer)
+2. [Start Demo Applications](#start-demo-applications)
 3. [Track what happens behind the scenes](#track-what-happens-behind-the-scenes)
 4. [Deployment](#deployment-on-a-cluster)
+5. [Platform UI](#platform-ui)
 
 
-## Requirements
+## Setup Messaging Layer
+
+### 1) Requirements
 
 * Install [Docker](https://www.docker.com/community-edition#/download) version **1.10.0+**
 * Install [Docker Compose](https://docs.docker.com/compose/install/) version **1.6.0+**
 * Clone this Repository
 * Install python modules:
     ```bash
-    pip install -r setup/requirements.txt
+    pip3 install -r setup/requirements.txt
     ```
 
-## Setup and Run
 
 This is an instruction on how to set up a demo scenario on your own hardware.
 Here, we use Ubuntu 18.04, for other OS there might have to be made adaptions.
 
  
-### 1) Setup **Apache Kafka** and it's library:
+### 2) Setup **Apache Kafka** and it's library:
 
 The Datastack uses Kafka **version 2.1.0** as the communication layer, the installations is done in `/kafka`.
 
@@ -95,7 +106,7 @@ sh setup/kafka/create_defaults.sh
 If multiple topics were generated, everything worked well.
 
 
-### 2) Setup **SensorThings Server (GOST)** to add semantics:
+### 3) Setup **SensorThings Server (GOST)** to add semantics:
 
     docker-compose -f setup/gost/docker-compose.yml up -d
 
@@ -105,11 +116,12 @@ The flag `-d` stands for `daemon` mode. To check if everything worked well, open
     docker-compose -f setup/gost/docker-compose.yml logs -f
 
 
-### 3) Run **demo applications** and connect to each other:
+
+## Start Demo Applications
 
 Now, open new terminals to run the demo applications:
 
-#### CarFleet - Prosumer
+### CarFleet - Prosumer
     python3 demo_applications/CarFleet/Car1/car_1.py
     > INFO:PR Client Logger:init: Initialising Digital Twin Client with name 'demo_car_1' on 'at.srfg.iot-iot4cps-wp5.CarFleet'
     ....
@@ -122,7 +134,7 @@ Now, open new terminals to run the demo applications:
     > The air temperature at the demo car 2 is 2.623506013964546 °C at 2019-03-18T12:21:27.177267+00:00
     >   -> Received new external data-point of 2019-03-18T13:54:59.482215+00:00: 'at.srfg.iot-iot4cps-wp5.CarFleet.car_1.Air Temperature' = 2.9816131778905497 degC.
 
-#### WeatherService - Producer
+### WeatherService - Producer
     
     python3 demo_applications/WeatherService/demo_station_1/demo_station_1.py
     python3 demo_applications/WeatherService/demo_station_2/demo_station_2.py 
@@ -131,8 +143,8 @@ Now, open new terminals to run the demo applications:
 Here, you should see that temperature data is produced by the demo stations and consumed only by the central service.
 
 
-#### InfraProv - Consumer and DataStack
-The Infrastructure Provider consumes all data from the stack and pipes it into a Elastic Grafana and Jupyter
+### Analytics - Consumer and DataStack
+The Analytics Provider consumes all data from the stack and pipes it into a Elastic Grafana and Jupyter
 Datastack.
 
 First, some configs have to be set in order to make the datastore work properly:
@@ -163,16 +175,20 @@ that ingests it into the DataStack.
 Therefore, it is important to start the StreamHub applications as noted in the next section.
    
    
-#### Stream Hub - Connect the tenants
+### Stream Hub - Connect the systems
 
 The StreamHub application can be regarded as hub for the streamed data.
-Run the java files:
+Run the built jar file:
 
-* `demo_applications/streamhub_apps/target/classes/com/github/christophschranz/iot4cpshub/StreamHub_CarFleet`
-* `demo_applications/streamhub_apps/target/classes/com/github/christophschranz/iot4cpshub/StreamHub_WeatherService`
- 
+```bash
+java -jar demo_applications/streamhub_apps/out/artifacts/streamhub_apps_jar/streamhub_apps.jar --stream-name mystream --source-system cz.icecars.iot-iot4cps-wp5.CarFleet target-system at.datahouse.iot-iot4cps-wp5.RoadAnalytics --filter-logic {} --bootstrap-server 127.0.0.1:9092
+```
  to share data from the specific tenant to others.
 
+If you want to change the streamhub application itself, modify and rebuild the java project in
+`demo_applications/streamhub_apps`. 
+
+It is recommended, to start and stop stream-applications via the [Platform UI](#platform-ui).
 
     
 ## Track what happens behind the scenes:
@@ -191,7 +207,7 @@ Check the created kafka topics:
     at.srfg.iot-iot4cps-wp5.WeatherService.logging
     test-topic
 
-Note that kafka-topics must be created manually as explained in the [Quickstart](#quickstart).
+Note that kafka-topics must be created manually as explained in the [Setup](#setup-messaging-layer).
 
 To track the traffic in real time, use the `kafka-consumer-console`: 
 
@@ -213,3 +229,42 @@ If you want to remove the SensorThings instances from the GOST server, run `dock
 
 To deploy the Digital Twin Platform on a cluster, see the 
 [setup/README-Deployment.md](setup/README-Deployment.md) notes.
+
+
+## Platform UI
+
+The user interface is the recommended way to create system topics which happens when registering a new client,
+and to deploy and stop stream-applications, that forwards selected data from one system to another.
+
+### Starting the platform
+
+Before starting the platform, make sure **postgresql** is installed and the configuration selected in `server/.env`
+points to a appropriate config in `server/config`. For instructions on how to install postgres, this 
+[site](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-postgresql-on-ubuntu-18-04) may help.
+
+```bash
+cd server
+sudo pip3 install virtualenv 
+virtualenv venv 
+source venv/bin/activate
+
+pip3 install -r requirements.txt
+sh start-server.sh
+```
+
+The platform is then, if the default developer-config is selected, available on [localhost:1908](localhost:1908)
+
+
+![Platform](/extra/platform_home.png)
+
+There are demo-accounts available for:
+* sue.smith@gmail.com
+* stefan.gunnarsson@gmail.com
+* anna.gruber@gmail.com
+
+The password for each of them is `asdf`.
+
+<br>
+If you have feedback and ideas, please let me know.
+
+Have fun exploring this project!
