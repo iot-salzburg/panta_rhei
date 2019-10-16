@@ -280,7 +280,7 @@ def insert_sample():
          'creator_uuid': uuid_stefan,
          'datetime': get_datetime(),
          'description': lorem_ipsum},
-        {'name': "centralservice",
+        {'name': "forecast_service",
          'system_uuid': uuid_weatherservice,
          'metadata_name': "sensorthings",
          'metadata_uri': "http://localhost:8084",

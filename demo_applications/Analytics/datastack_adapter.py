@@ -31,6 +31,8 @@ SUBSCRIPTIONS = os.path.join(dirname, "subscriptions.json")
 ELASTICSTACK_URLS = ["http://localhost:9200", "http://localhost:9600"]
 
 # Set the configs, create a new Digital Twin Instance and register file structure
+# This config is generated when registering a client application on the platform
+# Make sure that Kafka and GOST are up and running before starting the platform
 config = {"client_name": "datastack-adapter",
           "system": "at.datahouse.iot-iot4cps-wp5.RoadAnalytics",
           "kafka_bootstrap_servers": "localhost:9092",  # "192.168.48.81:9092,192.168.48.82:9092,192.168.48.83:9092"
