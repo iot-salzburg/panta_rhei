@@ -5,9 +5,9 @@
   <table class="table">
   <td>
     <h1> <small> Client name: </small>{{payload.name}}</h1>
+    <hr>
     <h3> <small> This is a registered Client application of the system:</small></h3>
     <h3>{{payload.domain}}.{{payload.enterprise}}.{{payload.workcenter}}.{{payload.station}}</h3>
-    <hr>
     <h3> <small> Metadata Name:</small> {{payload.metadata_name}}</h3>
 <!--    <h3> <small> Metadata URI:</small> {{payload.metadata_uri}}</h3>-->
     {% if payload.description %}

@@ -4,55 +4,61 @@
     <div class="jumbotron text-center">
         <h1>Digital Twin Platform</h1>
         <p class="lead" >
-        <h4>This project enables you to share IoT data incredibly easy even in complex streaming networks and also
-            provides data analytics functionality.
-        <br>
-        Everything, open source.</h4>
+        <h4>This open source IoT platform reduces the complexity of your cross-station, cross-company and cross-domain data streams.</h4>
 
         <br>
-        This website handles the management of users, companies, systems, clients and stream-applications
-        for the underlying streaming data network.
+        <img src="https://raw.githubusercontent.com/iot-salzburg/panta_rhei/master/extra/dataflows.png" alt="Dataflows in the Digital Twin platform" height="350">
+        <br>
+        Example Dataflow for multiple CPSs and services.
+
         <br>
         <br>
+        <h3>Workflow with three steps:</h3>
 
         <div class="list-group">
           <a href="#" class="list-group-item list-group-item-action flex-column align-items-start">
             <div class="d-flex w-100 justify-content-between">
-              <h5 class="mb-1">Digital Twin Messaging Layer</h5>
+              <h5 class="mb-1">Register yourself, your company and system of CPSs and service</h5>
             </div>
-            <p class="mb-1">The Digital Twin Messaging Layer unifies the strengths of Apache Kafka and SensorThings.</p>
+            <p class="mb-1">This is done using this platform.</p>
           </a>
           <a href="#" class="list-group-item list-group-item-action flex-column align-items-start">
             <div class="d-flex w-100 justify-content-between">
-              <h5 class="mb-1">Digital Twin Client</h5>
+              <h5 class="mb-1">Register client applications for your CPSs and services</h5>
             </div>
-            <p class="mb-1">The Digital Twin Client accesses the Messaging Layer easily with only an hand full lines of code.</p>
+            <p class="mb-1">The generated config on the platform can be used by the provided python client
+                in order to publish and consume data from your CPS's and service's application to and from the platform.
+            This allows you to share data between CPSs and services within the same system.</p>
           </a>
           <a href="#" class="list-group-item list-group-item-action flex-column align-items-start">
             <div class="d-flex w-100 justify-content-between">
-              <h5 class="mb-1">Demo Applications</h5>
+              <h5 class="mb-1">Create cross-system streams</h5>
             </div>
-            <p class="mb-1">Demo Applications helps you to get started as fast as possible.</p>
+            <p class="mb-1">Once data is published to your system, you can share your data-streams to any
+                target system. This enables you to create cross-station, cross-company and cross-domain data-streams.</p>
           </a>
         </div>
-    </p>
-    <br>
-    {% if session.logged_in == NULL %}
-        <p class="lead">
-            Get started now!
+
         </p>
-      <a href="/register" class="btn btn-primary btn-lg">Register</a>
-      <a href="/login" class="btn btn-success btn-lg">Login</a>
-    {% endif %}
+        <br>
+        {% if session.logged_in == NULL %}
+            <p class="lead">
+                Get started now!
+            </p>
+          <a href="/register" class="btn btn-primary btn-lg">Register</a>
+          <a href="/login" class="btn btn-success btn-lg">Login</a>
+        {% endif %}
 
         <br>
         <br>
         <br>
-        <h4>Source:</h4>
+        <h4>More information:</h4>
         <p class="lead" >
-            The source code is open source available
-            <a href={{payload.SOURCE_URL}}>here</a>.
+            The documentation, examples and it's source code are available on the project's
+            <a href={{payload.SOURCE_URL}}>repository</a>.
         </p>
   </div>
+<br>
+<br>
 
 {% endblock %}
