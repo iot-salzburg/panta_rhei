@@ -22,7 +22,6 @@ def dashboard():
 
     # Get current user_uuid
     user_uuid = session["user_uuid"]
-    msg_systems = msg_companies = None
 
     # Fetch companies, for which the current user is admin of
     engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
@@ -49,8 +48,6 @@ def dashboard():
     result_proxy = conn.execute(query)
     companies = [dict(c.items()) for c in result_proxy.fetchall()]
     # print("Fetched companies: {}".format(companies))
-    if companies == list():
-        msg_companies = "No companies found."
 
     # fetch dedicated systems
     query = """SELECT sys.uuid AS system_uuid, domain, enterprise, workcenter, station, agent.email AS contact_mail
@@ -60,16 +57,40 @@ def dashboard():
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
     WHERE agent.uuid='{}';""".format(user_uuid)
     result_proxy = conn.execute(query)
-    engine.dispose()
-
     systems = [dict(c.items()) for c in result_proxy.fetchall()]
-    if len(systems) == 0:
-        msg_companies = "No companies found."
 
+    # Fetch clients, for which systems the current user is agent of
+    query = """SELECT sys.uuid AS system_uuid, name, domain, enterprise, workcenter, station, creator.email AS contact_mail
+    FROM clients
+    INNER JOIN users as creator ON creator.uuid=clients.creator_uuid
+    INNER JOIN systems AS sys ON clients.system_uuid=sys.uuid
+    INNER JOIN companies AS com ON sys.company_uuid=com.uuid
+    INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid 
+    INNER JOIN users as agent ON agent.uuid=agf.user_uuid
+    WHERE agent.uuid='{}';""".format(user_uuid)
+    result_proxy = conn.execute(query)
+    clients = [dict(c.items()) for c in result_proxy.fetchall()]
+    # print("Fetched clients: {}".format(clients))
+
+    # Fetch streams, for which systems the current user is agent of
+    query = """
+    SELECT sys.uuid AS system_uuid, streams.name, status, source_system, target_system, creator.email AS contact_mail
+    FROM streams
+    INNER JOIN users as creator ON creator.uuid=streams.creator_uuid
+    INNER JOIN systems AS sys ON streams.system_uuid=sys.uuid
+    INNER JOIN companies AS com ON sys.company_uuid=com.uuid
+    INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid 
+    INNER JOIN users as agent ON agent.uuid=agf.user_uuid
+    WHERE agent.uuid='{}';""".format(user_uuid)
+    result_proxy = conn.execute(query)
+    streams = [dict(c.items()) for c in result_proxy.fetchall()]
+    # print("Fetched streams: {}".format(streams))
+
+    engine.dispose()
     payload = dict()
     payload["SOURCE_URL"] = app.config["SOURCE_URL"]
-    return render_template("dashboard.html", companies=companies, systems=systems, msg_systems=msg_systems,
-                           msg_companies=msg_companies, session=session, payload=payload)
+    return render_template("dashboard.html", companies=companies, systems=systems, clients=clients, streams=streams,
+                           session=session, payload=payload)
 
 
 @home_bp.route('/about')
