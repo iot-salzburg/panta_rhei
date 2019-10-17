@@ -92,27 +92,26 @@
 
   <hr>
   <h2> <small> Admins of the system </small></h2>
-  <table class="table">
+  <table class="table table-striped">
     <tr>
-      <th>First Name</th>
       <th>Name</th>
       <th>Contact</th>
       <th></th>
     </tr>
       {% for agent in agents %}
       <tr>
-        <td>{{agent.first_name}}</td>
-        <td>{{agent.sur_name}}</td>
+        <td>{{agent.first_name}} {{agent.sur_name}}</td>
         <td>{{agent.agent_mail}}</td>
         <td>
             <a class="btn btn-danger float-right" href="/delete_agent_system/{{agent.system_uuid}}/{{agent.agent_uuid}}"
-        data-toggle="tooltip" title="Remove this user as agent from the company."> remove </a>
+        data-toggle="tooltip" title="Remove this user as admin from the company."> remove </a>
         </td>
+      </tr>
     {% endfor %}
   </table>
 
   <a href="/add_agent_system/{{payload.system_uuid}}" class="btn btn-success"
-        data-toggle="tooltip" title="Add a registered user as new agent for this system.">Add Agent</a>
+        data-toggle="tooltip" title="Add a registered user as new admin for this system.">Add Admin</a>
 
   <br>
   <br>
