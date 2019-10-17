@@ -85,11 +85,13 @@ def show_client(system_uuid, client_name):
 
     # if not, agents has at least one item
     payload = clients[0]
+    payload["SOURCE_URL"] = app.config["SOURCE_URL"]
+    bootstrp_srv = app.config.get("KAFKA_BOOTSTRAP_SERVER")
     config = {"client_name": client_name,
               "system": "{}.{}.{}.{}".format(payload["domain"], payload["enterprise"],
                                              payload["workcenter"], payload["station"]),
               "gost_servers": "localhost:8084",
-              "kafka_bootstrap_servers": app.config["KAFKA_BOOTSTRAP_SERVER"]}
+              "kafka_bootstrap_servers": [bootstrp_srv if bootstrp_srv is not None else "localhost:9092"][0]}
 
     return render_template("/clients/show_client.html", payload=payload, config=config)
 

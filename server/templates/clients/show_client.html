@@ -4,11 +4,12 @@
 
   <table class="table">
   <td>
-    <h1> <small> Client: {{payload.name}} </small></h1>
-    <h3> <small> Part of the system:
-      {{payload.domain}}.{{payload.enterprise}}.{{payload.workcenter}}.{{payload.station}} </small></h3>
-    <h3> <small> Metadata Name: {{payload.metadata_name}}</small></h3>
-<!--    <h5> <small> Metadata URI: {{payload.metadata_uri}}</small></h5>-->
+    <h1> <small> Client name: </small>{{payload.name}}</h1>
+    <h3> <small> This is a registered Client application of the system:</small></h3>
+    <h3>{{payload.domain}}.{{payload.enterprise}}.{{payload.workcenter}}.{{payload.station}}</h3>
+    <hr>
+    <h3> <small> Metadata Name:</small> {{payload.metadata_name}}</h3>
+<!--    <h3> <small> Metadata URI:</small> {{payload.metadata_uri}}</h3>-->
     {% if payload.description %}
     {{payload.description}}
     {% endif %}
@@ -19,7 +20,9 @@
         data-toggle="tooltip" title="Delete this client application."> delete client </a>
       <br>
       <br>
-      <h3> <small> Client application config: </small></h3>
+      <h3> <small> Config to connect a CPS or service: </small></h3>
+      Copy & Paste this config into your client application, see <a href={{payload.SOURCE_URL}}>here</a>.
+
       <pre id="json"></pre>
   </td>
   </table>
@@ -37,7 +40,7 @@
   <hr>
   <table class="table table-striped">
     <tr>
-      <th>Name of the Client</th>
+      <th>Client's name</th>
       <th>System</th>
       <th>Company</th>
       <th>Creator's mail</th>

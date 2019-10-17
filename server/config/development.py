@@ -24,3 +24,5 @@ try:
 except:
     HOST_IP = "localhost"
 KAFKA_BOOTSTRAP_SERVER = "{}:9092".format(HOST_IP)
+
+SOURCE_URL = "https://git-service.ait.ac.at/im-IoT4CPS/WP5-lifecycle-mgmt"

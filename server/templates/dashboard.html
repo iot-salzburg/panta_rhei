@@ -2,10 +2,14 @@
 
 {% block body %}
   <table class="table">
-  <td>
+  <tr>
     <h1> Dashboard </h1>
   <h1> <small> Welcome {{session.first_name}} {{session.sur_name}}!</small></h1>
-  </td>
+  </tr>
+    <tr>
+      To get started, find examples and check the open source code,
+      check the project's <a href={{payload.SOURCE_URL}}>git repository</a>.
+    </tr>
   </table>
 
 

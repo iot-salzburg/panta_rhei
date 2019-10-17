@@ -66,8 +66,10 @@ def dashboard():
     if len(systems) == 0:
         msg_companies = "No companies found."
 
+    payload = dict()
+    payload["SOURCE_URL"] = app.config["SOURCE_URL"]
     return render_template("dashboard.html", companies=companies, systems=systems, msg_systems=msg_systems,
-                           msg_companies=msg_companies, session=session)
+                           msg_companies=msg_companies, session=session, payload=payload)
 
 
 @home_bp.route('/about')
@@ -77,7 +79,9 @@ def about():
 
 @home_bp.route('/home')
 def home():
-    return render_template('home.html')
+    payload = dict()
+    payload["SOURCE_URL"] = app.config["SOURCE_URL"]
+    return render_template('home.html', payload=payload)
 
 
 @home_bp.route('/search', methods=['GET', 'POST'])
