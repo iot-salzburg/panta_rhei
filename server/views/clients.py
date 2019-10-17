@@ -194,7 +194,7 @@ def add_client_for_system(system_uuid):
             engine.dispose()
             # Create keyfile based on the given information
             create_keyfile(name=form_name, system_uuid=system_uuid)
-            msg = "The user '{}' was added to system '{}' as client.".format(form_name, system_name)
+            msg = "A client application with name '{}' was registered for the system '{}'.".format(form_name, system_name)
             app.logger.info(msg)
             flash(msg, "success")
             return redirect(url_for("client.show_client", system_uuid=system_uuid, client_name=form_name))

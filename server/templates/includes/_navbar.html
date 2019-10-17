@@ -19,7 +19,7 @@
         <a class="nav-link active" href="/clients">clients</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link active" href="/streamhub">streamhub</a>
+        <a class="nav-link active" href="/streamhub">streams</a>
       </li>
     {% endif %}
 
@@ -36,6 +36,9 @@
 <!-- Right side -->
     <ul class="navbar-nav justify-content-center">
       {% if session.logged_in %}
+      <li class="nav-item">
+        <a class="nav-link">{{session.first_name}}</a>
+      </li>
       <li class="nav-item">
         <a class="nav-link" href="/logout">logout</a>
       </li>

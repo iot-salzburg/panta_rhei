@@ -212,14 +212,15 @@ def add_system_for_company(company_uuid):
             transaction.commit()
             app.logger.info("The system '{}' was created.".format(system_name))
             flash("The system '{}' was created.".format(system_name), "success")
-            return redirect(url_for("company.show_company", company_uuid=company_uuid))
-        except:
+            return redirect(url_for("system.show_system", system_uuid=system_uuid))
+        except Exception as e:
             transaction.rollback()
             app.logger.warning("The system '{}' couldn't created.".format(system_name))
+            app.logger.debug("Error: {}".format(e))
             flash("The system '{}' couldn't created.".format(system_name), "danger")
-            return render_template("login.html")
+            return render_template("/auth/login.html")
 
-    return render_template("/systems/add_system.html", form=form, payload=payload)
+    return render_template("systems/add_system.html", form=form, payload=payload)
 
 
 # Delete system
@@ -333,7 +334,7 @@ def add_agent_system(system_uuid):
     if permitted_systems == list():
         engine.dispose()
         flash("You are not permitted to add an agent for this system.", "danger")
-        return redirect(url_for("show_system", system_uuid=system_uuid))
+        return redirect(url_for("system.show_system", system_uuid=system_uuid))
 
     payload = permitted_systems[0]
 
