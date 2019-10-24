@@ -120,6 +120,7 @@ def add_company():
             query = db.insert(app.config["tables"]["companies"])
             values_list = [{"uuid": company_uuid,
                             "domain": form_domain,
+                            "datetime": get_datetime(),
                             "enterprise": form_enterprise,
                             "description": form.description.data}]
             conn.execute(query, values_list)
