@@ -21,7 +21,7 @@ def show_all_companies():
     conn = engine.connect()
     query = """SELECT company_uuid, domain, enterprise, creator.email AS contact_mail
     FROM companies AS com 
-    INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
+    INNER JOIN is_admin_of_com AS aof ON com.uuid=aof.company_uuid 
     INNER JOIN users as admin ON admin.uuid=aof.user_uuid
     INNER JOIN users as creator ON creator.uuid=aof.creator_uuid
     WHERE admin.uuid='{}';""".format(user_uuid)
@@ -48,7 +48,7 @@ def show_company(company_uuid):
     SELECT company_uuid, domain, enterprise, description, admin.uuid AS admin_uuid, admin.first_name, admin.sur_name, 
     admin.email, creator.email AS creator_mail, com.datetime AS com_datetime
     FROM companies AS com 
-    INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
+    INNER JOIN is_admin_of_com AS aof ON com.uuid=aof.company_uuid 
     INNER JOIN users as admin ON admin.uuid=aof.user_uuid 
     INNER JOIN users as creator ON creator.uuid=aof.creator_uuid 
     WHERE company_uuid='{}';""".format(company_uuid)
@@ -129,8 +129,8 @@ def add_company():
             flash("The company '{}.{}' already exists.".format(form_domain, form_enterprise), "danger")
             return redirect(url_for("company.show_all_companies"))
 
-        # Create new is_admin_of instance
-        query = db.insert(app.config["tables"]["is_admin_of"])
+        # Create new is_admin_of_com instance
+        query = db.insert(app.config["tables"]["is_admin_of_com"])
         values_list = [{"user_uuid": user_uuid,
                         "company_uuid": company_uuid,
                         "creator_uuid": user_uuid,
@@ -166,7 +166,7 @@ def delete_company(company_uuid):
     # Check if you are admin of this company
     query = """SELECT company_uuid, domain, enterprise, user_uuid
         FROM companies AS com 
-        INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
+        INNER JOIN is_admin_of_com AS aof ON com.uuid=aof.company_uuid 
         WHERE aof.user_uuid='{}'
         AND aof.company_uuid='{}';""".format(user_uuid, company_uuid)
     result_proxy = conn.execute(query)
@@ -179,7 +179,7 @@ def delete_company(company_uuid):
 
     # Check if you are the last admin of the company
     query = """SELECT aof.company_uuid, domain, enterprise, user_uuid
-        FROM companies AS com INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
+        FROM companies AS com INNER JOIN is_admin_of_com AS aof ON com.uuid=aof.company_uuid 
         WHERE aof.company_uuid='{}';""".format(company_uuid)
     result_proxy_admin = conn.execute(query)
 
@@ -205,8 +205,8 @@ def delete_company(company_uuid):
 
     transaction = conn.begin()
     try:
-        # Delete new is_admin_of instance
-        query = """DELETE FROM is_admin_of
+        # Delete new is_admin_of_com instance
+        query = """DELETE FROM is_admin_of_com
             WHERE company_uuid='{}';""".format(company_uuid)
         conn.execute(query)
         # Delete company
@@ -246,7 +246,7 @@ def add_admin_company(company_uuid):
     # Check if you are admin of this company
     query = """SELECT company_uuid, domain, enterprise, creator.email AS contact_mail
             FROM companies AS com 
-            INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
+            INNER JOIN is_admin_of_com AS aof ON com.uuid=aof.company_uuid 
             INNER JOIN users as admin ON admin.uuid=aof.user_uuid
             INNER JOIN users as creator ON creator.uuid=aof.creator_uuid
             WHERE admin.uuid='{}' 
@@ -285,7 +285,7 @@ def add_admin_company(company_uuid):
         # Check if the user is already admin of this company
         query = """SELECT company_uuid, user_uuid
         FROM companies AS com 
-        INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
+        INNER JOIN is_admin_of_com AS aof ON com.uuid=aof.company_uuid 
         WHERE aof.user_uuid='{}' AND com.uuid='{}';""".format(user["uuid"], company_uuid)
         result_proxy = conn.execute(query)
         if result_proxy.fetchall() != list():
@@ -294,8 +294,8 @@ def add_admin_company(company_uuid):
             return render_template("/companies/add_admin_company.html", form=form, domain=domain,
                                    enterprise=enterprise)
 
-        # Create new is_admin_of instance
-        query = db.insert(app.config["tables"]["is_admin_of"])
+        # Create new is_admin_of_com instance
+        query = db.insert(app.config["tables"]["is_admin_of_com"])
         values_list = [{"user_uuid": user["uuid"],
                         "company_uuid": selected_company["company_uuid"],
                         "creator_uuid": user_uuid,
@@ -324,7 +324,7 @@ def delete_admin_company(company_uuid, admin_uuid):
     # Check if you are admin of this company
     query = """SELECT company_uuid, domain, enterprise, creator.email AS contact_mail
         FROM companies AS com 
-        INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
+        INNER JOIN is_admin_of_com AS aof ON com.uuid=aof.company_uuid 
         INNER JOIN users as admin ON admin.uuid=aof.user_uuid
         INNER JOIN users as creator ON creator.uuid=aof.creator_uuid
         WHERE admin.uuid='{}'
@@ -346,7 +346,7 @@ def delete_admin_company(company_uuid, admin_uuid):
         # get info for the deleted user
         query = """SELECT company_uuid, domain, enterprise, admin.email AS admin_email, admin.uuid AS admin_uuid
                 FROM companies AS com 
-                INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
+                INNER JOIN is_admin_of_com AS aof ON com.uuid=aof.company_uuid 
                 INNER JOIN users as admin ON admin.uuid=aof.user_uuid
                 WHERE admin.uuid='{}'
                 AND aof.company_uuid='{}';""".format(admin_uuid, company_uuid)
@@ -359,8 +359,8 @@ def delete_admin_company(company_uuid, admin_uuid):
 
         else:
             del_user = del_users[0]
-            # Delete new is_admin_of instance
-            query = """DELETE FROM is_admin_of
+            # Delete new is_admin_of_com instance
+            query = """DELETE FROM is_admin_of_com
                 WHERE user_uuid='{}'
                 AND company_uuid='{}';""".format(admin_uuid, company_uuid)
             conn.execute(query)

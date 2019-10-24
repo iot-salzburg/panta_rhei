@@ -26,7 +26,7 @@ def show_all_systems():
     query = """SELECT sys.uuid AS system_uuid, domain, enterprise, workcenter, station, agent.email AS contact_mail
     FROM systems AS sys
     INNER JOIN companies AS com ON sys.company_uuid=com.uuid
-    INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid 
+    INNER JOIN is_admin_of_sys AS agf ON sys.uuid=agf.system_uuid 
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
     WHERE agent.uuid='{}';""".format(user_uuid)
     result_proxy = conn.execute(query)
@@ -51,7 +51,7 @@ def show_system(system_uuid):
     agent.uuid AS agent_uuid, agent.first_name, agent.sur_name, agent.email AS agent_mail, creator.email AS creator_mail
     FROM systems AS sys
     INNER JOIN companies AS com ON sys.company_uuid=com.uuid
-    INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid 
+    INNER JOIN is_admin_of_sys AS agf ON sys.uuid=agf.system_uuid 
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
     INNER JOIN users as creator ON creator.uuid=agf.creator_uuid 
     WHERE sys.uuid='{}';""".format(system_uuid)
@@ -77,7 +77,7 @@ def show_system(system_uuid):
     INNER JOIN users as creator ON creator.uuid=clients.creator_uuid
     INNER JOIN systems AS sys ON clients.system_uuid=sys.uuid
     INNER JOIN companies AS com ON sys.company_uuid=com.uuid
-    INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid 
+    INNER JOIN is_admin_of_sys AS agf ON sys.uuid=agf.system_uuid 
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
     WHERE agent.uuid='{}'
     AND sys.uuid='{}';""".format(user_uuid, system_uuid)
@@ -94,7 +94,7 @@ def show_system(system_uuid):
     INNER JOIN users as creator ON creator.uuid=streams.creator_uuid
     INNER JOIN systems AS sys ON streams.system_uuid=sys.uuid
     INNER JOIN companies AS com ON sys.company_uuid=com.uuid
-    INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid 
+    INNER JOIN is_admin_of_sys AS agf ON sys.uuid=agf.system_uuid 
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
     WHERE agent.uuid='{}';""".format(user_uuid)
     result_proxy = conn.execute(query)
@@ -236,7 +236,7 @@ def delete_system(system_uuid):
     query = """SELECT company_uuid, domain, enterprise, workcenter, station
         FROM companies AS com
         INNER JOIN systems AS sys ON com.uuid=sys.company_uuid
-        INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid
+        INNER JOIN is_admin_of_sys AS agf ON sys.uuid=agf.system_uuid
         WHERE agf.user_uuid='{}'
         AND agf.system_uuid='{}';""".format(user_uuid, system_uuid)
     result_proxy = conn.execute(query)
@@ -251,7 +251,7 @@ def delete_system(system_uuid):
     query = """SELECT company_uuid, domain, enterprise, workcenter, station
         FROM companies AS com
         INNER JOIN systems AS sys ON com.uuid=sys.company_uuid
-        INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid
+        INNER JOIN is_admin_of_sys AS agf ON sys.uuid=agf.system_uuid
         AND agf.system_uuid='{}';""".format(system_uuid)
     result_proxy = conn.execute(query)
 
@@ -280,7 +280,7 @@ def delete_system(system_uuid):
     transaction = conn.begin()
     try:
         # Delete new is_admin_of instance
-        query = """DELETE FROM is_agent_of
+        query = """DELETE FROM is_admin_of_sys
             WHERE system_uuid='{}';""".format(system_uuid)
         conn.execute(query)
         # Delete system
@@ -325,7 +325,7 @@ def add_agent_system(system_uuid):
     query = """SELECT company_uuid, system_uuid, domain, enterprise, workcenter, station
         FROM companies AS com
         INNER JOIN systems AS sys ON com.uuid=sys.company_uuid
-        INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid
+        INNER JOIN is_admin_of_sys AS agf ON sys.uuid=agf.system_uuid
         WHERE agf.user_uuid='{}'
         AND agf.system_uuid='{}';""".format(user_uuid, system_uuid)
     result_proxy = conn.execute(query)
@@ -353,7 +353,7 @@ def add_agent_system(system_uuid):
 
         user = found_users[0]
         # Check if the user is already agent of this system
-        query = """SELECT system_uuid, user_uuid FROM is_agent_of
+        query = """SELECT system_uuid, user_uuid FROM is_admin_of_sys
         WHERE user_uuid='{}' AND system_uuid='{}';""".format(user["uuid"], system_uuid)
         result_proxy = conn.execute(query)
         if result_proxy.fetchall() != list():
@@ -361,8 +361,8 @@ def add_agent_system(system_uuid):
             flash("This user is already agent of this system.", "danger")
             return render_template("/systems/add_agent_system.html", form=form, payload=payload)
 
-        # Create new is_agent_of instance
-        query = db.insert(app.config["tables"]["is_agent_of"])
+        # Create new is_admin_of_sys instance
+        query = db.insert(app.config["tables"]["is_admin_of_sys"])
         values_list = [{"user_uuid": user["uuid"],
                         "system_uuid": payload["system_uuid"],
                         "creator_uuid": user_uuid,
@@ -389,7 +389,7 @@ def delete_agent_system(system_uuid, agent_uuid):
     query = """SELECT company_uuid, system_uuid, domain, enterprise, workcenter, station
             FROM companies AS com
             INNER JOIN systems AS sys ON com.uuid=sys.company_uuid
-            INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid
+            INNER JOIN is_admin_of_sys AS agf ON sys.uuid=agf.system_uuid
             WHERE agf.user_uuid='{}'
             AND agf.system_uuid='{}';""".format(user_uuid, system_uuid)
     result_proxy = conn.execute(query)
@@ -410,7 +410,7 @@ def delete_agent_system(system_uuid, agent_uuid):
     agent.uuid AS agent_uuid 
     FROM companies AS com
     INNER JOIN systems AS sys ON com.uuid=sys.company_uuid
-    INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid
+    INNER JOIN is_admin_of_sys AS agf ON sys.uuid=agf.system_uuid
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
     WHERE agent.uuid='{}'
     AND agf.system_uuid='{}';""".format(agent_uuid, system_uuid)
@@ -423,8 +423,8 @@ def delete_agent_system(system_uuid, agent_uuid):
         return redirect(url_for("company.show_all_systems"))
 
     del_user = del_users[0]
-    # Delete new is_agent_of instance
-    query = """DELETE FROM is_agent_of
+    # Delete new is_admin_of_sys instance
+    query = """DELETE FROM is_admin_of_sys
         WHERE user_uuid='{}'
         AND system_uuid='{}';""".format(agent_uuid, system_uuid)
     conn.execute(query)

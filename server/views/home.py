@@ -41,7 +41,7 @@ def dashboard():
     # fetch dedicated companies
     query = """SELECT company_uuid, domain, enterprise, creator.email AS contact_mail
     FROM companies AS com 
-    INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
+    INNER JOIN is_admin_of_com AS aof ON com.uuid=aof.company_uuid 
     INNER JOIN users as admin ON admin.uuid=aof.user_uuid
     INNER JOIN users as creator ON creator.uuid=aof.creator_uuid
     WHERE admin.uuid='{}';""".format(user_uuid)
@@ -53,7 +53,7 @@ def dashboard():
     query = """SELECT sys.uuid AS system_uuid, domain, enterprise, workcenter, station, agent.email AS contact_mail
     FROM systems AS sys
     INNER JOIN companies AS com ON sys.company_uuid=com.uuid
-    INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid 
+    INNER JOIN is_admin_of_sys AS agf ON sys.uuid=agf.system_uuid 
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
     WHERE agent.uuid='{}';""".format(user_uuid)
     result_proxy = conn.execute(query)
@@ -65,7 +65,7 @@ def dashboard():
     INNER JOIN users as creator ON creator.uuid=clients.creator_uuid
     INNER JOIN systems AS sys ON clients.system_uuid=sys.uuid
     INNER JOIN companies AS com ON sys.company_uuid=com.uuid
-    INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid 
+    INNER JOIN is_admin_of_sys AS agf ON sys.uuid=agf.system_uuid 
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
     WHERE agent.uuid='{}';""".format(user_uuid)
     result_proxy = conn.execute(query)
@@ -79,7 +79,7 @@ def dashboard():
     INNER JOIN users as creator ON creator.uuid=streams.creator_uuid
     INNER JOIN systems AS sys ON streams.system_uuid=sys.uuid
     INNER JOIN companies AS com ON sys.company_uuid=com.uuid
-    INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid 
+    INNER JOIN is_admin_of_sys AS agf ON sys.uuid=agf.system_uuid 
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
     WHERE agent.uuid='{}';""".format(user_uuid)
     result_proxy = conn.execute(query)
@@ -123,7 +123,7 @@ def search():
     # fetch dedicated companies
     query = """SELECT company_uuid, com.*, creator.email AS contact_mail
     FROM companies AS com 
-    INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
+    INNER JOIN is_admin_of_com AS aof ON com.uuid=aof.company_uuid 
     INNER JOIN users as admin ON admin.uuid=aof.user_uuid
     INNER JOIN users as creator ON creator.uuid=aof.creator_uuid
     WHERE admin.uuid='{}';""".format(user_uuid)
@@ -139,7 +139,7 @@ def search():
     query = """SELECT sys.uuid AS system_uuid, domain, enterprise, sys.*, agent.email AS contact_mail
     FROM systems AS sys
     INNER JOIN companies AS com ON sys.company_uuid=com.uuid
-    INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid 
+    INNER JOIN is_admin_of_sys AS agf ON sys.uuid=agf.system_uuid 
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
     WHERE agent.uuid='{}';""".format(user_uuid)
     result_proxy = conn.execute(query)
@@ -156,7 +156,7 @@ def search():
     INNER JOIN users as creator ON creator.uuid=clients.creator_uuid
     INNER JOIN systems AS sys ON clients.system_uuid=sys.uuid
     INNER JOIN companies AS com ON sys.company_uuid=com.uuid
-    INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid 
+    INNER JOIN is_admin_of_sys AS agf ON sys.uuid=agf.system_uuid 
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
     WHERE agent.uuid='{}';""".format(user_uuid)
     result_proxy = conn.execute(query)
@@ -173,7 +173,7 @@ def search():
     INNER JOIN users as creator ON creator.uuid=streams.creator_uuid
     INNER JOIN systems AS sys ON streams.system_uuid=sys.uuid
     INNER JOIN companies AS com ON sys.company_uuid=com.uuid
-    INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid 
+    INNER JOIN is_admin_of_sys AS agf ON sys.uuid=agf.system_uuid 
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
     WHERE agent.uuid='{}';""".format(user_uuid)
     result_proxy = conn.execute(query)

@@ -27,7 +27,7 @@ def show_all_streams():
     INNER JOIN users as creator ON creator.uuid=streams.creator_uuid
     INNER JOIN systems AS sys ON streams.system_uuid=sys.uuid
     INNER JOIN companies AS com ON sys.company_uuid=com.uuid
-    INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid 
+    INNER JOIN is_admin_of_sys AS agf ON sys.uuid=agf.system_uuid 
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
     WHERE agent.uuid='{}';""".format(user_uuid)
     result_proxy = conn.execute(query)
@@ -117,7 +117,7 @@ def add_stream_for_system(system_uuid):
     SELECT sys.uuid AS system_uuid, domain, enterprise, workcenter, station, agent.uuid AS agent_uuid
     FROM systems AS sys
     INNER JOIN companies AS com ON sys.company_uuid=com.uuid
-    INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid 
+    INNER JOIN is_admin_of_sys AS agf ON sys.uuid=agf.system_uuid 
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
     WHERE agent.uuid='{}' AND sys.uuid='{}';""".format(user_uuid, system_uuid)
     result_proxy = conn.execute(query)
@@ -194,7 +194,7 @@ def delete_stream(system_uuid, stream_name):
     INNER JOIN users as creator ON creator.uuid=streams.creator_uuid
     INNER JOIN systems AS sys ON streams.system_uuid=sys.uuid
     INNER JOIN companies AS com ON sys.company_uuid=com.uuid
-    INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid 
+    INNER JOIN is_admin_of_sys AS agf ON sys.uuid=agf.system_uuid 
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
     WHERE agent.uuid='{}'
     AND sys.uuid='{}';""".format(user_uuid, system_uuid)
@@ -240,7 +240,7 @@ def get_stream_payload(user_uuid, system_uuid, stream_name):
     INNER JOIN users as creator ON creator.uuid=streams.creator_uuid
     INNER JOIN systems AS sys ON streams.system_uuid=sys.uuid
     INNER JOIN companies AS com ON sys.company_uuid=com.uuid
-    INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid 
+    INNER JOIN is_admin_of_sys AS agf ON sys.uuid=agf.system_uuid 
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
     WHERE sys.uuid='{}' AND streams.name='{}';""".format(system_uuid, stream_name)
     result_proxy = conn.execute(query)

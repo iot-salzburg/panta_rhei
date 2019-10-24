@@ -30,8 +30,8 @@ def drop_tables():
     DROP TABLE IF EXISTS systems CASCADE;
     DROP TABLE IF EXISTS clients CASCADE;
     DROP TABLE IF EXISTS streams CASCADE;
-    DROP TABLE IF EXISTS is_admin_of CASCADE;
-    DROP TABLE IF EXISTS is_agent_of CASCADE;
+    DROP TABLE IF EXISTS is_admin_of_com CASCADE;
+    DROP TABLE IF EXISTS is_admin_of_sys CASCADE;
     """
     result_proxy = conn.execute(query)
     engine.dispose()
@@ -71,15 +71,15 @@ def create_tables(app):
         db.Column('datetime', db.DateTime, nullable=True),
         db.Column('description', db.VARCHAR(1024), nullable=True)
     )
-    app.config["tables"]["is_admin_of"] = db.Table(
-        'is_admin_of', app.config['metadata'],
+    app.config["tables"]["is_admin_of_com"] = db.Table(
+        'is_admin_of_com', app.config['metadata'],
         db.Column('user_uuid', db.ForeignKey("users.uuid"), primary_key=True),
         db.Column('company_uuid', db.ForeignKey('companies.uuid'), primary_key=True),
         db.Column('creator_uuid', db.ForeignKey("users.uuid"), nullable=False),
         db.Column('datetime', db.DateTime, nullable=True)
     )
-    app.config["tables"]["is_agent_of"] = db.Table(
-        'is_agent_of', app.config['metadata'],
+    app.config["tables"]["is_admin_of_sys"] = db.Table(
+        'is_admin_of_sys', app.config['metadata'],
         db.Column('user_uuid', db.ForeignKey("users.uuid"), primary_key=True),
         db.Column('system_uuid', db.ForeignKey('systems.uuid'), primary_key=True),
         db.Column('creator_uuid', db.ForeignKey("users.uuid"), nullable=False),
@@ -189,8 +189,8 @@ def insert_sample():
          'datetime': get_datetime()}]
     ResultProxy = conn.execute(query, values_list)
 
-    # Insert is_admin_of
-    query = db.insert(app.config["tables"]["is_admin_of"])
+    # Insert is_admin_of_com
+    query = db.insert(app.config["tables"]["is_admin_of_com"])
     values_list = [
         {'user_uuid': uuid_sue,
          'company_uuid': uuid_icecars,
@@ -232,8 +232,8 @@ def insert_sample():
          'datetime': get_datetime()}]
     ResultProxy = conn.execute(query, values_list)
 
-    # Insert is_agent_of
-    query = db.insert(app.config["tables"]["is_agent_of"])
+    # Insert is_admin_of_sys
+    query = db.insert(app.config["tables"]["is_admin_of_sys"])
     values_list = [
         {'user_uuid': uuid_sue,
          'system_uuid': uuid_carfleet,
