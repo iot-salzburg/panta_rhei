@@ -2,14 +2,19 @@
 
 {% block body %}
   <table class="table">
-  <td>
+  <tr>
     <h1> Dashboard </h1>
   <h1> <small> Welcome {{session.first_name}} {{session.sur_name}}!</small></h1>
-  </td>
+  </tr>
+    <tr>
+      To get started, find examples and check the open source code,
+      check the project's <a href={{payload.SOURCE_URL}}>git repository</a>.
+    </tr>
   </table>
 
 
-  <h1> <small> List of dedicated companies </small></h1>
+  <h1> <small> Your companies </small></h1>
+  A list of companies that you are admin of:
   <hr>
   <table class="table table-striped">
     <tr>
@@ -46,7 +51,8 @@
 <!-------------------------------------------------------------------------------------------------------->
 
 <!--  <h1>Dashboard <small> Welcome {{session.first_name}} {{session.sur_name}}</small></h1>-->
-  <h1> <small> List of dedicated systems </small></h1>
+  <h1> <small>Your systems </small></h1>
+A list of systems of CPSs and services that you are admin of:
   <hr>
   <table class="table table-striped">
     <tr>
@@ -77,6 +83,70 @@
     {% endif %}
   <a class="btn btn-success" href="/add_system"
       data-toggle="tooltip" title="Add a new system to this company."> Add System</a>
+
+  <br>
+  <br>
+<!-------------------------------------------------------------------------------------------------------->
+
+
+  <h1> <small> Your client applications </small></h1>
+
+A list of client applications of whose dedicated system you are admin of:
+  <hr>
+  <table class="table table-striped">
+    <tr>
+      <th>Name</th>
+      <th>Company</th>
+      <th>System</th>
+      <th>Creator</th>
+      <th></th>
+    </tr>
+      {% for client in clients %}
+      <tr>
+        <td><a href="show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-block">{{client.name}}</a></td>
+        <td><a href="show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-block">{{client.domain}}.{{client.enterprise}}</a></td>
+        <td><a href="show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-block">{{client.workcenter}}.{{client.station}}</a></td>
+        <td><a href="show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-block">{{client.contact_mail}}</a></td>
+<!--        <td>{{client.contact_mail}}</td>-->
+        <td><a href="show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-info float-right"
+                data-toggle="tooltip" title="Manage this client application.">manage</a></td>
+      </tr>
+    {% endfor %}
+  </table>
+  <a class="btn btn-success" href="/add_client"
+      data-toggle="tooltip" title="Add a new client application to this system."> Add Client</a>
+
+  <br>
+  <br>
+<!-------------------------------------------------------------------------------------------------------->
+
+  <h1> <small> Your streams </small></h1>
+A list of streams of whose source system you are admin of:
+  <hr>
+  <table class="table table-striped">
+    <tr>
+      <th>Name</th>
+      <th>Source System</th>
+      <th>Target System</th>
+      <th>Status</th>
+      <th>Creator</th>
+      <th></th>
+    </tr>
+      {% for stream in streams %}
+      <tr>
+        <td><a href="show_stream/{{stream.system_uuid}}/{{stream.name}}" class="btn btn-block">{{stream.name}}</a></td>
+        <td><a href="show_stream/{{stream.system_uuid}}/{{stream.name}}" class="btn btn-block">{{stream.source_system}}</a></td>
+        <td><a href="show_stream/{{stream.system_uuid}}/{{stream.name}}" class="btn btn-block">{{stream.target_system}}</a></td>
+        <td><a href="show_stream/{{stream.system_uuid}}/{{stream.name}}" class="btn btn-block">{{stream.status}}</a></td>
+        <td><a href="show_stream/{{stream.system_uuid}}/{{stream.name}}" class="btn btn-block">{{stream.contact_mail}}</a></td>
+
+        <td><a href="show_stream/{{stream.system_uuid}}/{{stream.name}}" class="btn btn-info float-right"
+                data-toggle="tooltip" title="Manage this stream.">manage</a></td>
+      </tr>
+    {% endfor %}
+  </table>
+  <a class="btn btn-success" href="/add_stream"
+      data-toggle="tooltip" title="Add a new stream application to this system."> Add Stream</a>
 
   <br>
   <br>

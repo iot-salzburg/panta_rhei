@@ -4,11 +4,13 @@
 
   <table class="table">
   <td>
-    <h1> <small> System: {{payload.domain}}.{{payload.enterprise}}.{{payload.workcenter}}.{{payload.station}} </small></h1>
+    <h1> <small> System identifier: </small>
+      {{payload.domain}}.{{payload.enterprise}}.{{payload.workcenter}}.{{payload.station}}</h1>
     <h3> <small> Part of the company: {{payload.domain}}.{{payload.enterprise}} </small></h3>
     {% if payload.creator_mail %}
     <h3> <small> Created by {{payload.creator_mail}} at {{payload.sys_datetime}}. </small></h3>
     {% endif %}
+
     {% if payload.description %}
     {{payload.description}}
     {% endif %}
@@ -20,36 +22,11 @@
   </td>
   </table>
 
-  <hr>
-  <h2> <small> Agents </small></h2>
-  <table class="table table-striped">
-    <tr>
-      <th>First Name</th>
-      <th>Name</th>
-      <th>Contact</th>
-      <th></th>
-    </tr>
-      {% for agent in agents %}
-      <tr>
-        <td>{{agent.first_name}}</td>
-        <td>{{agent.sur_name}}</td>
-        <td>{{agent.agent_mail}}</td>
-        <td>
-            <a class="btn btn-danger float-right" href="/delete_agent_system/{{agent.system_uuid}}/{{agent.agent_uuid}}"
-        data-toggle="tooltip" title="Remove this user as agent from the company."> remove </a>
-        </td>
-    {% endfor %}
-  </table>
-
-  <a href="/add_agent_system/{{payload.system_uuid}}" class="btn btn-success"
-        data-toggle="tooltip" title="Add a registered user as new agent for this system.">Add Agent</a>
-
-  <br>
-  <br>
 <!---------------------------------------------------------------------------------------------->
 
   <hr>
   <h2> <small> Client applications </small></h2>
+  For connecting CPSs and services:
   <table class="table table-striped">
     <tr>
       <th>Name</th>
@@ -81,7 +58,8 @@
 <!---------------------------------------------------------------------------------------------->
 
   <hr>
-  <h1> <small> Streams </small></h1>
+  <h2> <small>Stream applications</small></h2>
+  For sharing data from this system to another:
   <table class="table table-striped">
     <tr>
       <th>Name</th>
@@ -108,6 +86,32 @@
   <a class="btn btn-success" href="/add_stream/{{payload.system_uuid}}"
       data-toggle="tooltip" title="Add a new stream application to this system."> Add Stream</a>
 
+  <br>
+  <br>
+<!---------------------------------------------------------------------------------------------->
+
+  <hr>
+  <h2> <small> Admins of the system </small></h2>
+  <table class="table table-striped">
+    <tr>
+      <th>Name</th>
+      <th>Contact</th>
+      <th></th>
+    </tr>
+      {% for agent in agents %}
+      <tr>
+        <td>{{agent.first_name}} {{agent.sur_name}}</td>
+        <td>{{agent.agent_mail}}</td>
+        <td>
+            <a class="btn btn-danger float-right" href="/delete_agent_system/{{agent.system_uuid}}/{{agent.agent_uuid}}"
+        data-toggle="tooltip" title="Remove this user as admin from the company."> remove </a>
+        </td>
+      </tr>
+    {% endfor %}
+  </table>
+
+  <a href="/add_agent_system/{{payload.system_uuid}}" class="btn btn-success"
+        data-toggle="tooltip" title="Add a registered user as new admin for this system.">Add Admin</a>
 
   <br>
   <br>

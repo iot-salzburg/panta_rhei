@@ -3,7 +3,8 @@
 {% block body %}
   <table class="table">
   <td>
-    <h1> <small> Company: {{payload.domain}}.{{payload.enterprise}} </small></h1>
+    <h1> <small> Company identifier: </small>{{payload.domain}}.{{payload.enterprise}}</h1>
+
     {% if payload.creator_mail %}
     <h3> <small> Created by {{payload.creator_mail}} at {{payload.com_datetime}}. </small></h3>
     {% endif %}
@@ -20,7 +21,7 @@
   </table>
 
   <hr>
-  <h2> <small> Systems </small></h2>
+  <h2> <small>Systems for CPSs and services within the company </small></h2>
   <table class="table table-striped">
     <tr>
       <th>uuid</th>
@@ -54,7 +55,7 @@
 <!-------------------------------------------------------------------------------------------->
 
   <hr>
-  <h2> <small> Admins</small></h2>
+  <h2> <small>Admins of the company</small></h2>
   <table class="table table-striped">
     <tr>
       <th>First Name</th>

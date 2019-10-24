@@ -14,7 +14,7 @@ PLATFORM_TOPIC = "platform.logger"
 
 def check_kafka(app):
     if not app.config["KAFKA_BOOTSTRAP_SERVER"]:
-        app.logger.warning("The connection to Kafka is disabled. Check the '.env' file!")
+        app.logger.info("The connection to Kafka is disabled. Check the '.env' file!")
         return True
     kac = kafka_admin.AdminClient({'bootstrap.servers': app.config["KAFKA_BOOTSTRAP_SERVER"]})
     try:

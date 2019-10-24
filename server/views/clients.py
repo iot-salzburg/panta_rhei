@@ -27,7 +27,7 @@ def show_all_clients():
     INNER JOIN users as creator ON creator.uuid=clients.creator_uuid
     INNER JOIN systems AS sys ON clients.system_uuid=sys.uuid
     INNER JOIN companies AS com ON sys.company_uuid=com.uuid
-    INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid 
+    INNER JOIN is_admin_of_sys AS agf ON sys.uuid=agf.system_uuid 
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
     WHERE agent.uuid='{}';""".format(user_uuid)
     result_proxy = conn.execute(query)
@@ -54,7 +54,7 @@ def show_client(system_uuid, client_name):
     INNER JOIN users as creator ON creator.uuid=clients.creator_uuid
     INNER JOIN systems AS sys ON clients.system_uuid=sys.uuid
     INNER JOIN companies AS com ON sys.company_uuid=com.uuid
-    INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid 
+    INNER JOIN is_admin_of_sys AS agf ON sys.uuid=agf.system_uuid 
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
     WHERE sys.uuid='{}' AND clients.name='{}';""".format(system_uuid, client_name)
     result_proxy = conn.execute(query)
@@ -85,11 +85,13 @@ def show_client(system_uuid, client_name):
 
     # if not, agents has at least one item
     payload = clients[0]
+    payload["SOURCE_URL"] = app.config["SOURCE_URL"]
+    bootstrp_srv = app.config.get("KAFKA_BOOTSTRAP_SERVER")
     config = {"client_name": client_name,
               "system": "{}.{}.{}.{}".format(payload["domain"], payload["enterprise"],
                                              payload["workcenter"], payload["station"]),
               "gost_servers": "localhost:8084",
-              "kafka_bootstrap_servers": app.config["KAFKA_BOOTSTRAP_SERVER"]}
+              "kafka_bootstrap_servers": [bootstrp_srv if bootstrp_srv is not None else "localhost:9092"][0]}
 
     return render_template("/clients/show_client.html", payload=payload, config=config)
 
@@ -152,7 +154,7 @@ def add_client_for_system(system_uuid):
     query = """SELECT sys.uuid AS system_uuid, domain, enterprise, workcenter, station, agent.uuid AS agent_uuid
     FROM systems AS sys
     INNER JOIN companies AS com ON sys.company_uuid=com.uuid
-    INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid 
+    INNER JOIN is_admin_of_sys AS agf ON sys.uuid=agf.system_uuid 
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
     WHERE agent.uuid='{}' AND sys.uuid='{}';""".format(user_uuid, system_uuid)
     result_proxy = conn.execute(query)
@@ -194,7 +196,7 @@ def add_client_for_system(system_uuid):
             engine.dispose()
             # Create keyfile based on the given information
             create_keyfile(name=form_name, system_uuid=system_uuid)
-            msg = "The user '{}' was added to system '{}' as client.".format(form_name, system_name)
+            msg = "A client application with name '{}' was registered for the system '{}'.".format(form_name, system_name)
             app.logger.info(msg)
             flash(msg, "success")
             return redirect(url_for("client.show_client", system_uuid=system_uuid, client_name=form_name))
@@ -224,7 +226,7 @@ def delete_client(system_uuid, client_name):
     INNER JOIN users as creator ON creator.uuid=clients.creator_uuid
     INNER JOIN systems AS sys ON clients.system_uuid=sys.uuid
     INNER JOIN companies AS com ON sys.company_uuid=com.uuid
-    INNER JOIN is_agent_of AS agf ON sys.uuid=agf.system_uuid 
+    INNER JOIN is_admin_of_sys AS agf ON sys.uuid=agf.system_uuid 
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
     WHERE agent.uuid='{}'
     AND sys.uuid='{}';""".format(user_uuid, system_uuid)

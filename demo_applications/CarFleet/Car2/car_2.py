@@ -32,6 +32,8 @@ SUBSCRIPTIONS = os.path.join(dirname, "subscriptions.json")
 MAPPINGS = os.path.join(dirname, "ds-mappings.json")
 
 # Set the configs, create a new Digital Twin Instance and register file structure
+# This config is generated when registering a client application on the platform
+# Make sure that Kafka and GOST are up and running before starting the platform
 config = {"client_name": "car_2",
           "system": "cz.icecars.iot-iot4cps-wp5.CarFleet",
           "gost_servers": "localhost:8084",

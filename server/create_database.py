@@ -30,8 +30,8 @@ def drop_tables():
     DROP TABLE IF EXISTS systems CASCADE;
     DROP TABLE IF EXISTS clients CASCADE;
     DROP TABLE IF EXISTS streams CASCADE;
-    DROP TABLE IF EXISTS is_admin_of CASCADE;
-    DROP TABLE IF EXISTS is_agent_of CASCADE;
+    DROP TABLE IF EXISTS is_admin_of_com CASCADE;
+    DROP TABLE IF EXISTS is_admin_of_sys CASCADE;
     """
     result_proxy = conn.execute(query)
     engine.dispose()
@@ -71,15 +71,15 @@ def create_tables(app):
         db.Column('datetime', db.DateTime, nullable=True),
         db.Column('description', db.VARCHAR(1024), nullable=True)
     )
-    app.config["tables"]["is_admin_of"] = db.Table(
-        'is_admin_of', app.config['metadata'],
+    app.config["tables"]["is_admin_of_com"] = db.Table(
+        'is_admin_of_com', app.config['metadata'],
         db.Column('user_uuid', db.ForeignKey("users.uuid"), primary_key=True),
         db.Column('company_uuid', db.ForeignKey('companies.uuid'), primary_key=True),
         db.Column('creator_uuid', db.ForeignKey("users.uuid"), nullable=False),
         db.Column('datetime', db.DateTime, nullable=True)
     )
-    app.config["tables"]["is_agent_of"] = db.Table(
-        'is_agent_of', app.config['metadata'],
+    app.config["tables"]["is_admin_of_sys"] = db.Table(
+        'is_admin_of_sys', app.config['metadata'],
         db.Column('user_uuid', db.ForeignKey("users.uuid"), primary_key=True),
         db.Column('system_uuid', db.ForeignKey('systems.uuid'), primary_key=True),
         db.Column('creator_uuid', db.ForeignKey("users.uuid"), nullable=False),
@@ -138,25 +138,25 @@ def insert_sample():
          'first_name': 'Sue',
          'sur_name': 'Smith',
          'birthdate': '1967-04-01',
-         'email': 'sue.smith@gmail.com',
+         'email': 'sue.smith@example.com',
          'password': sha256_crypt.encrypt('asdf')},
         {'uuid': uuid_stefan,
          'first_name': 'Stefan',
          'sur_name': 'Gunnarsson',
          'birthdate': '1967-03-01',
-         'email': 'stefan.gunnarsson@gmail.com',
+         'email': 'stefan.gunnarsson@example.com',
          'password': sha256_crypt.encrypt('asdf')},
         {'uuid': uuid_peter,
          'first_name': 'Peter',
          'sur_name': 'Novak',
          'birthdate': '1990-02-01',
-         'email': 'peter.novak@gmail.com',
+         'email': 'peter.novak@example.com',
          'password': sha256_crypt.encrypt('asdf')},
         {'uuid': uuid_anna,
          'first_name': 'Anna',
          'sur_name': 'Gruber',
          'birthdate': '1994-01-01',
-         'email': 'anna.gruber@gmail.com',
+         'email': 'anna.gruber@example.com',
          'password': sha256_crypt.encrypt('asdf')},
         {'uuid': uuid_chris,
          'first_name': 'Chris',
@@ -189,8 +189,8 @@ def insert_sample():
          'datetime': get_datetime()}]
     ResultProxy = conn.execute(query, values_list)
 
-    # Insert is_admin_of
-    query = db.insert(app.config["tables"]["is_admin_of"])
+    # Insert is_admin_of_com
+    query = db.insert(app.config["tables"]["is_admin_of_com"])
     values_list = [
         {'user_uuid': uuid_sue,
          'company_uuid': uuid_icecars,
@@ -232,8 +232,8 @@ def insert_sample():
          'datetime': get_datetime()}]
     ResultProxy = conn.execute(query, values_list)
 
-    # Insert is_agent_of
-    query = db.insert(app.config["tables"]["is_agent_of"])
+    # Insert is_admin_of_sys
+    query = db.insert(app.config["tables"]["is_admin_of_sys"])
     values_list = [
         {'user_uuid': uuid_sue,
          'system_uuid': uuid_carfleet,
@@ -280,7 +280,7 @@ def insert_sample():
          'creator_uuid': uuid_stefan,
          'datetime': get_datetime(),
          'description': lorem_ipsum},
-        {'name': "centralservice",
+        {'name': "forecast_service",
          'system_uuid': uuid_weatherservice,
          'metadata_name': "sensorthings",
          'metadata_uri': "http://localhost:8084",
