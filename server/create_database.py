@@ -131,7 +131,6 @@ def insert_sample():
     uuid_stefan = get_uid()
     uuid_peter = get_uid()
     uuid_anna = get_uid()
-    uuid_chris = get_uid()
     query = db.insert(app.config["tables"]["users"])
     values_list = [
         {'uuid': uuid_sue,
@@ -157,12 +156,6 @@ def insert_sample():
          'sur_name': 'Gruber',
          'birthdate': '1994-01-01',
          'email': 'anna.gruber@example.com',
-         'password': sha256_crypt.encrypt('asdf')},
-        {'uuid': uuid_chris,
-         'first_name': 'Chris',
-         'sur_name': 'Schranz',
-         'birthdate': '1993-04-23',
-         'email': 'christoph.s.23@gmx.at',
          'password': sha256_crypt.encrypt('asdf')}]
     ResultProxy = conn.execute(query, values_list)
 
@@ -236,6 +229,10 @@ def insert_sample():
     query = db.insert(app.config["tables"]["is_admin_of_sys"])
     values_list = [
         {'user_uuid': uuid_sue,
+         'system_uuid': uuid_carfleet,
+         'creator_uuid': uuid_sue,
+         'datetime': get_datetime()},
+        {'user_uuid': uuid_peter,
          'system_uuid': uuid_carfleet,
          'creator_uuid': uuid_sue,
          'datetime': get_datetime()},

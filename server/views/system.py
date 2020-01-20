@@ -113,6 +113,7 @@ class SystemForm(Form):
     station = StringField("Station", [validators.Length(min=2, max=20), valid_level_name])
     description = TextAreaField("Description", [validators.Length(max=16*1024)])
 
+
 # Add system in system view, redirect to companies
 @system.route("/add_system")
 @is_logged_in
@@ -120,6 +121,7 @@ def add_system():
     # redirect to companies
     flash("Specify the company to which a system should be added.", "info")
     return redirect(url_for("company.show_all_companies"))
+
 
 # Add system in company view
 @system.route("/add_system/<string:company_uuid>", methods=["GET", "POST"])
@@ -140,7 +142,7 @@ def add_system_for_company(company_uuid):
     query = """
     SELECT company_uuid, domain, enterprise, admin.uuid AS admin_uuid, admin.first_name, admin.sur_name, admin.email 
     FROM companies AS com 
-    INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
+    INNER JOIN is_admin_of_com AS aof ON com.uuid=aof.company_uuid 
     INNER JOIN users as admin ON admin.uuid=aof.user_uuid 
     INNER JOIN users as creator ON creator.uuid=aof.creator_uuid 
     WHERE company_uuid='{}';""".format(company_uuid)
@@ -150,6 +152,7 @@ def add_system_for_company(company_uuid):
     # Check if the company exists and you are an admin
     if len(admins) == 0:
         engine.dispose()
+        app.logger.warning("It seems that the company with the uuid '{}' doesn't exist.".format(company_uuid))
         flash("It seems that this company doesn't exist.", "danger")
         return redirect(url_for("company.show_all_companies"))
 
@@ -197,8 +200,8 @@ def add_system_for_company(company_uuid):
                                            form_workcenter, form_station)
         transaction = conn.begin()
         try:
-            # Create new is_admin_of instance
-            query = db.insert(app.config["tables"]["is_agent_of"])
+            # Create new is_admin_of_sys instance
+            query = db.insert(app.config["tables"]["is_admin_of_sys"])
             values_list = [{"user_uuid": user_uuid,
                             "system_uuid": system_uuid,
                             "creator_uuid": user_uuid,
@@ -279,7 +282,7 @@ def delete_system(system_uuid):
 
     transaction = conn.begin()
     try:
-        # Delete new is_admin_of instance
+        # Delete new is_admin_of_sys instance
         query = """DELETE FROM is_admin_of_sys
             WHERE system_uuid='{}';""".format(system_uuid)
         conn.execute(query)

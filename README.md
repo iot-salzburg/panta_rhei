@@ -259,11 +259,11 @@ The platform is then, if the default developer-config is selected, available on 
 ![Platform](/extra/platform_home.png)
 
 There are demo-accounts available for:
-* sue.smith@gmail.com
-* stefan.gunnarsson@gmail.com
-* anna.gruber@gmail.com
+* sue.smith@example.com
+* stefan.gunnarsson@example.com
+* anna.gruber@example.com
 
-The password for each of them is `asdf`.
+The password of each user is `asdf`.
 
 <br>
 If you have feedback and ideas, please let me know.
