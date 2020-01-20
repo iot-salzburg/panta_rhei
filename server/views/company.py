@@ -24,7 +24,8 @@ def show_all_companies():
     INNER JOIN is_admin_of_com AS aof ON com.uuid=aof.company_uuid 
     INNER JOIN users as admin ON admin.uuid=aof.user_uuid
     INNER JOIN users as creator ON creator.uuid=aof.creator_uuid
-    WHERE admin.uuid='{}';""".format(user_uuid)
+    WHERE admin.uuid='{}'
+    ORDER BY domain, com;""".format(user_uuid)
     result_proxy = conn.execute(query)
     engine.dispose()
     companies = [dict(c.items()) for c in result_proxy.fetchall()]
