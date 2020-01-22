@@ -2,8 +2,6 @@
 import logging
 
 # confluent_kafka is based on librdkafka, details in install_kafka_requirements.sh
-import os
-import subprocess
 import time
 import sqlalchemy as db
 
@@ -12,7 +10,7 @@ import confluent_kafka.admin as kafka_admin
 from confluent_kafka import cimpl
 
 PLATFORM_TOPIC = "platform.logger"
-KAFKA_TOPICS_SUBFIXES = [".log", ".int", ".ext"]
+KAFKA_TOPICS_POSTFIXES = [".log", ".int", ".ext"]
 
 
 class KafkaInterface:
@@ -69,8 +67,8 @@ class KafkaInterface:
                 # Recreate Kafka Topics for each system if one topic is missing (create is costly and idempotent)
             for system_name in db_system_names:
                 all_in = True
-                for sub_fix in KAFKA_TOPICS_SUBFIXES:
-                    if not self.system_topics.get(system_name + sub_fix, False):
+                for postfix in KAFKA_TOPICS_POSTFIXES:
+                    if not self.system_topics.get(system_name + postfix, False):
                         all_in = False
                 if not all_in:
                     self.create_system_topics(system_name)
@@ -117,14 +115,14 @@ class KafkaInterface:
 
     def delete_system_topics_try(self, system_name, trial):
         # Delete system topics
-        self.k_admin_client.delete_topics([system_name + k_type for k_type in KAFKA_TOPICS_SUBFIXES])
+        self.k_admin_client.delete_topics([system_name + postfix for postfix in KAFKA_TOPICS_POSTFIXES])
         # the system_topics are updated in the get_connection method, may needs some time to update, hence more trials
         time.sleep(1+2*trial)  # increasing waiting time, trial starts with 0.
         self.get_connection()
         # check if each system topic was removed, this procedure has linear complexity.
         all_out = True
-        for sub_fix in KAFKA_TOPICS_SUBFIXES:
-            if self.system_topics.get(system_name + sub_fix, False):
+        for postfix in KAFKA_TOPICS_POSTFIXES:
+            if self.system_topics.get(system_name + postfix, False):
                 all_out = False
         if not all_out:
             return False
