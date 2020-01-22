@@ -4,6 +4,7 @@ import logging
 # confluent_kafka is based on librdkafka, details in install_kafka_requirements.sh
 import os
 import subprocess
+import time
 
 import confluent_kafka
 import confluent_kafka.admin as kafka_admin
@@ -37,11 +38,13 @@ def check_kafka(app):
 
 def create_system_topics(app, system_name):
     if not app.config["KAFKA_BOOTSTRAP_SERVER"]:
-        app.logger.debug("Skipped to create system topics")
+        app.logger.debug("Skipped to create system topics as the platform-only mode is used.")
         return None
+    app.logger.debug("Creating Kafka Topic for new system.")
     if check_kafka(app):
         # Create system topics
         kac = kafka_admin.AdminClient({'bootstrap.servers': app.config["KAFKA_BOOTSTRAP_SERVER"]})
+        time.sleep(0.1)
         kac.create_topics([kafka_admin.NewTopic(system_name + ".log", 3, 1),
                            kafka_admin.NewTopic(system_name + ".int", 3, 1),
                            kafka_admin.NewTopic(system_name + ".ext", 3, 1)])
@@ -49,20 +52,17 @@ def create_system_topics(app, system_name):
 
 
 def create_default_topics(app):
-    if not app.config["KAFKA_BOOTSTRAP_SERVER"]:
-        app.logger.debug("Skipped to create system topics")
-        return None
-    if check_kafka(app):
-        # Create default system topics
-        for system_name in ["cz.icecars.iot-iot4cps-wp5.CarFleet",
-                            "is.iceland.iot-iot4cps-wp5.WeatherService",
-                            "at.datahouse.iot-iot4cps-wp5.RoadAnalytics"]:
-            create_system_topics(app, system_name)
+    # Create default system topics
+    for system_name in ["cz.icecars.iot-iot4cps-wp5.CarFleet",
+                        "is.iceland.iot-iot4cps-wp5.WeatherService",
+                        "at.datahouse.iot-iot4cps-wp5.RoadAnalytics"]:
+        create_system_topics(app, system_name)
 
 
 def delete_system_topics(app, system_name):
     if not app.config["KAFKA_BOOTSTRAP_SERVER"]:
-        app.logger.debug("Skipped to delete system topics for '{}'".format(system_name))
+        app.logger.debug("Skipped to delete system topics for '{}' as the platform-only mode is used".format(
+            system_name))
         return None
     # Delete system topics
     if check_kafka(app):

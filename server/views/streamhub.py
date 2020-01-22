@@ -36,7 +36,7 @@ def show_all_streams():
     streams = [dict(c.items()) for c in result_proxy.fetchall()]
     # print("Fetched streams: {}".format(streams))
 
-    return render_template("/streamhub/streams.html", streams=streams)
+    return render_template(url_for("streamhub.show_all_streams", streams=streams))
 
 
 @streamhub_bp.route("/show_stream/<string:system_uuid>/<string:stream_name>")
@@ -49,12 +49,17 @@ def show_stream(system_uuid, stream_name):
     if not isinstance(payload, dict):
         return payload
 
+    if not app.config["KAFKA_BOOTSTRAP_SERVER"]:
+        app.logger.info("The connection to Kafka is disabled. Check the '.env' file!")
+        flash("This platform runs in the 'platform-only' mode and doesn't provide the stream functionality.", "info")
+        return render_template("/streamhub/show_stream.html", payload=payload)
+
     # Check if the process is running
     if check_if_proc_runs(system_uuid, stream_name):
         payload["status"] = "running"
         set_status_to(system_uuid, stream_name, "running")
 
-    # The stream doesn't run
+    # if the stream doesn't run
     else:
         app.logger.debug("The stream '{}' doesn't run.".format(payload["name"]))
         # Get SOLL status
@@ -123,12 +128,11 @@ def add_stream_for_system(system_uuid):
     WHERE agent.uuid='{}' AND sys.uuid='{}';""".format(user_uuid, system_uuid)
     result_proxy = conn.execute(query)
     clients = [dict(c.items()) for c in result_proxy.fetchall()]
-    print("Fetched streams: {}".format(clients))
 
     # Check if the system exists and has agents
     if len(clients) == 0:
         engine.dispose()
-        flash("It seems that this stream doesn't exist or you are not permitted see details this stream.", "danger")
+        flash("It seems that this system doesn't exist or you are not permitted see details this stream.", "danger")
         return redirect(url_for("streamhub.show_all_streams"))
 
     # if not, streams has at least one item
@@ -268,6 +272,10 @@ def get_stream_payload(user_uuid, system_uuid, stream_name):
 @streamhub_bp.route("/start_stream/<string:system_uuid>/<string:stream_name>", methods=["GET"])
 @is_logged_in
 def start_stream(system_uuid, stream_name):
+    if not app.config["KAFKA_BOOTSTRAP_SERVER"]:
+        # This platform runs in the 'platform-only' mode and doesn't provide the stream functionality
+        return redirect(url_for("streamhub.show_stream", system_uuid=system_uuid, stream_name=stream_name))
+
     # Get current user_uuid
     user_uuid = session["user_uuid"]
 
