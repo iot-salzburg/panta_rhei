@@ -6,7 +6,6 @@ from sqlalchemy import exc as sqlalchemy_exc
 from wtforms import Form, StringField, validators, TextAreaField
 
 from .useful_functions import get_datetime, get_uid, is_logged_in, valid_level_name
-from .kafka_interface import check_kafka, create_system_topics, delete_system_topics
 
 system = Blueprint("system", __name__)  # url_prefix="/comp")
 
@@ -211,7 +210,7 @@ def add_system_for_company(company_uuid):
             engine.dispose()
 
             # Create system topics
-            create_system_topics(app, system_name=system_name)
+            app.kafka_interface.create_system_topics(system_name=system_name)
 
             transaction.commit()
             app.logger.info("The system '{}' was created.".format(system_name))
@@ -294,15 +293,18 @@ def delete_system(system_uuid):
         engine.dispose()
 
         # Delete Kafka topics
-        delete_system_topics(app, system_name=system_name)
-
-        transaction.commit()
-        app.logger.info("The system '{}' was deleted.".format(system_name))
-        flash("The system '{}' was deleted.".format(system_name), "success")
+        if app.kafka_interface.delete_system_topics(system_name=system_name):
+            transaction.commit()
+            app.logger.info("The system '{}' was deleted.".format(system_name))
+            flash("The system '{}' was deleted.".format(system_name), "success")
+        else:
+            transaction.rollback()
+            app.logger.warning("The system '{}' couldn't be deleted, returned False".format(system_name))
+            flash("The system '{}' couldn't be deleted.".format(system_name), "danger")
     except:
         transaction.rollback()
-        app.logger.warning("The system '{}' couldn't deleted.".format(system_name))
-        flash("The system '{}' couldn't deleted.".format(system_name), "danger")
+        app.logger.warning("The system '{}' couldn't be deleted.".format(system_name))
+        flash("The system '{}' couldn't be deleted.".format(system_name), "danger")
     finally:
         # Redirect to latest page, either /systems or /show_company/UID
         if session.get("last_url"):
