@@ -32,7 +32,7 @@ def check_kafka(app):
             return True
     except cimpl.KafkaException:
         app.logger.error("Couldn't connect to Kafka Bootstrap servers.")
-        app.logger.error("Check '{}'!".format(app.config["KAFKA_BOOTSTRAP_SERVER"]))
+        app.logger.error("Check the Kafka Bootstrap Servers '{}'!".format(app.config["KAFKA_BOOTSTRAP_SERVER"]))
         return False
 
 

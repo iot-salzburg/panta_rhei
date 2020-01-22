@@ -40,9 +40,9 @@ if __name__ == '__main__':
 
     # Check the connection to Kafka and create new tables if not already done
     if check_kafka(app):
-        app.logger.debug("Connected to with bootstrap servers '{}'.".format(app.config["KAFKA_BOOTSTRAP_SERVER"]))
+        app.logger.debug("Connected to the Kafka Bootstrap Servers '{}'.".format(app.config["KAFKA_BOOTSTRAP_SERVER"]))
     else:
-        app.logger.error("The connection to Kafka Servers couldn't be established.")
+        app.logger.error("The connection to the Kafka Bootstrap Servers couldn't be established.")
         sys.exit(1)
 
     # Adding a KafkaHandler to the logger, ingests messages into kafka
