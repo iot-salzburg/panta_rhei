@@ -14,7 +14,7 @@ import logging
 # noinspection PyUnresolvedReferences
 from SimulateTemperatures import SimulateTemperatures
 
-TRACK_MAP = {1: "openroute_SRFG-round.json", 2: "openroute_Mirabellplatz-round.json"}
+TRACK_MAP = {1: "openroute_SRFG-round.json", 2: "openroute_Mirabellplatz-round.json", 3: "openroute_Muelln-round.json"}
 
 
 class CarSimulator:
@@ -36,7 +36,7 @@ class CarSimulator:
 
         logging.basicConfig(level='WARNING')
         self.logger = logging.getLogger("CarSimulator")
-        self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(logging.INFO)
 
         self.logger.info("Created instance of class CarSimulator.")
         self.temp = SimulateTemperatures(time_factor=time_factor, day_amplitude=temp_day_amplitude,
@@ -62,6 +62,7 @@ class CarSimulator:
             if len(self.track.get("geometry")) < 10:
                 raise Exception("The track with name '{}' has not enough vertices.".format(TRACK_MAP[self.track_id]))
 
+        self.logger.info("Driving on track: '{}' with a speed of {} m/s.".format(TRACK_MAP[self.track_id], self.speed))
         # Load the starting positions
         self.update_positions()
 
@@ -80,9 +81,9 @@ class CarSimulator:
         else:  # if it is not the initial starting point
             delta_time = time.time() - self.last_moved  # delta time is in seconds
             step = delta_time * self.speed / 3.6 * self.time_factor + self.old_step  # step is in metres
-            self.logger.debug("Step to go: {} m".format(step))
+            self.logger.debug("Step to go: {} m".format(round(step, 2)))
             next_vertex_dist = self.get_next_vertex_dist()
-            self.logger.debug("next_vertex_dist: {} m".format(next_vertex_dist))
+            self.logger.debug("next_vertex_dist: {} m".format(round(next_vertex_dist, 2)))
             if step < 1:
                 self.logger.debug("Update not done, the car has moved less than 1 meter.")
                 return None
@@ -126,8 +127,9 @@ class CarSimulator:
     def interpolate_position(self, dist_ratio, k):
         # Interpolate linearly between the coordinates with index self.track_idx and self.track_idx+1
         # for all three coordinates noted by k.
-        return self.track.get("geometry")[self.track_idx][k] + dist_ratio * \
-               (self.track.get("geometry")[self.track_idx + 1][k] - self.track.get("geometry")[self.track_idx][k])
+        position = self.track.get("geometry")[self.track_idx][k] + dist_ratio * \
+                   (self.track.get("geometry")[self.track_idx + 1][k] - self.track.get("geometry")[self.track_idx][k])
+        return round(position, 6)
 
     def get_latitude(self):
         if time.time() - self.last_update > 1:
@@ -150,7 +152,7 @@ class CarSimulator:
 
 if __name__ == "__main__":
     print("Creating an instance of a simulated car.")
-    car = CarSimulator(track_id=1, time_factor=1, speed=30, activeness=1,
+    car = CarSimulator(track_id=3, time_factor=10, speed=30, activeness=1,
                        temp_day_amplitude=5, temp_year_amplitude=-5, temp_average=2.5)
 
     while True:

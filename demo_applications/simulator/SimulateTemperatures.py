@@ -42,7 +42,7 @@ class SimulateTemperatures:
         temperature += self.moving_average
 
         # return the simulated part
-        return temperature
+        return round(temperature, 3)
 
 
 if __name__ == "__main__":
