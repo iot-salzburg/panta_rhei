@@ -23,6 +23,7 @@ class CarSimulator:
         # Store start_time
         self.start_time = time.time()
         self.last_update = 0
+        self.last_moved = 0
         self.track = dict()
         self.track_id = track_id
         self.track_idx = 0
@@ -35,7 +36,7 @@ class CarSimulator:
 
         logging.basicConfig(level='WARNING')
         self.logger = logging.getLogger("CarSimulator")
-        self.logger.setLevel(logging.INFO)
+        self.logger.setLevel(logging.DEBUG)
 
         self.logger.info("Created instance of class CarSimulator.")
         self.temp = SimulateTemperatures(time_factor=time_factor, day_amplitude=temp_day_amplitude,
@@ -65,20 +66,26 @@ class CarSimulator:
         self.update_positions()
 
     def update_positions(self):
-        self.logger.debug("Using Track_idx: {}".format(self.track_idx))  # The first 3 entries (2) are 0
+        self.last_update = time.time()
+        self.logger.debug("Passed track index: {}".format(self.track_idx))  # The first 3 entries (2) are 0
 
-        if self.last_update == 0:  # zero is the initial starting point
+        if self.last_moved == 0:  # zero is the initial starting point
             # Update the GPS positions
             self.gps_latitude = self.track.get("geometry")[self.track_idx][0]
             self.gps_longitude = self.track.get("geometry")[self.track_idx][1]
             self.gps_attitude = self.track.get("geometry")[self.track_idx][2]
-            self.last_update = time.time()
+            self.last_moved = time.time()
 
         # Interpolate the positions
         else:  # if it is not the initial starting point
-            delta_time = time.time() - self.last_update  # delta time is in seconds
+            delta_time = time.time() - self.last_moved  # delta time is in seconds
             step = delta_time * self.speed / 3.6 * self.time_factor + self.old_step  # step is in metres
+            self.logger.debug("Step to go: {} m".format(step))
             next_vertex_dist = self.get_next_vertex_dist()
+            self.logger.debug("next_vertex_dist: {} m".format(next_vertex_dist))
+            if step < 1:
+                self.logger.debug("Update not done, the car has moved less than 1 meter.")
+                return None
 
             # iterate to the index after which there is the new position
             while step >= next_vertex_dist and self.track_idx < len(self.track.get("geometry")) - 2:
@@ -91,7 +98,7 @@ class CarSimulator:
                 self.logger.debug("Overflow occurred, restart at index 0.")
                 self.track_idx = 0
                 self.old_step = 0
-                self.last_update = time.time()
+                # self.last_moved = time.time()
                 self.update_positions()
             else:
                 # Now interpolate latitude, longitude and attitude between self.track_idx and self.track_idx+1
@@ -100,22 +107,21 @@ class CarSimulator:
                 self.gps_latitude = self.interpolate_position(dist_ratio, 0)
                 self.gps_longitude = self.interpolate_position(dist_ratio, 1)
                 self.gps_attitude = self.interpolate_position(dist_ratio, 2)
-                self.last_update = time.time()
-
-                # TODO get real units
+                self.last_moved = time.time()
 
     def get_next_vertex_dist(self):
         # Calculate the distance between two vertices
-        # lat0 = self.track.get("geometry")[self.track_idx][0]
-        # lon0 = self.track.get("geometry")[self.track_idx][1]
-        # lat1 = self.track.get("geometry")[self.track_idx][0]
-        # lon1 = self.track.get("geometry")[self.track_idx][1]
-        #
-        # dx = 40075/360 * math.cos((lat1-lat0)/2*math.pi/180) * (lon1-lon0) * 10000
-        # dy = 40075/360 * (lat1-lat0) * 1000
-        delta_lat = self.track.get("geometry")[self.track_idx+1][0] - self.track.get("geometry")[self.track_idx][0]
-        delta_long = self.track.get("geometry")[self.track_idx+1][1] - self.track.get("geometry")[self.track_idx][1]
-        return (delta_lat**2 + delta_long**2)**0.5
+        lat0 = self.track.get("geometry")[self.track_idx][0]
+        lon0 = self.track.get("geometry")[self.track_idx][1]
+        lat1 = self.track.get("geometry")[self.track_idx+1][0]
+        lon1 = self.track.get("geometry")[self.track_idx+1][1]
+
+        # Calculate the distances in meters based on latitude and longitude. (only correct for not to big edges!)
+        dx = 40075*1000/360 * math.cos((lat1-lat0)/2*math.pi/180) * (lon1-lon0)
+        dy = 40075*1000/360 * (lat1-lat0)
+        # dist = 40075*1000 / 2 / math.pi  # Calculate via the "Seitenkosinussatz" (not needed)
+        # dist *= acos(sin(lat1*pi/180)*sin(lat2*pi/180) + cos(lat1*pi/180)*cos(lat2*pi/180)*cos((lon2-lon1)*pi/180))
+        return (dx**2 + dy**2)**0.5
 
     def interpolate_position(self, dist_ratio, k):
         # Interpolate linearly between the coordinates with index self.track_idx and self.track_idx+1
@@ -144,7 +150,7 @@ class CarSimulator:
 
 if __name__ == "__main__":
     print("Creating an instance of a simulated car.")
-    car = CarSimulator(track_id=1, time_factor=0.001, speed=30, activeness=1,
+    car = CarSimulator(track_id=1, time_factor=1, speed=30, activeness=1,
                        temp_day_amplitude=5, temp_year_amplitude=-5, temp_average=2.5)
 
     while True:
