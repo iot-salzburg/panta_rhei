@@ -36,7 +36,7 @@ def show_all_streams():
     streams = [dict(c.items()) for c in result_proxy.fetchall()]
     # print("Fetched streams: {}".format(streams))
 
-    return render_template(url_for("streamhub.show_all_streams", streams=streams))
+    return render_template("streamhub/streams.html", streams=streams)
 
 
 @streamhub_bp.route("/show_stream/<string:system_uuid>/<string:stream_name>")
