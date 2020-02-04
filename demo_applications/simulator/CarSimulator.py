@@ -153,25 +153,29 @@ class CarSimulator:
         return self.gps_attitude
 
     def get_acceleration(self):
-        delta_time = int(time.time() - self.last_acceleration)
+        delta_time = int(0.1*self.time_factor * (time.time() - self.last_acceleration))
         if delta_time == 0:
-            return 0
-        # The strongest breaking event is drawn from an exponential distribution f(x)=l*e^-(lx), as it is memoryless.
-        # This means, that P(X>a1+a2) = P(X>a1)*P(X>a2) for two accelerations a1, a2.
+            self.logger.debug("delta_time in get_acceleration is very small.")
+            return min([random.random() for _ in range(5)])
+        # A breaking event per second is drawn from an exponential distribution f(x)=l*e^-(lx), as it is memoryless.
         # highest_acceleration = random.expovariate(100*self.cautiousness/delta_time/self.time_factor)
-        accelerations = [random.expovariate(5*self.cautiousness) for _ in range(delta_time*int(self.time_factor))]
+        influences = 3/(1+math.exp(0.1*(4-self.temp.get_temp())))  # The temperature is normalized with 4° and a=0.1
+        influences += math.sin(self.gps_latitude) + math.sin(self.gps_longitude)  # The position should have an effect
+        accelerations = [random.expovariate(self.cautiousness * (5 + max(influences, 0.1)))
+                         for _ in range(delta_time)]
         self.last_acceleration = int(time.time())
         return max(accelerations)
 
 
 if __name__ == "__main__":
     print("Creating an instance of a simulated car.")
+    random.seed(0)
     car = CarSimulator(track_id=3, time_factor=10, speed=30, cautiousness=1,
                        temp_day_amplitude=5, temp_year_amplitude=-5, temp_average=2.5)
 
     while True:
         car.update_positions()
-        print("The car is at [{}, {}] and the temperature is: {} °C".format(
+        print("The car is at [{}, {}] and measures the temperature: {} °C".format(
             car.get_latitude(), car.get_longitude(), car.temp.get_temp()))
         print("Highest acceleration: {} m/s²".format(car.get_acceleration()))
         time.sleep(1)
