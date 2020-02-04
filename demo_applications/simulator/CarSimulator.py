@@ -34,6 +34,8 @@ class CarSimulator:
         self.gps_latitude = 0
         self.gps_longitude = 0
         self.gps_attitude = 0
+        if cautiousness < 0.1:
+            raise Exception("The cautiousness must not undercut 0.1.")
         self.cautiousness = cautiousness
         self.last_acceleration = self.start_time
 
@@ -156,15 +158,16 @@ class CarSimulator:
         delta_time = int(0.1*self.time_factor * (time.time() - self.last_acceleration))
         if delta_time == 0:
             self.logger.debug("delta_time in get_acceleration is very small.")
-            return min([random.random() for _ in range(5)])
+            return round(min([random.random() for _ in range(5)]), 3)
         # A breaking event per second is drawn from an exponential distribution f(x)=l*e^-(lx), as it is memoryless.
-        # highest_acceleration = random.expovariate(100*self.cautiousness/delta_time/self.time_factor)
-        influences = 3/(1+math.exp(0.1*(4-self.temp.get_temp())))  # The temperature is normalized with 4° and a=0.1
-        influences += math.sin(self.gps_latitude) + math.sin(self.gps_longitude)  # The position should have an effect
-        accelerations = [random.expovariate(self.cautiousness * (5 + max(influences, 0.1)))
+        # The temperature is normalized with 4° and a=0.1
+        influences = 3/(1+math.exp(0.1*(4-self.temp.get_temp())))
+        # The position should have an effect, multiply with 100 to see an effect within a city
+        influences += math.sin(100*self.gps_latitude) + math.sin(100*self.gps_longitude)
+        accelerations = [random.expovariate(self.cautiousness * (5 + influences))
                          for _ in range(delta_time)]
         self.last_acceleration = int(time.time())
-        return max(accelerations)
+        return round(max(accelerations), 3)
 
 
 if __name__ == "__main__":
@@ -175,7 +178,6 @@ if __name__ == "__main__":
 
     while True:
         car.update_positions()
-        print("The car is at [{}, {}] and measures the temperature: {} °C".format(
-            car.get_latitude(), car.get_longitude(), car.temp.get_temp()))
-        print("Highest acceleration: {} m/s²".format(car.get_acceleration()))
+        print("The car is at [{}, {}], measures the temperature: {} °C and had a highest acceleration of {} m/s²".
+              format(car.get_latitude(), car.get_longitude(), car.temp.get_temp(), car.get_acceleration()))
         time.sleep(1)
