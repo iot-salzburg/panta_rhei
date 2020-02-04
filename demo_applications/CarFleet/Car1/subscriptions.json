@@ -2,6 +2,8 @@
   "subscribed_datastreams": [
     "is.iceland.iot-iot4cps-wp5.WeatherService.weatherstation_1.Air Temperature",
     "is.iceland.iot-iot4cps-wp5.WeatherService.weatherstation_2.Air Temperature",
-    "cz.icecars.iot-iot4cps-wp5.CarFleet.car_2.Air Temperature"
+    "cz.icecars.iot-iot4cps-wp5.CarFleet.car_2.acceleration",
+    "cz.icecars.iot-iot4cps-wp5.CarFleet.car_2.GPS-position-latitude",
+    "cz.icecars.iot-iot4cps-wp5.CarFleet.car_2.GPS-position-longitude"
   ]
 }

@@ -34,7 +34,7 @@ MAPPINGS = os.path.join(dirname, "ds-mappings.json")
 # Make sure that Kafka and GOST are up and running before starting the platform
 config = {"client_name": "car_1",
           "system": "cz.icecars.iot-iot4cps-wp5.CarFleet",
-          "gost_servers": "localhost:8084",
+          "gost_servers": "localhost:8082",
           "kafka_bootstrap_servers": "localhost:9092"}
 client = DigitalTwinClient(**config)
 # client.register_existing(mappings_file=MAPPINGS)
@@ -50,13 +50,15 @@ try:
         timestamp = datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat()
 
         # Measure the demo temperature
+        car.update_positions()
         temperature = car.temp.get_temp()
+
+        # Print the temperature with the corresponding timestamp in ISO format
+        print("The demo car 1 is at [{}, {}],   \twith the temp.: {} °C \tand had a maximal acceleration of {} m/s² \t"
+              "at {}".format(car.get_latitude(), car.get_longitude(), temperature, car.get_acceleration(), timestamp))
 
         # Send the demo temperature
         client.produce(quantity="temperature", result=temperature, timestamp=timestamp)
-
-        # Print the temperature with the corresponding timestamp in ISO format
-        print("The air temperature at the demo car 1 is {} °C at {}".format(temperature, timestamp))
 
         # Receive all queued messages of the weather-service and other connected cars and calculate the minimum
         minimal_temps = list()
@@ -80,6 +82,6 @@ try:
         if minimal_temps != list():
             print("    WARNING, the road could be slippery, see: {}".format(minimal_temps))
 
-        time.sleep(10)
+        time.sleep(5)
 except KeyboardInterrupt:
     client.disconnect()

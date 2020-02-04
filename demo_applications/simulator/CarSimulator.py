@@ -138,25 +138,25 @@ class CarSimulator:
         # for all three coordinates noted by k.
         position = self.track.get("geometry")[self.track_idx][k] + dist_ratio * \
                    (self.track.get("geometry")[self.track_idx + 1][k] - self.track.get("geometry")[self.track_idx][k])
-        return round(position, 6)
+        return position
 
     def get_latitude(self):
         if time.time() - self.last_update > 1:
             self.logger.warning("The latitude might be deprecated")
             self.logger.warning("Call car_simulator.update_positions() right before getting a position!")
-        return self.gps_latitude
+        return round(self.gps_latitude, 6)
 
     def get_longitude(self):
         if time.time() - self.last_update > 1:
             self.logger.warning("The longitude might be deprecated")
             self.logger.warning("Call car_simulator.update_positions() right before getting a position!")
-        return self.gps_longitude
+        return round(self.gps_longitude, 6)
 
     def get_attitude(self):
         if time.time() - self.last_update > 1:
             self.logger.warning("The attitude might be deprecated")
             self.logger.warning("Call car_simulator.update_positions() right before getting a position!")
-        return self.gps_attitude
+        return round(self.gps_attitude, 6)
 
     def get_acceleration(self):
         delta_time = int(0.1*self.time_factor * (time.time() - self.last_acceleration))
