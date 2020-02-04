@@ -6,8 +6,8 @@ services:
     image: geodan/gost-db
     restart: always
     volumes:
-#      - postgis:/var/lib/postgresql/data using an encapsulated docker volume
-      - /mnt/glusterfs/dtz/gost/postgis:/var/lib/postgresql/data
+      # using an encapsulated docker volume
+      - /path/to/volume/gost/postgis:/var/lib/postgresql/data
     environment:
         POSTGRES_DB: gost
         POSTGRES_USER: postgres

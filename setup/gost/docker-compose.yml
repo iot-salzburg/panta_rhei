@@ -21,8 +21,7 @@ services:
         - gost-db
     environment:
         GOST_DB_HOST: gost-db
-#        GOST_SERVER_EXTERNAL_URI: http://192.168.48.81:8084
-        GOST_SERVER_EXTERNAL_URI: http://localhost:8084
+        GOST_SERVER_EXTERNAL_URI: http://localhost:8082
         GOST_SERVER_MAX_ENTITIES: 200
 
   dashboard:  # service reachable from kafka stack with: wget  --method GET   --output-document   - 'http://dashboard:8080/v1.0/Things(3)'
