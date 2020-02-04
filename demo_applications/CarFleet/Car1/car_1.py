@@ -49,16 +49,24 @@ try:
         # unix epoch and ISO 8601 UTC are both valid
         timestamp = datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat()
 
-        # Measure the demo temperature
+        # Measure metrics
         car.update_positions()
         temperature = car.temp.get_temp()
+        acceleration = car.get_acceleration()
+        latitude = car.get_latitude()
+        longitude = car.get_longitude()
+        attitude = car.get_attitude()
 
         # Print the temperature with the corresponding timestamp in ISO format
-        print("The demo car 1 is at [{}, {}],   \twith the temp.: {} °C \tand had a maximal acceleration of {} m/s² \t"
-              "at {}".format(car.get_latitude(), car.get_longitude(), temperature, car.get_acceleration(), timestamp))
+        print("The demo car 1 is at [{}, {}],   \twith the temp.: {} °C  \tand had a maximal acceleration of {} m/s²  "
+              "\tat {}".format(latitude, longitude, temperature, acceleration, timestamp))
 
-        # Send the demo temperature
+        # Send the metrics via the client, it is suggested to use the same timestamp for later analytics
         client.produce(quantity="temperature", result=temperature, timestamp=timestamp)
+        client.produce(quantity="acceleration", result=acceleration, timestamp=timestamp)
+        client.produce(quantity="GPS-position-latitude", result=latitude, timestamp=timestamp)
+        client.produce(quantity="GPS-position-longitude", result=longitude, timestamp=timestamp)
+        client.produce(quantity="GPS-position-attitude", result=attitude, timestamp=timestamp)
 
         # Receive all queued messages of the weather-service and other connected cars and calculate the minimum
         minimal_temps = list()
