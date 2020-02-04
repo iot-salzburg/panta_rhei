@@ -123,5 +123,7 @@ server/venv
 *fuse_hidden*
 /server/templates/streamhub/streamhub.json
 
+*.save*.*
+
 # temperarily not track changes
 server/.env

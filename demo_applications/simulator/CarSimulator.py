@@ -14,11 +14,12 @@ import logging
 # noinspection PyUnresolvedReferences
 from SimulateTemperatures import SimulateTemperatures
 
+# Tracks are downloaded from https://maps.openrouteservice.org/
 TRACK_MAP = {1: "openroute_SRFG-round.json", 2: "openroute_Mirabellplatz-round.json", 3: "openroute_Muelln-round.json"}
 
 
 class CarSimulator:
-    def __init__(self, track_id=-1, time_factor=100.0, speed=30, activeness=1,
+    def __init__(self, track_id=-1, time_factor=100.0, speed=30, cautiousness=1,
                  temp_day_amplitude=5, temp_year_amplitude=-5, temp_average=2.5):
         # Store start_time
         self.start_time = time.time()
@@ -33,6 +34,8 @@ class CarSimulator:
         self.gps_latitude = 0
         self.gps_longitude = 0
         self.gps_attitude = 0
+        self.cautiousness = cautiousness
+        self.last_acceleration = self.start_time
 
         logging.basicConfig(level='WARNING')
         self.logger = logging.getLogger("CarSimulator")
@@ -149,14 +152,26 @@ class CarSimulator:
             self.logger.warning("Call car_simulator.update_positions() right before getting a position!")
         return self.gps_attitude
 
+    def get_acceleration(self):
+        delta_time = int(time.time() - self.last_acceleration)
+        if delta_time == 0:
+            return 0
+        # The strongest breaking event is drawn from an exponential distribution f(x)=l*e^-(lx), as it is memoryless.
+        # This means, that P(X>a1+a2) = P(X>a1)*P(X>a2) for two accelerations a1, a2.
+        # highest_acceleration = random.expovariate(100*self.cautiousness/delta_time/self.time_factor)
+        accelerations = [random.expovariate(5*self.cautiousness) for _ in range(delta_time*int(self.time_factor))]
+        self.last_acceleration = int(time.time())
+        return max(accelerations)
+
 
 if __name__ == "__main__":
     print("Creating an instance of a simulated car.")
-    car = CarSimulator(track_id=3, time_factor=10, speed=30, activeness=1,
+    car = CarSimulator(track_id=3, time_factor=10, speed=30, cautiousness=1,
                        temp_day_amplitude=5, temp_year_amplitude=-5, temp_average=2.5)
 
     while True:
         car.update_positions()
         print("The car is at [{}, {}] and the temperature is: {} °C".format(
             car.get_latitude(), car.get_longitude(), car.temp.get_temp()))
+        print("Highest acceleration: {} m/s²".format(car.get_acceleration()))
         time.sleep(1)
