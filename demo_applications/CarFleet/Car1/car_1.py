@@ -19,10 +19,8 @@ import time
 import pytz
 from datetime import datetime
 
-# Append path of client to pythonpath in order to import the client from cli
-sys.path.append(os.getcwd())
 from client.digital_twin_client import DigitalTwinClient
-from demo_applications.simulator.SimulateTemperatures import SimulateTemperatures
+from demo_applications.simulator.CarSimulator import CarSimulator
 
 # Get dirname from inspect module
 filename = inspect.getframeinfo(inspect.currentframe()).filename
@@ -42,7 +40,9 @@ client = DigitalTwinClient(**config)
 # client.register_existing(mappings_file=MAPPINGS)
 client.register_new(instance_file=INSTANCES)  # Registering of new instances should be outsourced to the platform
 client.subscribe(subscription_file=SUBSCRIPTIONS)
-randomised_temp = SimulateTemperatures(t_factor=100, day_amplitude=4, year_amplitude=-4, average=3)
+
+car = CarSimulator(track_id=1, time_factor=100, speed=30, cautiousness=1,
+                   temp_day_amplitude=4, temp_year_amplitude=-4, temp_average=3, seed=1)
 
 try:
     while True:
@@ -50,7 +50,7 @@ try:
         timestamp = datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat()
 
         # Measure the demo temperature
-        temperature = randomised_temp.get_temp()
+        temperature = car.temp.get_temp()
 
         # Send the demo temperature
         client.produce(quantity="temperature", result=temperature, timestamp=timestamp)

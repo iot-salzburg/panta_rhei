@@ -11,6 +11,8 @@ import time
 import json
 import random
 import logging
+
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 # noinspection PyUnresolvedReferences
 from SimulateTemperatures import SimulateTemperatures
 
@@ -20,7 +22,7 @@ TRACK_MAP = {1: "openroute_SRFG-round.json", 2: "openroute_Mirabellplatz-round.j
 
 class CarSimulator:
     def __init__(self, track_id=-1, time_factor=100.0, speed=30, cautiousness=1,
-                 temp_day_amplitude=5, temp_year_amplitude=-5, temp_average=2.5):
+                 temp_day_amplitude=5, temp_year_amplitude=-5, temp_average=2.5, seed=None):
         # Store start_time
         self.start_time = time.time()
         self.last_update = 0
@@ -38,6 +40,8 @@ class CarSimulator:
             raise Exception("The cautiousness must not undercut 0.1.")
         self.cautiousness = cautiousness
         self.last_acceleration = self.start_time
+        if seed is not None:
+            random.seed(seed)
 
         logging.basicConfig(level='WARNING')
         self.logger = logging.getLogger("CarSimulator")
@@ -45,7 +49,7 @@ class CarSimulator:
 
         self.logger.info("Created instance of class CarSimulator.")
         self.temp = SimulateTemperatures(time_factor=time_factor, day_amplitude=temp_day_amplitude,
-                                         year_amplitude=temp_year_amplitude, average=temp_average)
+                                         year_amplitude=temp_year_amplitude, average=temp_average, seed=seed)
 
         self.get_start_positions()
 
@@ -60,7 +64,7 @@ class CarSimulator:
                 self.track_id, json.dumps(TRACK_MAP)))
 
         # Load the track and store as dictionary, check if it contains enough vertices
-        with open(TRACK_MAP[self.track_id]) as track_file:
+        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),  TRACK_MAP[self.track_id])) as track_file:
             self.track = json.loads(track_file.read().encode("utf-8"))
             if self.track.get("geometry") is None:
                 raise Exception("The track with name '{}' can't be loaded.".format(TRACK_MAP[self.track_id]))
@@ -172,9 +176,8 @@ class CarSimulator:
 
 if __name__ == "__main__":
     print("Creating an instance of a simulated car.")
-    random.seed(0)
     car = CarSimulator(track_id=3, time_factor=10, speed=30, cautiousness=1,
-                       temp_day_amplitude=5, temp_year_amplitude=-5, temp_average=2.5)
+                       temp_day_amplitude=5, temp_year_amplitude=-5, temp_average=2.5, seed=0)
 
     while True:
         car.update_positions()
