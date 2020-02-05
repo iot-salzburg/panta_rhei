@@ -13,10 +13,9 @@ Demo Scenario: Connected Cars
 """
 
 import os
-import sys
-import inspect
 import time
 import pytz
+import inspect
 import threading
 from datetime import datetime
 
@@ -32,71 +31,62 @@ MAPPINGS = os.path.join(dirname, "ds-mappings.json")
 
 
 def produce_metrics(car, client, interval=10):
-    try:
-        while True:
-            # unix epoch and ISO 8601 UTC are both valid
-            timestamp = datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat()
+    while not halt_event.is_set():
+        # unix epoch and ISO 8601 UTC are both valid
+        timestamp = datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat()
 
-            # Measure metrics
-            car.update_positions()
-            temperature = car.temp.get_temp()
-            acceleration = car.get_acceleration()
-            latitude = car.get_latitude()
-            longitude = car.get_longitude()
-            attitude = car.get_attitude()
+        # Measure metrics
+        car.update_positions()
+        temperature = car.temp.get_temp()
+        acceleration = car.get_acceleration()
+        latitude = car.get_latitude()
+        longitude = car.get_longitude()
+        attitude = car.get_attitude()
 
-            # Print the temperature with the corresponding timestamp in ISO format
-            print("The demo car 1 is at [{}, {}],   \twith the temp.: {} °C  \tand had a maximal acceleration of "
-                  "{} m/s²  \tat {}".format(latitude, longitude, temperature, acceleration, timestamp))
+        # Print the temperature with the corresponding timestamp in ISO format
+        print("The demo car 1 is at [{}, {}],   \twith the temp.: {} °C  \tand had a maximal acceleration of "
+              "{} m/s²  \tat {}".format(latitude, longitude, temperature, acceleration, timestamp))
 
-            # Send the metrics via the client, it is suggested to use the same timestamp for later analytics
-            client.produce(quantity="temperature", result=temperature, timestamp=timestamp)
-            client.produce(quantity="acceleration", result=acceleration, timestamp=timestamp)
-            client.produce(quantity="GPS-position-latitude", result=latitude, timestamp=timestamp)
-            client.produce(quantity="GPS-position-longitude", result=longitude, timestamp=timestamp)
-            client.produce(quantity="GPS-position-attitude", result=attitude, timestamp=timestamp)
+        # Send the metrics via the client, it is suggested to use the same timestamp for later analytics
+        client.produce(quantity="temperature", result=temperature, timestamp=timestamp)
+        client.produce(quantity="acceleration", result=acceleration, timestamp=timestamp)
+        client.produce(quantity="GPS-position-latitude", result=latitude, timestamp=timestamp)
+        client.produce(quantity="GPS-position-longitude", result=longitude, timestamp=timestamp)
+        client.produce(quantity="GPS-position-attitude", result=attitude, timestamp=timestamp)
 
-            time.sleep(interval)
-    except KeyboardInterrupt:
-        print("disconnect client.")
-        client.disconnect()
-        return "stopped"
+        time.sleep(interval)
 
 
 # Receive all temperatures of the weather-service and other cars and check whether they are subzero
 def consume_metrics(client):
-    try:
-        while True:
-            # In this list, each datapoint is stored that yiels a result below zero degC.
-            subzero_temp = list()
+    while not halt_event.is_set():
+        # In this list, each datapoint is stored that yiels a result below zero degC.
+        subzero_temp = list()
 
-            # Data of the same instance can be consumed directly via the class method
-            temperature = car.temp.get_temp()
-            if temperature < 0:
-                subzero_temp.append({"origin": config["system"], "temperature": temperature})
+        # Data of the same instance can be consumed directly via the class method
+        temperature = car.temp.get_temp()
+        if temperature < 0:
+            subzero_temp.append({"origin": config["system"], "temperature": temperature})
 
-            # Data of other instances (and also the same one) can be consumed via the client
-            received_quantities = client.consume(timeout=1.0)
-            for received_quantity in received_quantities:
-                # The resolves the all meta-data for an received data-point
-                print("  -> Received new external data-point at {}: '{}' = {} {}."
-                      .format(received_quantity["phenomenonTime"],
-                              received_quantity["Datastream"]["name"],
-                              received_quantity["result"],
-                              received_quantity["Datastream"]["unitOfMeasurement"]["symbol"]))
-                # To view the whole data-point in a pretty format, uncomment:
-                # print("Received new data: {}".format(json.dumps(received_quantity, indent=2)))
-                if received_quantity["Datastream"]["unitOfMeasurement"]["symbol"] == "degC" \
-                        and received_quantity["result"] < 0:
-                    subzero_temp.append(
-                        {"origin": received_quantity["Datastream"]["name"], "temperature": received_quantity["result"]})
+        # Data of other instances (and also the same one) can be consumed via the client
+        received_quantities = client.consume(timeout=1.0)
+        for received_quantity in received_quantities:
+            # The resolves the all meta-data for an received data-point
+            print("  -> Received new external data-point at {}: '{}' = {} {}."
+                  .format(received_quantity["phenomenonTime"],
+                          received_quantity["Datastream"]["name"],
+                          received_quantity["result"],
+                          received_quantity["Datastream"]["unitOfMeasurement"]["symbol"]))
+            # To view the whole data-point in a pretty format, uncomment:
+            # print("Received new data: {}".format(json.dumps(received_quantity, indent=2)))
+            if received_quantity["Datastream"]["unitOfMeasurement"]["symbol"] == "degC" \
+                    and received_quantity["result"] < 0:
+                subzero_temp.append(
+                    {"origin": received_quantity["Datastream"]["name"], "temperature": received_quantity["result"]})
 
-            # Check whether there are temperatures are subzero
-            if subzero_temp != list():
-                print("    WARNING, the road could be slippery, see: {}".format(subzero_temp))
-
-    except KeyboardInterrupt:
-        client.disconnect()
+        # Check whether there are temperatures are subzero
+        if subzero_temp != list():
+            print("    WARNING, the road could be slippery, see: {}".format(subzero_temp))
 
 
 if __name__ == "__main__":
@@ -108,27 +98,33 @@ if __name__ == "__main__":
               "gost_servers": "localhost:8082",
               "kafka_bootstrap_servers": "localhost:9092"}
     client = DigitalTwinClient(**config)
+    client.logger.info("Main: Starting client.")
     client.register(instance_file=INSTANCES)  # Register new instances should be outsourced to the platform
     client.subscribe(subscription_file=SUBSCRIPTIONS)
-
-    client.logger.info("Main: Starting client as car 1.")
 
     # Create an instance of the CarSimulator that simulates a car driving on different tracks through Salzburg
     car = CarSimulator(track_id=1, time_factor=100, speed=30, cautiousness=1,
                        temp_day_amplitude=4, temp_year_amplitude=-4, temp_average=3, seed=1)
     client.logger.info("Main: Created instance of CarSimulator.")
 
-    client.logger.info("Main: Starting producer and consumer Thread.")
+    client.logger.info("Main: Starting producer and consumer threads.")
+    halt_event = threading.Event()
+
+    # Create and start the receiver Thread that consumes data via the client
+    consumer = threading.Thread(target=consume_metrics, kwargs=({"client": client}))
+    consumer.start()
+    # Create and start the receiver Thread that publishes data via the client
+    producer = threading.Thread(target=produce_metrics, kwargs=({"car": car, "client": client, "interval": 1}))
+    producer.start()
+
+    # set halt signal to stop the threads if a KeyboardInterrupt occurs
     try:
-        # Create and start the receiver Thread that consumes data via the client
-        consumer = threading.Thread(target=consume_metrics, kwargs=({"client": client}))
-        consumer.start()
-
-        # Create and start the receiver Thread that publishes data via the client
-        producer = threading.Thread(target=produce_metrics, kwargs=({"car": car, "client": client, "interval": 1}))
-        producer.start()
-
+        while True:
+            time.sleep(1)
     except (KeyboardInterrupt, SystemExit):
-        print("Gracefully stopping.")
-        print(producer.join())
+        client.logger.info("Main: Set halt signal to producer and consumer.")
+        halt_event.set()
+        producer.join()
+        consumer.join()
+        client.logger.info("Main: Stopped the demo applications.")
         client.disconnect()

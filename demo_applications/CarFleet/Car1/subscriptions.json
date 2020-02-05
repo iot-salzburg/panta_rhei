@@ -1,5 +1,6 @@
 {
   "subscribed_datastreams": [
+    "cz.icecars.iot-iot4cps-wp5.CarFleet.car_1.Air Temperature",
     "cz.icecars.iot-iot4cps-wp5.CarFleet.car_2.Air Temperature",
     "cz.icecars.iot-iot4cps-wp5.CarFleet.car_2.acceleration",
     "cz.icecars.iot-iot4cps-wp5.CarFleet.car_2.GPS-position-latitude",
