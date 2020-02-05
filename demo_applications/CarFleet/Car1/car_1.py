@@ -58,7 +58,9 @@ def produce_metrics(car, client, interval=10):
 
             time.sleep(interval)
     except KeyboardInterrupt:
+        print("disconnect client.")
         client.disconnect()
+        return "stopped"
 
 
 # Receive all temperatures of the weather-service and other cars and check whether they are subzero
@@ -106,17 +108,27 @@ if __name__ == "__main__":
               "gost_servers": "localhost:8082",
               "kafka_bootstrap_servers": "localhost:9092"}
     client = DigitalTwinClient(**config)
-    client.register(instance_file=INSTANCES)  # Registering of new instances should be outsourced to the platform
+    client.register(instance_file=INSTANCES)  # Register new instances should be outsourced to the platform
     client.subscribe(subscription_file=SUBSCRIPTIONS)
+
+    client.logger.info("Main: Starting client as car 1.")
 
     # Create an instance of the CarSimulator that simulates a car driving on different tracks through Salzburg
     car = CarSimulator(track_id=1, time_factor=100, speed=30, cautiousness=1,
                        temp_day_amplitude=4, temp_year_amplitude=-4, temp_average=3, seed=1)
+    client.logger.info("Main: Created instance of CarSimulator.")
 
-    # Create and start the receiver Thread that consumes data via the client
-    receiver = threading.Thread(target=consume_metrics, kwargs=({"client": client}))
-    receiver.start()
+    client.logger.info("Main: Starting producer and consumer Thread.")
+    try:
+        # Create and start the receiver Thread that consumes data via the client
+        consumer = threading.Thread(target=consume_metrics, kwargs=({"client": client}))
+        consumer.start()
 
-    # Create and start the receiver Thread that publishes data via the client
-    sender = threading.Thread(target=produce_metrics, kwargs=({"car": car, "client": client, "interval": 1}))
-    sender.start()
+        # Create and start the receiver Thread that publishes data via the client
+        producer = threading.Thread(target=produce_metrics, kwargs=({"car": car, "client": client, "interval": 1}))
+        producer.start()
+
+    except (KeyboardInterrupt, SystemExit):
+        print("Gracefully stopping.")
+        print(producer.join())
+        client.disconnect()
