@@ -15,19 +15,16 @@ Demo Scenario: Connected Cars
 import os
 import time
 import pytz
-import inspect
 import threading
 from datetime import datetime
 
 from client.digital_twin_client import DigitalTwinClient
 from demo_applications.simulator.CarSimulator import CarSimulator
 
-# Get dirname from inspect module
-filename = inspect.getframeinfo(inspect.currentframe()).filename
-dirname = os.path.dirname(os.path.abspath(filename))
+# load files relative to this file
+dirname = os.path.dirname(os.path.abspath(__file__))
 INSTANCES = os.path.join(dirname, "instances.json")
 SUBSCRIPTIONS = os.path.join(dirname, "subscriptions.json")
-MAPPINGS = os.path.join(dirname, "ds-mappings.json")
 
 
 def produce_metrics(car, client, interval=10):
@@ -122,8 +119,9 @@ if __name__ == "__main__":
         while True:
             time.sleep(1)
     except (KeyboardInterrupt, SystemExit):
-        client.logger.info("Main: Set halt signal to producer and consumer.")
+        client.logger.info("Main: Sent halt signal to producer and consumer.")
         halt_event.set()
+        # wait for the threads to get finished (can take about the timeout duration)
         producer.join()
         consumer.join()
         client.logger.info("Main: Stopped the demo applications.")
