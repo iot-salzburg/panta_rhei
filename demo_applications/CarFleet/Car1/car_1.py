@@ -95,8 +95,8 @@ if __name__ == "__main__":
               "kafka_bootstrap_servers": "localhost:9092"}
     client = DigitalTwinClient(**config)
     client.logger.info("Main: Starting client.")
-    client.register(instance_file=INSTANCES)  # Register new instances should be outsourced to the platform
-    client.subscribe(subscription_file=SUBSCRIPTIONS)
+    client.register(instance_file=INSTANCES)  # Register new instances could be outsourced to the platform
+    client.subscribe(subscription_file=SUBSCRIPTIONS)  # Subscribe to datastreams
 
     # Create an instance of the CarSimulator that simulates a car driving on different tracks through Salzburg
     car = CarSimulator(track_id=1, time_factor=100, speed=30, cautiousness=1,

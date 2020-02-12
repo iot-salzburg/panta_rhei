@@ -236,13 +236,14 @@ class RegisterHelper:
                 ds["name"] = ".".join([self.config["system"], ds["Thing"], ds["name"]])
 
         res = requests.get(gost_url + "/v1.0/Datastreams")
-        if res.status_code in [200,201,202]:
+        if res.status_code in [200, 201, 202]:
             gost_datastreams = res.json()
         else:
+            gost_datastreams = dict()
             self.logger.warning(
                     "register: Problems in upserting Datastreams with URI: {}, status code: {}, "
-                    "payload: {}".format(uri, res.status_code, json.dumps(res.json(), indent=2)))
-        gost_datastream_list = [datastream["name"] for datastream in gost_datastreams["value"]]
+                    "payload: {}".format(gost_url, res.status_code, json.dumps(res.json(), indent=2)))
+        gost_datastream_list = [datastream["name"] for datastream in gost_datastreams.get("value", list())]
 
         for datastream in instances["Datastreams"].keys():
             name = instances["Datastreams"][datastream]["name"]
