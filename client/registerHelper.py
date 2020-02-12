@@ -175,9 +175,8 @@ class RegisterHelper:
 
         # Add an unique prefix to identify the instances in the GOST server
         for key, ds in instances["Datastreams"].items():
-            if not ds["ObservedProperty"]["name"].startswith(".".join([self.config["system"], ds["Thing"]])):
-                ds["ObservedProperty"]["name"] = ".".join([self.config["system"],
-                                                           ds["Thing"], ds["ObservedProperty"]["name"]])
+            if not ds["ObservedProperty"]["name"].startswith(self.config["system"]):
+                ds["ObservedProperty"]["name"] = ".".join([self.config["system"], ds["ObservedProperty"]["name"]])
 
         self.instances["Datastreams"] = dict()
         gost_observed_properties = requests.get(gost_url + "/v1.0/ObservedProperties").json()
@@ -229,11 +228,11 @@ class RegisterHelper:
         """
         # Register Datastreams with observation. Patch or post
         self.logger.debug("register_new: Register Datastreams")
-
         # Add an unique prefix to identify the instances in the GOST server
         for key, ds in instances["Datastreams"].items():
-            if not ds["name"].startswith(".".join([self.config["system"], ds["Thing"]])):
-                ds["name"] = ".".join([self.config["system"], ds["Thing"], ds["name"]])
+            if not ds["name"].startswith(instances["Things"][ds["Thing"]]["name"]):
+                ds["name"] = ".".join([instances["Things"][ds["Thing"]]["name"], ds["name"]])
+            # print(instances["Things"][ds["Thing"]]["name"])  # should yield the Thing's name with the system as prefix
 
         res = requests.get(gost_url + "/v1.0/Datastreams")
         if res.status_code in [200, 201, 202]:

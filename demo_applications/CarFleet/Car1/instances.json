@@ -1,8 +1,8 @@
 {
   "Things": {
-    "car_1": {
-      "name": "Demo Car 1",
-      "description": "A demo Car that is an unique system that provides and consumes temperature data",
+    "car": {
+      "name": "Main",
+      "description": "The main control of the demo Car 1 that is an unique system that provides and consumes data",
       "properties": {
         "specification": "https://www.salzburgresearch.at/projekt/iot4cps/"
       }
@@ -43,7 +43,7 @@
         "description": "Air temperature measured in the connected car 1",
         "definition": "http://www.qudt.org/qudt/owl/1.0.0/quantity/Instances.html#AreaTemperature"
       },
-      "Thing": "car_1",
+      "Thing": "car",
       "Sensor": "temp-sensor"
     },
     "acceleration": {
@@ -61,7 +61,7 @@
         "description": "Maximum acceleration of the car that occurred after the previous measurement.",
         "definition": "http://www.qudt.org/qudt/owl/1.0.0/quantity/Instances.html#Acceleration"
       },
-      "Thing": "car_1",
+      "Thing": "car",
       "Sensor": "acceleration-sensor"
     },
     "GPS-position-latitude": {
@@ -78,7 +78,7 @@
         "description": "Latitude of the car''s position.",
         "definition": "http://www.qudt.org/qudt/owl/1.0.0/quantity/Instances.html#Angle"
       },
-      "Thing": "car_1",
+      "Thing": "car",
       "Sensor": "GPS-sensor"
     },
     "GPS-position-longitude": {
@@ -95,7 +95,7 @@
         "description": "Longitude of the car''s position.",
         "definition": "http://www.qudt.org/qudt/owl/1.0.0/quantity/Instances.html#Angle"
       },
-      "Thing": "car_1",
+      "Thing": "car",
       "Sensor": "GPS-sensor"
     },
     "GPS-position-attitude": {
@@ -112,7 +112,7 @@
         "description": "Attitude of the car''s position in meter above the sea level.",
         "definition": "http://www.qudt.org/qudt/owl/1.0.0/quantity/Instances.html#Length"
       },
-      "Thing": "car_1",
+      "Thing": "car",
       "Sensor": "GPS-sensor"
     }
   }

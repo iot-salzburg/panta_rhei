@@ -205,9 +205,9 @@ class DigitalTwinClient:
         # Build the kafka-topic that is used
         # kafka_topic = "{}.{}.".format(self.config["system_prefix"], self.config["system_name"])
         if self.mapping[quantity]["observationType"] == "logging":
-            kafka_topic = self.config["system"] + "." + "log"
+            kafka_topic = self.config["system"] + ".log"
         else:
-            kafka_topic = self.config["system"] + "." + "int"
+            kafka_topic = self.config["system"] + ".int"
 
         # The key is of the form "thing" or "client-name" (for logging)
         kafka_key = str(self.mapping[quantity].get("Thing", self.config["client_name"]))

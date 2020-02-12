@@ -2,14 +2,16 @@
 """
 Demo Scenario: Connected Cars
     CarFleet:
-        The connected car wants to enhance it's safety by retrieving temperature data, to warn the driver on
-        approaching slippery road sections. As each car has also temperature data that is of interest for other
-        cars, it sends this data to the the platform.
-    InfraProv:
-        The provider of the road infrastructure wants to enhance it's road quality and therefore consumes and analyses data.
-    WeatherStation:
-        stations: The weather stations are conducted by a local weather service provider which provides the data as a service.
-        service_provider: The weather information provider offers temperature data for it's customers.
+        Connected cars want to enhance their safety by retrieving temperature, acceleration and position data from each
+        other, to warn the drivers on approaching dangerous road sections. As each car measures these quantities by
+        them selves, they are shared to others via the the platform.
+    Analytics:
+        A provider of applied data analytics with the goal to improve the road quality. Therefore, data of various
+         sources are consumed.
+    WeatherService:
+        A Weather Service provider that conducts multiple Stations that measure weather conditions, as well as a
+        central service to forecast the Weather. Additionally, the temperature data is of interest for the CarFleet and
+        therefore shared with them.
 """
 
 import os
@@ -89,8 +91,8 @@ if __name__ == "__main__":
     # Set the configs, create a new Digital Twin Instance and register file structure
     # This config is generated when registering a client application on the platform
     # Make sure that Kafka and GOST are up and running before starting the platform
-    config = {"client_name": "car_1",
-              "system": "cz.icecars.iot-iot4cps-wp5.CarFleet",
+    config = {"client_name": "client",
+              "system": "cz.icecars.iot4cps-wp5-CarFleet.Car1",
               "gost_servers": "localhost:8082",
               "kafka_bootstrap_servers": "localhost:9092"}
     client = DigitalTwinClient(**config)
@@ -110,7 +112,7 @@ if __name__ == "__main__":
     consumer = threading.Thread(target=consume_metrics)
     consumer.start()
     # Create and start the receiver Thread that publishes data via the client
-    producer = threading.Thread(target=produce_metrics, kwargs=({"interval": 1}))
+    producer = threading.Thread(target=produce_metrics, kwargs=({"interval": 5}))
     producer.start()
 
     # set halt signal to stop the threads if a KeyboardInterrupt occurs
