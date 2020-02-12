@@ -27,13 +27,12 @@ INSTANCES = os.path.join(dirname, "instances.json")
 SUBSCRIPTIONS = os.path.join(dirname, "subscriptions.json")
 
 
-def produce_metrics(car, client, interval=10):
+def produce_metrics(interval=10):
     while not halt_event.is_set():
         # unix epoch and ISO 8601 UTC are both valid
         timestamp = datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat()
 
         # Measure metrics
-        car.update_positions()
         temperature = car.temp.get_temp()
         acceleration = car.get_acceleration()
         latitude = car.get_latitude()
@@ -55,7 +54,7 @@ def produce_metrics(car, client, interval=10):
 
 
 # Receive all temperatures of the weather-service and other cars and check whether they are subzero
-def consume_metrics(client):
+def consume_metrics():
     while not halt_event.is_set():
         # In this list, each datapoint is stored that yiels a result below zero degC.
         subzero_temp = list()
@@ -108,10 +107,10 @@ if __name__ == "__main__":
     halt_event = threading.Event()
 
     # Create and start the receiver Thread that consumes data via the client
-    consumer = threading.Thread(target=consume_metrics, kwargs=({"client": client}))
+    consumer = threading.Thread(target=consume_metrics)
     consumer.start()
     # Create and start the receiver Thread that publishes data via the client
-    producer = threading.Thread(target=produce_metrics, kwargs=({"car": car, "client": client, "interval": 1}))
+    producer = threading.Thread(target=produce_metrics, kwargs=({"interval": 1}))
     producer.start()
 
     # set halt signal to stop the threads if a KeyboardInterrupt occurs

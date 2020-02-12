@@ -18,6 +18,7 @@ from SimulateTemperatures import SimulateTemperatures
 
 # Tracks are downloaded from https://maps.openrouteservice.org/
 TRACK_MAP = {1: "openroute_SRFG-round.json", 2: "openroute_Mirabellplatz-round.json", 3: "openroute_Muelln-round.json"}
+UPDATE_THRESHOLD = 0.001  # threshold, update positions if this is surpassed in coordinate getter.
 
 
 class CarSimulator:
@@ -43,7 +44,7 @@ class CarSimulator:
         if seed is not None:
             random.seed(seed)
 
-        logging.basicConfig(level='WARNING')
+        logging.basicConfig(level=logging.WARNING)
         self.logger = logging.getLogger("CarSimulator")
         self.logger.setLevel(logging.INFO)
 
@@ -141,21 +142,21 @@ class CarSimulator:
         return position
 
     def get_latitude(self):
-        if time.time() - self.last_update > 1:
-            self.logger.warning("The latitude might be deprecated")
-            self.logger.warning("Call car_simulator.update_positions() right before getting a position!")
+        if time.time() - self.last_update > UPDATE_THRESHOLD:
+            self.logger.debug("The latitude might be deprecated, updating positions.")
+            self.update_positions()
         return round(self.gps_latitude, 6)
 
     def get_longitude(self):
-        if time.time() - self.last_update > 1:
-            self.logger.warning("The longitude might be deprecated")
-            self.logger.warning("Call car_simulator.update_positions() right before getting a position!")
+        if time.time() - self.last_update > UPDATE_THRESHOLD:
+            self.logger.debug("The longitude might be deprecated, updating positions.")
+            self.update_positions()
         return round(self.gps_longitude, 6)
 
     def get_attitude(self):
-        if time.time() - self.last_update > 1:
-            self.logger.warning("The attitude might be deprecated")
-            self.logger.warning("Call car_simulator.update_positions() right before getting a position!")
+        if time.time() - self.last_update > UPDATE_THRESHOLD:
+            self.logger.debug("The attitude might be deprecated, updating positions.")
+            self.update_positions()
         return round(self.gps_attitude, 6)
 
     def get_acceleration(self):
@@ -167,7 +168,7 @@ class CarSimulator:
         # The temperature is normalized with 4° and a=0.1
         influences = 3/(1+math.exp(0.1*(4-self.temp.get_temp())))
         # The position should have an effect, multiply with 100 to see an effect within a city
-        influences += math.sin(100*self.gps_latitude) + math.sin(100*self.gps_longitude)
+        influences += math.sin(100*self.get_latitude()) + math.sin(100*self.get_longitude())
         accelerations = [random.expovariate(self.cautiousness * (5 + influences))
                          for _ in range(delta_time)]
         self.last_acceleration = int(time.time())
