@@ -145,7 +145,7 @@ public class StreamAppEngine {
             if (!second_try) {
                 System.out.println("iot_id '" + iot_id + "' was not found, refetching sensorthings.");
                 reloadGOSTServer();
-                return check_condition(inputJson, second_try=true);
+                return check_condition(inputJson, true);
             }
             else {
                 e.printStackTrace();
