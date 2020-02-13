@@ -6,8 +6,8 @@ services:
     environment:
       # Streamhub config
       STREAM_NAME: test-stream
-      SOURCE_SYSTEM: cz.icecars.iot-iot4cps-wp5.CarFleet
-      TARGET_SYSTEM: at.datahouse.iot-iot4cps-wp5.RoadAnalytics
+      SOURCE_SYSTEM: is.iceland.iot4cps-wp5-WeatherService.Stations
+      TARGET_SYSTEM: cz.icecars.iot4cps-wp5-CarFleet.Car1
       KAFKA_BOOTSTRAP_SERVERS: ${HOST_IP}:9092
 #      KAFKA_BOOTSTRAP_SERVERS: 127.0.0.1:9092
       FILTER_LOGIC: "{}"

@@ -9,17 +9,13 @@ import org.apache.kafka.streams.kstream.KStream;
 
 import java.util.Properties;
 
-public class StreamHub_WeatherService {
+public class StreamHub_Car1 {
 
     public static void main(String[] args) {
         // the system name (must be unique, gets a consumer-group) and recipients
-        final String SYSTEM_NAME = "is.iceland.iot4cps-wp5-WeatherService.Stations";
-        final String [] OUTPUT_SYSTEMS = {
-                "is.iceland.iot4cps-wp5-WeatherService.Services",
-                "at.datahouse.iot4cps-wp5-Analytics.RoadAnalytics",
-                "cz.icecars.iot4cps-wp5-CarFleet.Car1",
-                "cz.icecars.iot4cps-wp5-CarFleet.Car2"
-        };
+        final String SYSTEM_NAME = "cz.icecars.iot4cps-wp5-CarFleet.Car1";
+        final String [] OUTPUT_SYSTEMS = {"cz.icecars.iot4cps-wp5-CarFleet.Car2",
+                "at.datahouse.iot4cps-wp5-Analytics.RoadAnalytics"};
         final String KAFKA_BOOTSTRAP_SERVERS = "127.0.0.1:9092";
 
         // create input and output topics from system name
@@ -40,7 +36,7 @@ public class StreamHub_WeatherService {
 
         // input topic, application logic
         KStream<String, String> inputTopic = streamsBuilder.stream(inputTopicName);
-        KStream<String, String> filteredStream = inputTopic.filter((k, val) -> check_condition(val));
+        KStream<String, String> filteredStream = inputTopic.filter((k, jsonTweet) -> true);
 
         for (String topic: outputTopics)
             if (topic.endsWith(".ext"))
@@ -59,16 +55,17 @@ public class StreamHub_WeatherService {
 
     public static JsonParser jsonParser = new JsonParser();
 
-    public static boolean check_condition(String inputJson) {
+    public static int extractInfo(String inputJson) {
         // json library
         try {
-            double result;
-            result = jsonParser.parse(inputJson)
+            return jsonParser.parse(inputJson)
                     .getAsJsonObject()
-                    .get("result").getAsDouble();
-            return result < 10;
+                    .get("user")
+                    .getAsJsonObject()
+                    .get("followers_count")
+                    .getAsInt();
         } catch (NullPointerException e) {
-            return false;
+            return 0;
         }
     }
 }

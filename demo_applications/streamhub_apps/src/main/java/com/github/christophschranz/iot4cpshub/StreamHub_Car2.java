@@ -9,12 +9,13 @@ import org.apache.kafka.streams.kstream.KStream;
 
 import java.util.Properties;
 
-public class StreamHub_CarFleet {
+public class StreamHub_Car2 {
 
     public static void main(String[] args) {
         // the system name (must be unique, gets a consumer-group) and recipients
-        final String SYSTEM_NAME = "cz.icecars.iot-iot4cps-wp5.CarFleet";
-        final String [] OUTPUT_SYSTEMS = {"at.datahouse.iot-iot4cps-wp5.RoadAnalytics"};
+        final String SYSTEM_NAME = "cz.icecars.iot4cps-wp5-CarFleet.Car2";
+        final String [] OUTPUT_SYSTEMS = {"cz.icecars.iot4cps-wp5-CarFleet.Car1",
+                "at.datahouse.iot4cps-wp5-Analytics.RoadAnalytics"};
         final String KAFKA_BOOTSTRAP_SERVERS = "127.0.0.1:9092";
 
         // create input and output topics from system name

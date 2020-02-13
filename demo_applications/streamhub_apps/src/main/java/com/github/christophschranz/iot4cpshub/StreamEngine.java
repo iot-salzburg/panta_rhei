@@ -11,6 +11,9 @@ import java.util.Properties;
 import java.util.Set;
 
 
+/*
+The StreamAppEngine generates streams between Panta Rhei Systems in Kafka Streams, based on System variables
+*/
 public class StreamEngine {
 
     public static void main(String[] args) {
