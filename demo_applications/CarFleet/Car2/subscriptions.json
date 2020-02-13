@@ -4,7 +4,7 @@
     "cz.icecars.iot4cps-wp5-CarFleet.Car1.Main.Acceleration",
     "cz.icecars.iot4cps-wp5-CarFleet.Car1.Main.Latitude",
     "cz.icecars.iot4cps-wp5-CarFleet.Car1.Main.Longitude",
-    "is.iceland.iot4cps-wp5-WeatherService.Stations.station_1.Air Temperature",
-    "is.iceland.iot4cps-wp5-WeatherService.Stations.station_2.Air Temperature"
+    "is.iceland.iot4cps-wp5-WeatherService.Stations.Station_1.Air Temperature",
+    "is.iceland.iot4cps-wp5-WeatherService.Stations.Station_2.Air Temperature"
   ]
 }

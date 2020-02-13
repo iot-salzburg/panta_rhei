@@ -34,14 +34,13 @@ MAPPINGS = os.path.join(dirname, "ds-mappings.json")
 # This config is generated when registering a client application on the platform
 # Make sure that Kafka and GOST are up and running before starting the platform
 config = {"client_name": "weatherstation_1",
-          "system": "is.iceland.iot-iot4cps-wp5.WeatherService",
-          "gost_servers": "localhost:8084",
+          "system": "is.iceland.iot4cps-wp5-WeatherService.Stations",
+          "gost_servers": "localhost:8082",
           "kafka_bootstrap_servers": "localhost:9092"}
 client = DigitalTwinClient(**config)
-# client.register_existing(mappings_file=MAPPINGS)
 client.register(instance_file=INSTANCES)
 
-randomised_temp = SimulateTemperatures(t_factor=100, day_amplitude=5, year_amplitude=-5, average=2.5)
+randomised_temp = SimulateTemperatures(time_factor=100, day_amplitude=5, year_amplitude=-5, average=2.5)
 
 try:
     while True:
