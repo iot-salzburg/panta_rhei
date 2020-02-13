@@ -55,17 +55,16 @@ public class StreamHub_Car2 {
 
     public static JsonParser jsonParser = new JsonParser();
 
-    public static int extractInfo(String inputJson) {
+    public static boolean check_condition(String inputJson) {
         // json library
         try {
-            return jsonParser.parse(inputJson)
+            double result;
+            result = jsonParser.parse(inputJson)
                     .getAsJsonObject()
-                    .get("user")
-                    .getAsJsonObject()
-                    .get("followers_count")
-                    .getAsInt();
+                    .get("result").getAsDouble();
+            return result < 10;
         } catch (NullPointerException e) {
-            return 0;
+            return false;
         }
     }
 }
