@@ -40,7 +40,7 @@ fan_status = False
 try:
     while True:
         # Receive all queued messages of the weather-service
-        received_quantities = client.consume(timeout=0.5)
+        received_quantities = client.consume(timeout=0.1)
         for received_quantity in received_quantities:
             # The resolves the all meta-data for an received data-point
             print("  -> Received new external data-point at {}: '{}' = {} {}."

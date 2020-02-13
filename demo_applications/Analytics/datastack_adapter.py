@@ -69,7 +69,7 @@ try:
             continue
 
         # Receive all queued messages of 'demo_temperature'
-        received_quantities = client.consume(timeout=1.0)
+        received_quantities = client.consume(timeout=0.1)
 
         for received_quantity in received_quantities:
             # The resolves the all meta-data for an received data-point

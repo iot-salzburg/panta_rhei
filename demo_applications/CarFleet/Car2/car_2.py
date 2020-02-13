@@ -67,7 +67,7 @@ def consume_metrics():
             subzero_temp.append({"origin": config["system"], "temperature": temperature})
 
         # Data of other instances (and also the same one) can be consumed via the client
-        received_quantities = client.consume(timeout=1.0)
+        received_quantities = client.consume(timeout=0.1)
         for received_quantity in received_quantities:
             # The resolves the all meta-data for an received data-point
             print("  -> Received new external data-point at {}: '{}' = {} {}."
@@ -82,9 +82,9 @@ def consume_metrics():
                 subzero_temp.append(
                     {"origin": received_quantity["Datastream"]["name"], "temperature": received_quantity["result"]})
 
-        # Check whether there are temperatures are subzero
-        if subzero_temp != list():
-            print("    WARNING, the road could be slippery, see: {}".format(subzero_temp))
+        # # Check whether there are temperatures are subzero
+        # if subzero_temp != list():
+        #     print("    WARNING, the road could be slippery, see: {}".format(subzero_temp))
 
 
 if __name__ == "__main__":
