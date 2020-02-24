@@ -48,12 +48,13 @@ public class Node {
     public Node(String str) {
         this.rawExpression = str;
 
-        // extract the logic operator
-        if (str.contains(" AND "))
+        // extract the outer logic operator. First iterate through the expr
+        String outer_str = getOuterExpr(str);
+        if (outer_str.contains(" AND "))
             this.logicOperation = "AND";
-        else if (str.contains(" OR "))
+        else if (outer_str.contains(" OR "))
             this.logicOperation = "OR";
-        else if (str.contains(" XOR "))
+        else if (outer_str.contains(" XOR "))
             this.logicOperation = "XOR";
         else {
             this.isLeaf = true;
@@ -69,6 +70,10 @@ public class Node {
             this.child2 = new Node(expr2);
         }
         else {
+            // remove brackets
+            str = str.replaceAll("[()]", "");
+            this.rawExpression = str;
+
             // extract the comparision operator else
             String operator = "=";
             if (str.contains("=")) {
@@ -115,7 +120,6 @@ public class Node {
         }
     }
 
-
     /**
      * Return a boolean expression whether the expression of the comparison expression is true or false
      * or the subtree is true or false
@@ -156,5 +160,28 @@ public class Node {
         }
         System.out.println("Exception in Node: " + this.toString());
         return false;
+    }
+    /**
+     * Return the outer expression that is not between brackets.
+     * Remove brackets if no outer statement was found.
+     * @return String of the outer expression
+     */
+    public static String getOuterExpr(String str) {
+        str = str.trim();
+        String outerString = "";
+        if (!str.contains("("))
+            return str;
+
+        if (str.startsWith("(") && str.endsWith(")"))
+            return str.substring(1, str.length()-1);
+        else if (str.startsWith("(")) {
+            return str.substring(str.lastIndexOf(')')+1);
+        }
+        else if (str.endsWith(")")) {
+            return str.substring(0, str.indexOf('('));
+        }
+        System.out.println("unexpected exception for string: " + str);
+        System.exit(13);
+        return outerString;
     }
 }

@@ -49,9 +49,19 @@ public class StreamParserTester {
                 System.out.println(anode.isTrue(jsonInput));
                 System.out.println();
 
-                System.out.println("#######################################################");
+                System.out.println("#######################################################\n");
 
-                expr =  "name = 'Station_1.Air Temperature' AND result > 4";
+//                expr =  "name = 'Station_1.Air Temperature' AND result > 4";
+//                Node node = new Node(expr);
+//                System.out.println(node.isTrue(jsonInput));
+//                System.out.println();
+
+
+                expr =  "name = 'Station_1.Air Temperature' OR (result > 30 AND result > 4)";
+                expr =  "((name = 'Station_1.Air Temperature' AND ((result < 30 AND result > 4)))";
+//                expr =  "(result < 30 AND result > 4) OR name = 'Station_1.Air Temperature'";
+//                expr =  "name = 'Station_1.Air Temperature' OR result > 4";
+//                expr =  "(name = 'Station_1.Air Temperature' OR result > 4)";
                 Node node = new Node(expr);
                 System.out.println(node.isTrue(jsonInput));
                 System.out.println();
