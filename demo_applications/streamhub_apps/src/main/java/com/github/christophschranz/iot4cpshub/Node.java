@@ -1,6 +1,7 @@
 package com.github.christophschranz.iot4cpshub;
 
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import java.util.ArrayList;
 
@@ -119,6 +120,7 @@ public class Node {
                 this.dblValue = Double.parseDouble(rawValue);
             }
         }
+        this.degree = this.getDegree();
     }
 
     /**
@@ -132,6 +134,8 @@ public class Node {
 //            System.out.println("\tjsonInput: " + jsonInput);
 
             if (stringOperation) {
+                System.out.println("expressionKey: " + exprKey);
+                System.out.println();
                 String dataValue = jsonInput.get(exprKey).getAsString();
                 if (comparisonOperation.equals("=="))
                     return dataValue.equals(strValue);

@@ -19,9 +19,9 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.KeyException;
+import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
-
 
 /* The StreamAppEngine generates streams between Panta Rhei Systems in Kafka, based on System variables */
 public class StreamAppEngine {
@@ -33,7 +33,8 @@ public class StreamAppEngine {
         logger.info("Starting a new stream with the parameter:");
 
         if (System.getenv().containsKey("STREAM_NAME"))
-            globalOptions.setProperty("STREAM_NAME", System.getenv("STREAM_NAME"));
+            globalOptions.setProperty("STREAM_NAME",
+                    System.getenv("STREAM_NAME").replaceAll("\"", ""));
         if (System.getenv().containsKey("SOURCE_SYSTEM"))
             globalOptions.setProperty("SOURCE_SYSTEM", System.getenv("SOURCE_SYSTEM"));
         if (System.getenv().containsKey("TARGET_SYSTEM"))
@@ -43,7 +44,11 @@ public class StreamAppEngine {
         if (System.getenv().containsKey("GOST_SERVER"))
             globalOptions.setProperty("GOST_SERVER", System.getenv("GOST_SERVER"));
         if (System.getenv().containsKey("FILTER_LOGIC"))
-            globalOptions.setProperty("FILTER_LOGIC", System.getenv("FILTER_LOGIC"));
+            globalOptions.setProperty("FILTER_LOGIC",
+                    System.getenv("FILTER_LOGIC").replaceAll("\"", ""));
+        globalOptions.setProperty("FILTER_LOGIC",
+                "SELECT * FROM is.iceland.iot4cps-wp5-WeatherService.Stations " +
+                        "WHERE name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_1.Air Temperature' AND result < 0");
 
         // parse input parameter to options and check completeness, must be a key-val pair
         if (1 == args.length % 2) {
@@ -69,13 +74,21 @@ public class StreamAppEngine {
         }
 
 
+        /**************************        build the Stream Parser class         **************************/
+        String expr =  globalOptions.getProperty("FILTER_LOGIC").substring(
+                globalOptions.getProperty("FILTER_LOGIC").indexOf(" WHERE ") + 7).replace(";", "");
+        // TODO extract query condition
+        Node queryParser = new Node(expr);
+        System.out.println(queryParser);
+
+//        System.exit(99);
+
+
         /**************************        load json from SensorThings         **************************/
 
         reloadGOSTServer();
         String name = sensorThingsStreams.get(Integer.toString(58)).getAsJsonObject().get("name").getAsString();
-        System.out.println(name);
 
-//        System.exit(99);
 
         /**************************   set up the topology and then start it    **************************/
         // create input and output topics from system name
@@ -97,7 +110,8 @@ public class StreamAppEngine {
         KStream<String, String> inputTopic = streamsBuilder.stream(inputTopicName);
 
         // TODO apply filter logic
-        KStream<String, String> filteredStream = inputTopic.filter((k, value) -> check_condition(value));
+        KStream<String, String> filteredStream = inputTopic.filter((k, value) -> check_condition(queryParser, value));
+//        KStream<String, String> filteredStream = inputTopic.filter((k, value) -> true);
 
         filteredStream.to(targetTopic);
 
@@ -116,36 +130,35 @@ public class StreamAppEngine {
 
     public static JsonParser jsonParser = new JsonParser();
 
-    public static boolean check_condition(String inputJson) {
-        return check_condition(inputJson, false);
+    public static boolean check_condition(Node queryParser, String inputJson) {
+        return check_condition(queryParser, inputJson, false);
     }
 
-    public static boolean check_condition(String inputJson, boolean second_try) {
+    public static boolean check_condition(Node queryParser, String inputJson, boolean second_try) {
         // json library
         String iot_id = "-1";
         try {
-            System.out.println("Getting new kafka message: " + inputJson);
-            String logic = globalOptions.getProperty("FILTER_LOGIC");  // TODO apply logic
-            double result;
-            iot_id = jsonParser.parse(inputJson)
-                    .getAsJsonObject()
-                    .get("Datastream").getAsJsonObject()
+            // parse raw Kafka Message
+            JsonObject jsonObject = jsonParser.parse(inputJson).getAsJsonObject();
+
+            iot_id = jsonObject.get("Datastream").getAsJsonObject()
                     .get("@iot.id").getAsString();
 
             String quantity_name = sensorThingsStreams.get(iot_id).getAsJsonObject().get("name").getAsString();
-            System.out.println("  Quantity is: " + quantity_name);
+            jsonObject.addProperty("name", quantity_name);
+            System.out.println("Getting new (augmented) kafka message: " + inputJson);
 
-            result = jsonParser.parse(inputJson)
-                    .getAsJsonObject()
-                    .get("result").getAsDouble();
+            boolean queryCondition = queryParser.isTrue(jsonObject);
+            System.out.println("Query condition: " + queryCondition);
+            return queryCondition;
 
-            return quantity_name.endsWith(".Station_1.Air Temperature") && result < 10;  // filter on name and condition
+//            return quantity_name.endsWith(".Station_1.Air Temperature") && result < 10;  // filter on name and condition
 
         } catch (NullPointerException e) {
             if (!second_try) {
                 System.out.println("iot_id '" + iot_id + "' was not found, refetching sensorthings.");
                 reloadGOSTServer();
-                return check_condition(inputJson, true);
+                return check_condition(queryParser, inputJson, true);
             }
             else {
                 e.printStackTrace();
@@ -181,6 +194,7 @@ public class StreamAppEngine {
             // the json value is not ordered properly, restructure such that we have {iot_id0: {}, iot_id1: {}, ...}
             sensorThingsStreams = new JsonObject();  // set ST to jsonObject
 
+            // adding the name
             for (int i=1; i < rawJsonArray.size(); i++ ) {
                 System.out.println("Adding " + rawJsonArray.get(i).getAsJsonObject().get("name").getAsString());
                 sensorThingsStreams.add(

@@ -2,6 +2,7 @@ package com.github.christophschranz.iot4cpshub;
 
 import com.google.gson.JsonObject;
 
+import java.util.Arrays;
 import java.util.Properties;
 
 public class NodeTester {
@@ -15,9 +16,6 @@ public class NodeTester {
                 globalOptions.setProperty("FILTER_LOGIC",
                         "SELECT * FROM is.iceland.iot4cps-wp5-WeatherService.Stations " +
                                 "WHERE name = 'Station_1.Air Temperature' AND result < 4");
-                StreamParser strp = new StreamParser(globalOptions);
-                System.out.println(strp);
-
 
                 JsonObject jsonInput = new JsonObject();
                 jsonInput.addProperty("name", "Station_1.Air Temperature");
@@ -65,6 +63,11 @@ public class NodeTester {
                 node = new Node(expr);
                 System.out.println(node.isTrue(jsonInput));
                 System.out.println();
+
+                String str = "SELECT * FROM is.iceland.iot4cps-wp5-WeatherService.Stations " +
+                        "WHERE name = 'is.iceland.iot4cps-wp5-WeatherService.Station_1.Air Temperature' AND result < 0";
+
+                System.out.println(str.substring(str.indexOf(" WHERE ") + 7));
         }
 
         public static Properties globalOptions = new Properties();
