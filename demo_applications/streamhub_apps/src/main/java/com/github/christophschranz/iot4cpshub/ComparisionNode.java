@@ -17,12 +17,18 @@ public class ComparisionNode {
     String strValue;
     double dblValue;
 
-    int degree;
-    boolean visited;
+    boolean interchanged;
 
-    // toString-method
+
+    /** toString-method
+     * @return the node
+     */
     public String toString(){
-        return "ComparisonNode: expr: " + this.rawExpression;
+        return "ComparisonNode: " +
+                "\n\trawExpression: " + this.rawExpression +
+                "\n\tcomparisonOperation: " + this.comparisonOperation +
+                "\n\texprKey: " + this.exprKey +
+                "\n\tstrValue: " + this.strValue + " \tdblValue: " + this.dblValue;
     }
 
     /**
@@ -47,34 +53,29 @@ public class ComparisionNode {
             System.exit(11);
         }
 
-        // extract both children, convert the correct object. (the one must match 'name', 'value' or 'time'
+        // extract both children, convert the correct object. (the one must match 'name', 'result' or 'time'
         this.exprKey = str.substring(0, str.indexOf(operator)).trim();
         String rawValue = str.substring(str.indexOf(operator) + 1).trim();
 
         ArrayList<String> allowedKeys = new ArrayList<String>() {{
             add("name");
-            add("value");
+            add("result");
             add("time");
         }};
         // switch if there is a val-key pair and exit if not valid expr key is found.
         if (!allowedKeys.contains(exprKey)) {
             if (allowedKeys.contains(rawValue)) {
-                System.out.println("switch val-key pair.");
                 String helper = rawValue;
                 rawValue = this.exprKey;
                 this.exprKey = helper;
+                this.interchanged = true;
             }
             else {
-                System.out.println("the expression key is not valid ('name', 'value' or 'time') " + this.rawExpression);
+                System.out.println("the expression key is not valid ['name', 'result' or 'time'] " + this.rawExpression);
                 System.exit(12);
             }
         }
-        // check the class of the value
-        System.out.println(rawValue.getClass());
-
-        System.out.println("exprKey: " + exprKey);
-        System.out.println("rawValue: " + rawValue);
-
+        // check the class of the value and save as String or double value
         if (rawValue.contains("'")) {
             this.stringOperation = true;
             this.strValue = rawValue.replaceAll("'","");
@@ -101,21 +102,20 @@ public class ComparisionNode {
             if (comparisonOperation.equals("=="))
                 return dataValue.equals(strValue);
             if (comparisonOperation.equals("<"))
-                return dataValue.compareTo(strValue) < 0;
+                return this.interchanged ^ dataValue.compareTo(strValue) < 0;
             if (comparisonOperation.equals(">"))
-                return dataValue.compareTo(strValue) > 0;
+                return this.interchanged ^ dataValue.compareTo(strValue) > 0;
         }
         else {
             double dataValue = jsonInput.get(exprKey).getAsDouble();
             if (comparisonOperation.equals("=="))
                 return dataValue == dblValue;
             if (comparisonOperation.equals("<"))
-                return dataValue < dblValue;
+                return this.interchanged ^ dataValue < dblValue;  // invert if the order of the expr is interchanged
             if (comparisonOperation.equals(">"))
-                return dataValue > dblValue;
+                return this.interchanged ^ dataValue > dblValue;
         }
         System.out.println("Exception in Node: " + this.toString());
         return false;
     }
-
 }
