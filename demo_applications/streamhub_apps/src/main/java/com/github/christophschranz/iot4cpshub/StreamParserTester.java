@@ -49,6 +49,13 @@ public class StreamParserTester {
                 System.out.println(anode.isTrue(jsonInput));
                 System.out.println();
 
+                System.out.println("#######################################################");
+
+                expr =  "name = 'Station_1.Air Temperature' AND result > 4";
+                Node node = new Node(expr);
+                System.out.println(node.isTrue(jsonInput));
+                System.out.println();
+
         }
 
         public static Properties globalOptions = new Properties();
