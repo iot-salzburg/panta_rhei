@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import java.util.ArrayList;
 
 
+
 /**
  * Class representing a node of the stream Parser and is represented by an logic operation and two children
  * that are LogicNodes or ComparisonNodes.
@@ -42,7 +43,7 @@ public class Node {
     }
 
     /**
-     * Initializes a new LogicNode. Take a string expression and build the operator and children
+     * Initializes a new Node. Take a string expression and build the operator and children
      * @param str String expression that describes an comparison operation
      */
     public Node(String str) {
@@ -128,7 +129,7 @@ public class Node {
     public boolean isTrue(JsonObject jsonInput) {
         if (this.isLeaf) {
             System.out.println("Check if the comparison '" + this.rawExpression + "' is true");
-            System.out.println("\tjsonInput: " + jsonInput);
+//            System.out.println("\tjsonInput: " + jsonInput);
 
             if (stringOperation) {
                 String dataValue = jsonInput.get(exprKey).getAsString();
@@ -150,7 +151,7 @@ public class Node {
         }
         else {
             System.out.println("Check if the logical statement '" + this.rawExpression + "' is true");
-            System.out.println("\tjsonInput: " + jsonInput);
+//            System.out.println("\tjsonInput: " + jsonInput);
             if (logicOperation.equals("AND"))
                 return (child1.isTrue(jsonInput) && child2.isTrue(jsonInput));
             if (logicOperation.equals("OR"))
@@ -183,5 +184,16 @@ public class Node {
         System.out.println("unexpected exception for string: " + str);
         System.exit(13);
         return outerString;
+    }
+
+    /**
+     * Return the degree of the node, by recursively calling the children's getDegree till leafNode with degree 0.
+     * @return int the degree of the node
+     */
+    public int getDegree() {
+        if (this.isLeaf)
+            return 0;
+        else
+            return Math.max(this.child1.getDegree(), this.child2.getDegree()) + 1;
     }
 }
