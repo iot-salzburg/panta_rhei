@@ -35,8 +35,8 @@ public class Node {
         return "Node: " +
                 "\n\trawExpression: " + this.rawExpression +
                 "\n\tlogicOperation: " + this.logicOperation +
-                "\n\tchild1: " + this.child1 +
-                "\n\tchild2: " + this.child2 +
+//                "\n\tchild1: " + this.child1 +
+//                "\n\tchild2: " + this.child2 +
                 "\n\tdegree: " + this.degree +
                 "\n\tcomparisonOperation: " + this.comparisonOperation +
                 "\n\texprKey: " + this.exprKey +

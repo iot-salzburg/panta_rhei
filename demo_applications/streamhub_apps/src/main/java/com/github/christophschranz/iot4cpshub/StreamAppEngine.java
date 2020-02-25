@@ -23,7 +23,9 @@ import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-/* The StreamAppEngine generates streams between Panta Rhei Systems in Kafka, based on System variables */
+/** The StreamAppEngine generates streams between Panta Rhei Systems in Kafka, based on System variables
+java -jar target/streamhub_apps-1.1-jar-with-dependencies.jar --STREAM_NAME whoami --SOURCE_SYSTEM is.iceland.iot4cps-wp5-WeatherService.Stations --TARGET_SYSTEM cz.icecars.iot4cps-wp5-CarFleet.Car1 --KAFKA_BOOTSTRAP_SERVERS 192.168.48.179:9092 --GOST_SERVER 192.168.48.179:8082 --FILTER_LOGIC "SELECT * FROM * WHERE (name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_1.Air Temperature' OR name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_2.Air Temperature') AND result < 30;"
+*/
 public class StreamAppEngine {
 
     public static void main(String[] args) {
@@ -77,11 +79,9 @@ public class StreamAppEngine {
         /**************************        build the Stream Parser class         **************************/
         String expr =  globalOptions.getProperty("FILTER_LOGIC").substring(
                 globalOptions.getProperty("FILTER_LOGIC").indexOf(" WHERE ") + 7).replace(";", "");
-        // TODO extract query condition
+
         Node queryParser = new Node(expr);
         System.out.println(queryParser);
-
-//        System.exit(99);
 
 
         /**************************        load json from SensorThings         **************************/
@@ -146,7 +146,7 @@ public class StreamAppEngine {
 
             String quantity_name = sensorThingsStreams.get(iot_id).getAsJsonObject().get("name").getAsString();
             jsonObject.addProperty("name", quantity_name);
-            System.out.println("Getting new (augmented) kafka message: " + inputJson);
+            System.out.println("Getting new (augmented) kafka message: " + jsonObject);
 
             boolean queryCondition = queryParser.isTrue(jsonObject);
             System.out.println("Query condition: " + queryCondition);
