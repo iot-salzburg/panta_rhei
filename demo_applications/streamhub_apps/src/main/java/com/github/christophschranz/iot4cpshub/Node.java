@@ -4,7 +4,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import java.util.ArrayList;
-
+import java.util.Arrays;
 
 
 /**
@@ -48,6 +48,7 @@ public class Node {
      * @param str String expression that describes an comparison operation
      */
     public Node(String str) {
+        str = strip(str);
         this.rawExpression = str;
 
         // extract the outer logic operator. First iterate through the expr
@@ -125,17 +126,15 @@ public class Node {
 
     /**
      * Return a boolean expression whether the expression of the comparison expression is true or false
-     * or the subtree is true or false
+     * or the subtree is true or false. This works by traversing the Nodes recursively to the comparision leaf nodes.
      * @return boolean expression
      */
     public boolean isTrue(JsonObject jsonInput) {
         if (this.isLeaf) {
-            System.out.println("Check if the comparison '" + this.rawExpression + "' is true");
-//            System.out.println("\tjsonInput: " + jsonInput);
-
+            System.out.println("Check the comparison '" + this.rawExpression + "':");
             if (stringOperation) {
-                System.out.println("expressionKey: " + exprKey);
-                System.out.println();
+//                System.out.println("  expressionKey: " + exprKey);
+//                System.out.println();
                 String dataValue = jsonInput.get(exprKey).getAsString();
                 if (comparisonOperation.equals("=="))
                     return dataValue.equals(strValue);
@@ -154,8 +153,7 @@ public class Node {
             }
         }
         else {
-            System.out.println("Check if the logical statement '" + this.rawExpression + "' is true");
-//            System.out.println("\tjsonInput: " + jsonInput);
+            System.out.println("Check the logical statement '" + this.rawExpression + "':");
             if (logicOperation.equals("AND"))
                 return (child1.isTrue(jsonInput) && child2.isTrue(jsonInput));
             if (logicOperation.equals("OR"))
@@ -173,23 +171,58 @@ public class Node {
      */
     public static String getOuterExpr(String str) {
         str = str.trim();
-        String outerString = "";
-        if (!str.contains("("))
-            return str;
+        int i = 0;  // idx for str
+        int idx = 0;  // idx for outerString generation
+        int depth = 0;
+        char[] ca = new char[str.length()];
+        while (i<str.length()) {
+            if (str.charAt(i) == '(')
+                depth ++;
+            if (str.charAt(i) == ')')
+                depth--;
+            if (depth == 0) {
+                ca[idx] = str.charAt(i);
+                idx ++;
+            }
+            i ++;
+        }
 
-        if (str.startsWith("(") && str.endsWith(")"))
-            return str.substring(1, str.length()-1);
-        else if (str.startsWith("(")) {
-            return str.substring(str.lastIndexOf(')')+1);
+        // correct invalid number of parentheses
+        if (depth != 0) {
+            if (depth >= 1 && str.charAt(0) == '(')  // trim '(' for split
+                return getOuterExpr(str.substring(1));
+            if (depth >= -1 && str.charAt(str.length()-1) == ')')  // trim ')' for split
+                return getOuterExpr(str.substring(0, str.length()-1));
+            System.out.println("Query is invalid, parentheses are not closing: " + str);
+            System.exit(15);
+
         }
-        else if (str.endsWith(")")) {
-            return str.substring(0, str.indexOf('('));
+        if (idx <= 1) {
+            // recursive call to remove outer parentheses
+            if (str.startsWith("(") && str.endsWith(")")) {
+                System.out.println("case idx <= idx, " + str);
+                return getOuterExpr(str.substring(1, str.length()-1));
+            }
+            System.out.println("Query is invalid: " + str);
+            System.exit(16);
         }
-        System.out.println("unexpected exception for string: " + str);
-        System.exit(13);
+        String outerString = String.valueOf(ca);
+        idx = Math.min(idx, str.length()-1);
+        outerString = outerString.substring(0, idx+1).replaceAll("[)]", "");
+        System.out.println(outerString);
         return outerString;
     }
-
+    /**
+     * Strip outer parenthesis
+     * Remove brackets if no outer statement was found.
+     * @return String of the outer expression
+     */
+    public static String strip(String str) {
+        if (str.charAt(0) == '(' && str.charAt(str.length()-1) == ')')  // trim  '(' and ')' for split
+            return strip(str.substring(1, str.length()-1));
+        else
+            return str;
+    }
     /**
      * Return the degree of the node, by recursively calling the children's getDegree till leafNode with degree 0.
      * @return int the degree of the node
