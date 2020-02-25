@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>src.main.java.com.github.christophschranz.iot4cpshub</groupId>
-    <artifactId>streamhub_apps</artifactId>
+    <artifactId>streamApp</artifactId>
     <version>1.1</version>
     <build>
         <plugins>

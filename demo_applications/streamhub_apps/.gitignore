@@ -1,4 +1,4 @@
 .idea
 
 target
-!target/streamhub_apps-1.1-jar-with-dependencies.jar
+!target/streamApp-1.1-jar-with-dependencies.jar

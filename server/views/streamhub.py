@@ -76,15 +76,7 @@ def show_stream(system_uuid, stream_name):
         # else:
         #     set_status_to(system_uuid, stream_name, "idle")
 
-    # TODO update filter_logic
-    # TODO show docker status of filter_logic
-    # filter_logic = {"client_name": client_name,
-    #           "system": "{}.{}.{}.{}".format(payload["domain"], payload["enterprise"],
-    #                                          payload["workcenter"], payload["station"]),
-    #           "gost_servers": "localhost:8084",
-    #           "kafka_bootstrap_servers": app.config["KAFKA_BOOTSTRAP_SERVER"]}
-
-    return render_template("/streamhub/show_stream.html", payload=payload)  # , filter_logic=filter_logic)
+    return render_template("/streamhub/show_stream.html", payload=payload, filter_logic=payload["filter_logic"])
 
 
 # Streamhub Form Class
@@ -298,12 +290,13 @@ def start_stream(system_uuid, stream_name):
     transaction = conn.begin()
     # try:
     # Start the jar file
-    cmd_list = ['java', '-jar', 'views/StreamEngine.jar']
-    cmd_list += ['--stream-name', stream_name]
-    cmd_list += ['--source-system', payload["source_system"]]
-    cmd_list += ['--target-system', payload["target_system"]]
-    cmd_list += ['--bootstrap-server', app.config["KAFKA_BOOTSTRAP_SERVER"]]
-    cmd_list += ['--filter-logic', payload["filter_logic"]]
+    cmd_list = ['java', '-jar', 'views/streamApp-1.1-jar-with-dependencies.jar']
+    cmd_list += ['--STREAM_NAME', stream_name]
+    cmd_list += ['--SOURCE_SYSTEM', payload["source_system"]]
+    cmd_list += ['--TARGET_SYSTEM', payload["target_system"]]
+    cmd_list += ['--KAFKA_BOOTSTRAP_SERVERS', app.config["KAFKA_BOOTSTRAP_SERVER"]]
+    cmd_list += ['--GOST_SERVER', app.config["GOST_SERVER"]]
+    cmd_list += ['--FILTER_LOGIC', "\"{}\"".format(payload["filter_logic"])]
     cmd = " ".join(cmd_list)
     app.logger.debug("Try to deploy '{}'".format(cmd))
 
@@ -349,7 +342,7 @@ def stop_stream(system_uuid, stream_name):
     transaction = conn.begin()
     try:
         # Stop the stream
-        procps = subprocess.Popen("ps -ef | grep '{}'".format(cmd), shell=True,
+        procps = subprocess.Popen("ps -ef | grep '{}'".format(cmd.split(" --FILTER_LOGIC ")[0]), shell=True,
                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         res = procps.communicate()[0].decode()
         for proc_line in res.split("\n"):
@@ -386,7 +379,7 @@ def check_if_proc_runs(system_uuid, stream_name):
         app.logger.debug("Init status, no process.")
         return False
 
-    pipe = subprocess.Popen("ps -ef | grep '{}'".format(cmd), shell=True, stdout=subprocess.PIPE)
+    pipe = subprocess.Popen("ps -ef | grep '{}'".format(cmd.split(" --FILTER_LOGIC ")[0]), shell=True, stdout=subprocess.PIPE)
     try:
         output = pipe.communicate()
         res = output[0].decode("utf-8")
