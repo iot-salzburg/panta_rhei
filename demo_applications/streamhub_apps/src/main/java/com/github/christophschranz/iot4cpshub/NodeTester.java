@@ -63,8 +63,8 @@ public class NodeTester {
                 expr =  "(name = 'Station_1.Air Temperature' OR name = 'Station_2.Air Temperature') AND ((result < 30) AND result > 4)";
                 expr =  "(result < 30 AND result > 4) OR name = 'Station_1.Air Temperature'";
                 Node node = new Node(expr);
+                System.out.println(node);
                 System.out.println(node.isTrue(jsonInput));
-                System.out.println();
 
                 String str = "SELECT * FROM is.iceland.iot4cps-wp5-WeatherService.Stations " +
                         "WHERE name = 'is.iceland.iot4cps-wp5-WeatherService.Station_1.Air Temperature' AND result < 0;";

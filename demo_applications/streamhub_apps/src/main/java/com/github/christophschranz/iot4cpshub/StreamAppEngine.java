@@ -24,7 +24,7 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 /** The StreamAppEngine generates streams between Panta Rhei Systems in Kafka, based on System variables
-java -jar target/streamhub_apps-1.1-jar-with-dependencies.jar --STREAM_NAME whoami --SOURCE_SYSTEM is.iceland.iot4cps-wp5-WeatherService.Stations --TARGET_SYSTEM cz.icecars.iot4cps-wp5-CarFleet.Car1 --KAFKA_BOOTSTRAP_SERVERS 192.168.48.179:9092 --GOST_SERVER 192.168.48.179:8082 --FILTER_LOGIC "SELECT * FROM * WHERE (name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_1.Air Temperature' OR name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_2.Air Temperature') AND result < 30;"
+java -jar target/streamApp-1.1-jar-with-dependencies.jar --STREAM_NAME test-jar --SOURCE_SYSTEM is.iceland.iot4cps-wp5-WeatherService.Stations --TARGET_SYSTEM cz.icecars.iot4cps-wp5-CarFleet.Car1 --KAFKA_BOOTSTRAP_SERVERS 192.168.48.179:9092 --GOST_SERVER 192.168.48.179:8082 --FILTER_LOGIC "SELECT * FROM * WHERE (name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_1.Air Temperature' OR name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_2.Air Temperature') AND result < 30;"
 */
 public class StreamAppEngine {
 
@@ -48,9 +48,6 @@ public class StreamAppEngine {
         if (System.getenv().containsKey("FILTER_LOGIC"))
             globalOptions.setProperty("FILTER_LOGIC",
                     System.getenv("FILTER_LOGIC").replaceAll("\"", ""));
-        globalOptions.setProperty("FILTER_LOGIC",
-                "SELECT * FROM is.iceland.iot4cps-wp5-WeatherService.Stations " +
-                        "WHERE name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_1.Air Temperature' AND result < 0");
 
         // parse input parameter to options and check completeness, must be a key-val pair
         if (1 == args.length % 2) {
@@ -128,6 +125,8 @@ public class StreamAppEngine {
 
     public static JsonObject sensorThingsStreams = new JsonObject();
 
+    public static Logger logger = LoggerFactory.getLogger(StreamAppEngine.class);
+
     public static JsonParser jsonParser = new JsonParser();
 
     public static boolean check_condition(Node queryParser, String inputJson) {
@@ -146,7 +145,7 @@ public class StreamAppEngine {
 
             String quantity_name = sensorThingsStreams.get(iot_id).getAsJsonObject().get("name").getAsString();
             jsonObject.addProperty("name", quantity_name);
-            System.out.println("Getting new (augmented) kafka message: " + jsonObject);
+            logger.info("Getting new (augmented) kafka message: {}", jsonObject);
 
             boolean queryCondition = queryParser.isTrue(jsonObject);
             System.out.println("Query condition: " + queryCondition);

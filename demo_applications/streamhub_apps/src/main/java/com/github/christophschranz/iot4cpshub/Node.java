@@ -32,15 +32,21 @@ public class Node {
      * @return the node
      */
     public String toString(){
-        return "Node: " +
-                "\n\trawExpression: " + this.rawExpression +
-                "\n\tlogicOperation: " + this.logicOperation +
-//                "\n\tchild1: " + this.child1 +
-//                "\n\tchild2: " + this.child2 +
-                "\n\tdegree: " + this.degree +
-                "\n\tcomparisonOperation: " + this.comparisonOperation +
-                "\n\texprKey: " + this.exprKey +
-                "\n\tstrValue: " + this.strValue + " \tdblValue: " + this.dblValue;
+        String ch1_expr = null;
+        String ch2_expr = null;
+        if (this.child1 != null)
+            ch1_expr = this.child1.rawExpression;
+        if (this.child1 != null)
+            ch2_expr = this.child2.rawExpression;
+        return "\tNode: " +
+                "\n\t rawExpression: " + this.rawExpression +
+                "\n\t logicOperation: " + this.logicOperation +
+                "\n\t child1: '" + ch1_expr + "'" +
+                "\n\t child2: '" + ch2_expr + "'" +
+                "\n\t degree: " + this.degree +
+                "\n\t comparisonOperation: " + this.comparisonOperation +
+                "\n\t exprKey: " + this.exprKey +
+                "\n\t strValue: " + this.strValue + " \tdblValue: " + this.dblValue;
     }
 
     /**
@@ -219,9 +225,9 @@ public class Node {
      */
     public static String strip(String str) {
         if (str.charAt(0) == '(' && str.charAt(str.length()-1) == ')')  // trim  '(' and ')' for split
-            return strip(str.substring(1, str.length()-1));
+            return strip(str.substring(1, str.length()-1).trim());
         else
-            return str;
+            return str.trim();
     }
     /**
      * Return the degree of the node, by recursively calling the children's getDegree till leafNode with degree 0.
