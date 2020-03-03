@@ -11,6 +11,7 @@ from .useful_functions import get_datetime, is_logged_in, valid_name, valid_syst
 
 streamhub_bp = Blueprint("streamhub", __name__)
 
+PROCESS_FILE = "templates/streamhub/streamhub.json"
 
 @streamhub_bp.route("/streamhub")
 @is_logged_in
@@ -327,9 +328,15 @@ def stop_stream(system_uuid, stream_name):
     if not isinstance(payload, dict):
         return payload
 
-    # load configs of stream
-    pid, cmd, stdout = load_stream(system_uuid, stream_name)
-    #
+    # load stream
+    process = load_stream(system_uuid, stream_name)
+    if process == dict():
+        app.logger.info(f"The stream '{payload['name']}' has already terminated.")
+        flash(f"The stream '{payload['name']}' has already terminated.", "info")
+        return redirect(url_for("streamhub.show_stream", system_uuid=system_uuid, stream_name=payload["name"]))
+    pid = process["pid"]
+    cmd = process["cmd"]
+
     # if pid == 0 or not check_if_proc_runs(system_uuid, stream_name):
     #     set_status_to(system_uuid, stream_name, "idle")
     #     msg = "The stream '{}' doesn't run.".format(payload["name"])
@@ -372,35 +379,38 @@ def stop_stream(system_uuid, stream_name):
 
 
 def check_if_proc_runs(system_uuid, stream_name):
-    app.logger.debug("check_if_proc_runs")
-    # load config
-    pid, cmd, stdout = load_stream(system_uuid, stream_name)
-    if pid is None:
+    """
+    Checks whether the StreamApp runs or not
+    :param system_uuid: UUID of the current system
+    :param stream_name: name of the current stream
+    :return: Boolean value, True if the process still runs.
+    """
+    app.logger.debug(f"Checks whether the StreamApp '{stream_name}' runs.")
+    # load stream
+    process = load_stream(system_uuid, stream_name)
+    if process == dict():
         app.logger.debug("Init status, no process.")
         return False
 
-    pipe = subprocess.Popen("ps -ef | grep '{}'".format(cmd.split(" --FILTER_LOGIC ")[0]), shell=True, stdout=subprocess.PIPE)
-    try:
-        output = pipe.communicate()
-        res = output[0].decode("utf-8")
-        app.logger.debug(res)
-        # if "StreamEngine.jar" not in res:
-        for proc_line in res.split("\n"):
-            if proc_line == "":
-                continue
-            if "grep" not in proc_line.replace(cmd, ""):
-                app.logger.debug("The process is running.")
-                return True
-        app.logger.debug("The process is not running.")
-        return False
-    except ValueError:
-        app.logger.debug("Process with pid {} doesn't exist.".format(pid))
+    # Return True if it runs
+    pipe = subprocess.Popen(f"ps -p {process.get('pid')} -o args", shell=True, stdout=subprocess.PIPE)
+    if pipe.poll() is not None and pipe.poll() <= 0:
+        app.logger.debug(f"The StreamApp '{stream_name}' runs.")
+        return True
+    else:
+        app.logger.debug(f"The StreamApp has failed with return code '{pipe.poll()}'.")
         return False
 
 
 def set_status_to(system_uuid, stream_name, status):
-    # Set status
-    app.logger.debug("Set status to {}".format(status))
+    """
+    Updates the SOLL-value of the stream app in the database
+    :param system_uuid: UUID of the current system
+    :param stream_name: name of the current stream
+    :param status: boolean value representing the SOLL status
+    :return:
+    """
+    app.logger.debug(f"Set status to {status}")
     engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
     conn = engine.connect()
     query = """UPDATE streams SET status='{status}' WHERE system_uuid='{system_uuid}' AND name='{stream_name}';""". \
@@ -410,25 +420,39 @@ def set_status_to(system_uuid, stream_name, status):
 
 
 def load_stream(system_uuid, stream_name):
+    """
+    Loads some information of the stream-app process
+    :param system_uuid: UUID of the current system
+    :param stream_name: name of the current stream
+    :return: a dictionary consisting of pid, cmd line and stdout
+    """
     try:
-        with open("templates/streamhub/streamhub.json") as f:
+        with open(PROCESS_FILE, "r") as f:
             content = json.loads(f.read())
     except FileNotFoundError:
-        with open("templates/streamhub/streamhub.json", "w") as f:
+        with open(PROCESS_FILE, "w") as f:
             f.write(json.dumps(dict(), indent=2))
-        return None, None
+        return dict()
     try:
-        pid = content[system_uuid][stream_name]["pid"]
-        cmd = content[system_uuid][stream_name]["cmd"]
-        stdout = content[system_uuid][stream_name].get("stdout")
-        return pid, cmd, stdout
+        # pid = content[system_uuid][stream_name]["pid"]
+        # cmd = content[system_uuid][stream_name]["cmd"]
+        # stdout = content[system_uuid][stream_name].get("stdout")
+        return content[system_uuid][stream_name]
     except KeyError:
-        return None, None
+        return dict()
 
 
-def store_stream(system_uuid, stream_name, proc):
+def store_stream(system_uuid, stream_name, proc, with_stdout=False):
+    """
+    Stores the current process in the status file and index by system uuid and stream_name
+    :param system_uuid: UUID of the current system
+    :param stream_name: name of the current stream
+    :param proc: process object, only attributes can be stored, not the whole object
+    :param with_stdout: store with stdout of process or not. Output of proc.communicate() can only called once.
+    :return:
+    """
     try:
-        with open("templates/streamhub/streamhub.json") as f:
+        with open(PROCESS_FILE, "r") as f:
             content = json.loads(f.read())
     except FileNotFoundError:
         content = dict()
@@ -439,7 +463,8 @@ def store_stream(system_uuid, stream_name, proc):
         content[system_uuid][stream_name] = dict()
     content[system_uuid][stream_name]["pid"] = proc.pid
     content[system_uuid][stream_name]["cmd"] = proc.args
-    content[system_uuid][stream_name]["stdout"] = proc.communicate(timeout=1)  # timeout returns during execution
+    if with_stdout:
+        content[system_uuid][stream_name]["stdout"] = proc.communicate(timeout=1)  # timeout returns during execution
 
-    with open("templates/streamhub/streamhub.json", "w") as f:
+    with open(PROCESS_FILE, "w") as f:
         f.write(json.dumps(content, indent=2))
