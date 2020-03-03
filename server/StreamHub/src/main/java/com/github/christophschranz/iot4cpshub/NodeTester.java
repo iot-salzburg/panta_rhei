@@ -50,6 +50,10 @@ public class NodeTester {
 
                 System.out.println("#######################################################\n");
 
+                String str = "SELECT * FROM is.iceland.iot4cps-wp5-WeatherService.Stations " +
+                        "WHERE name = 'is.iceland.iot4cps-wp5-WeatherService.Station_1.Air Temperature' AND result < 0;";
+                System.out.println(str.substring(str.indexOf(" WHERE ") + 7).replace(";", ""));
+
                 expr =  "name = 'Station_1.Air Temperature' AND result > 4";
 //                Node node = new Node(expr);
 //                System.out.println(node.isTrue(jsonInput));
@@ -66,10 +70,6 @@ public class NodeTester {
                 System.out.println(node);
                 System.out.println(node.isTrue(jsonInput));
 
-                String str = "SELECT * FROM is.iceland.iot4cps-wp5-WeatherService.Stations " +
-                        "WHERE name = 'is.iceland.iot4cps-wp5-WeatherService.Station_1.Air Temperature' AND result < 0;";
-
-                System.out.println(str.substring(str.indexOf(" WHERE ") + 7).replace(";", ""));
         }
 
         public static Properties globalOptions = new Properties();

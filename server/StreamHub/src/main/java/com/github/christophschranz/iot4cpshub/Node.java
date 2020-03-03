@@ -1,10 +1,7 @@
 package com.github.christophschranz.iot4cpshub;
 
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-
 import java.util.ArrayList;
-import java.util.Arrays;
 
 
 /**
@@ -220,8 +217,8 @@ public class Node {
     }
     /**
      * Strip outer parenthesis
-     * Remove brackets if no outer statement was found.
-     * @return String of the outer expression
+     * Remove brackets and strip the expression if no outer statement was found.
+     * @return Cleaned expression String
      */
     public static String strip(String str) {
         if (str.charAt(0) == '(' && str.charAt(str.length()-1) == ')')  // trim  '(' and ')' for split

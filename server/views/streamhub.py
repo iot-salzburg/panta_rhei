@@ -290,7 +290,7 @@ def start_stream(system_uuid, stream_name):
     transaction = conn.begin()
     # try:
     # Start the jar file
-    cmd_list = ['java', '-jar', 'views/streamApp-1.1-jar-with-dependencies.jar']
+    cmd_list = ['java', '-jar', 'StreamHub/target/streamApp-1.1-jar-with-dependencies.jar']
     cmd_list += ['--STREAM_NAME', stream_name]
     cmd_list += ['--SOURCE_SYSTEM', payload["source_system"]]
     cmd_list += ['--TARGET_SYSTEM', payload["target_system"]]
