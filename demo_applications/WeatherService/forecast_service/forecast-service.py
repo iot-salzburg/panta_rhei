@@ -43,11 +43,9 @@ try:
         received_quantities = client.consume(timeout=0.1)
         for received_quantity in received_quantities:
             # The resolves the all meta-data for an received data-point
-            print("  -> Received new external data-point at {}: '{}' = {} {}."
-                  .format(received_quantity["phenomenonTime"],
-                          received_quantity["Datastream"]["name"],
-                          received_quantity["result"],
-                          received_quantity["Datastream"]["unitOfMeasurement"]["symbol"]))
+            print(f"  -> Received new external data-point from {received_quantity['phenomenonTime']}: "
+                  f"'{received_quantity['Datastream']['name']}' = {received_quantity['result']} "
+                  f"{received_quantity['Datastream']['unitOfMeasurement']['symbol']}.")
 
         # To view the whole data-point in a pretty format, uncomment:
         # print("Received new data: {}".format(json.dumps(received_quantity, indent=2)))

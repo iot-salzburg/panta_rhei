@@ -54,8 +54,8 @@ try:
         client.produce(quantity="temperature", result=temperature, timestamp=timestamp)
 
         # Print the temperature with the corresponding timestamp in ISO format
-        print("The air temperature at the demo station 1 is {} °C at {}".format(
-            temperature, datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat()))
+        print(f"The air temperature at the demo station 1 is {temperature} °C at "
+              f"{datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat()}")
 
         time.sleep(10)
 except KeyboardInterrupt:

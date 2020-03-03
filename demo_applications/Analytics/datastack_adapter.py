@@ -61,10 +61,10 @@ try:
                     and requests.get(ELASTICSTACK_URLS[1]).status_code == 200:
                 connected = True
         except requests.exceptions.ConnectionError as e:
-            print("Connection Error: {}".format(e))
+            print(f"Connection Error: {e}")
         if not connected:
-            print("Connection to Elastic Stack on URLS {} couldn't be established. Trying again in 5 s."
-                  .format(ELASTICSTACK_URLS))
+            print(f"Connection to Elastic Stack on URLS {ELASTICSTACK_URLS} couldn't be established. "
+                  f"Trying again in 5 s.")
             time.sleep(5)
             continue
 
@@ -73,11 +73,9 @@ try:
 
         for received_quantity in received_quantities:
             # The resolves the all meta-data for an received data-point
-            print("  -> Received new external data-point at {}: '{}' = {} {}."
-                  .format(received_quantity["phenomenonTime"],
-                          received_quantity["Datastream"]["name"],
-                          received_quantity["result"],
-                          received_quantity["Datastream"]["unitOfMeasurement"]["symbol"]))
+            print(f"  -> Received new external data-point from {received_quantity['phenomenonTime']}: "
+                  f"{received_quantity['Datastream']['name']}' = {received_quantity['result']} "
+                  f"{received_quantity['Datastream']['unitOfMeasurement']['symbol']}.")
             data = dict({"Datastream": {"@iot.id": received_quantity["Datastream"]["@iot.id"],
                                         "name": received_quantity["Datastream"]["name"],
                                         "unitOfMeasurement":

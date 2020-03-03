@@ -42,8 +42,8 @@ def produce_metrics(interval=10):
         attitude = car.get_attitude()
 
         # Print the temperature with the corresponding timestamp in ISO format
-        print("The demo car 2 is at [{}, {}],   \twith the temp.: {} °C  \tand had a maximal acceleration of "
-              "{} m/s²  \tat {}".format(latitude, longitude, temperature, acceleration, timestamp))
+        print(f"The demo car 2 is at [{latitude}, {longitude}],   \twith the temp.: {temperature} °C  \tand had a " +
+              f"maximal acceleration of {acceleration} m/s²  \tat {timestamp}")
 
         # Send the metrics via the client, it is suggested to use the same timestamp for later analytics
         client.produce(quantity="temperature", result=temperature, timestamp=timestamp)
@@ -70,11 +70,9 @@ def consume_metrics():
         received_quantities = client.consume(timeout=0.1)
         for received_quantity in received_quantities:
             # The resolves the all meta-data for an received data-point
-            print("  -> Received new external data-point at {}: '{}' = {} {}."
-                  .format(received_quantity["phenomenonTime"],
-                          received_quantity["Datastream"]["name"],
-                          received_quantity["result"],
-                          received_quantity["Datastream"]["unitOfMeasurement"]["symbol"]))
+            print(f"  -> Received new external data-point from {received_quantity['phenomenonTime']}: "
+                  f"'{received_quantity['Datastream']['name']}' = {received_quantity['result']} "
+                  f"{received_quantity['Datastream']['unitOfMeasurement']['symbol']}.")
             # To view the whole data-point in a pretty format, uncomment:
             # print("Received new data: {}".format(json.dumps(received_quantity, indent=2)))
             if received_quantity["Datastream"]["unitOfMeasurement"]["symbol"] == "degC" \
