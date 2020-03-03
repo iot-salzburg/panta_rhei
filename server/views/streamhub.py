@@ -328,7 +328,7 @@ def stop_stream(system_uuid, stream_name):
         return payload
 
     # load configs of stream
-    pid, cmd = load_stream(system_uuid, stream_name)
+    pid, cmd, stdout = load_stream(system_uuid, stream_name)
     #
     # if pid == 0 or not check_if_proc_runs(system_uuid, stream_name):
     #     set_status_to(system_uuid, stream_name, "idle")
@@ -374,7 +374,7 @@ def stop_stream(system_uuid, stream_name):
 def check_if_proc_runs(system_uuid, stream_name):
     app.logger.debug("check_if_proc_runs")
     # load config
-    pid, cmd = load_stream(system_uuid, stream_name)
+    pid, cmd, stdout = load_stream(system_uuid, stream_name)
     if pid is None:
         app.logger.debug("Init status, no process.")
         return False
@@ -420,7 +420,8 @@ def load_stream(system_uuid, stream_name):
     try:
         pid = content[system_uuid][stream_name]["pid"]
         cmd = content[system_uuid][stream_name]["cmd"]
-        return pid, cmd
+        stdout = content[system_uuid][stream_name].get("stdout")
+        return pid, cmd, stdout
     except KeyError:
         return None, None
 
@@ -438,6 +439,7 @@ def store_stream(system_uuid, stream_name, proc):
         content[system_uuid][stream_name] = dict()
     content[system_uuid][stream_name]["pid"] = proc.pid
     content[system_uuid][stream_name]["cmd"] = proc.args
+    content[system_uuid][stream_name]["stdout"] = proc.communicate(timeout=1)  # timeout returns during execution
 
     with open("templates/streamhub/streamhub.json", "w") as f:
         f.write(json.dumps(content, indent=2))

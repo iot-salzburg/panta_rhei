@@ -34,6 +34,22 @@ Afterwards, the **jar** file can be executed using:
 java -jar target/streamApp-1.1-jar-with-dependencies.jar --STREAM_NAME test-jar --SOURCE_SYSTEM is.iceland.iot4cps-wp5-WeatherService.Stations --TARGET_SYSTEM cz.icecars.iot4cps-wp5-CarFleet.Car1 --KAFKA_BOOTSTRAP_SERVERS 192.168.48.179:9092 --GOST_SERVER 192.168.48.179:8082 --FILTER_LOGIC "SELECT * FROM * WHERE (name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_1.Air Temperature' OR name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_2.Air Temperature') AND result < 30;"
 ```
 
+### Deploying inside a Docker Container
+
+The most practical way to deploy the application is to build a docker container for the jar file.
+In order to work correctly, the Kafka config needs an additional line:
+
+```
+advertised.listeners=PLAINTEXT://[your-ip]:9092
+```
+where `[your-ip]` is the IP Address of your Kafka Bootstrap server that is accessible from other nodes,
+i.e., not `localhost`. The parameter `listeners` can stay on `localhost`, if wished. 
+
+```bash
+bash deployStreamApp.sh 
+docker-compose logs -f
+```
+
 ### Testing via the GUI
 
 This step requires a running platform as explained in the `server` directory.
