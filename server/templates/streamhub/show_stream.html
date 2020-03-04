@@ -69,8 +69,28 @@
 
 
   <hr>
-  <h2> <small> Stream filter logic: </small></h2>
-  {{filter_logic}}
+  <table class="table table-striped">
+    <tr>
+      <th><h2> <small> Stream Filter Logic: </small></h2></th>
+    </tr>
+    <tr>
+      <td>
+      {{payload.filter_logic}}
+      </td>
+    </tr>
+  </table>
+
+  <hr>
+  <table class="table table-striped">
+    <tr>
+      <th><h2> <small> StreamApp Status </small></h2></th>
+    </tr>
+    <tr>
+      <td>
+      {{app_status}}
+      </td>
+    </tr>
+  </table>
 
 <!--  <pre id="json"></pre>-->
 
@@ -79,7 +99,7 @@
 <!--        "filter": '{{payload.filter}}'};-->
 <!--    document.getElementById("json").innerHTML = JSON.stringify(data, undefined, 2);-->
 <!--  </script>-->
-
+  <hr>
   <br>
   <br>
 {% endblock %}

@@ -1,5 +1,9 @@
 import json
 import subprocess
+import time
+
+import pytz
+from datetime import datetime
 
 import sqlalchemy as db
 from flask import Blueprint, render_template, flash, redirect, url_for, session, request
@@ -12,6 +16,8 @@ from .useful_functions import get_datetime, is_logged_in, valid_name, valid_syst
 streamhub_bp = Blueprint("streamhub", __name__)
 
 PROCESS_FILE = "templates/streamhub/streamhub.json"
+LOG_FILE = "templates/streamhub/crashresport.log"
+
 
 @streamhub_bp.route("/streamhub")
 @is_logged_in
@@ -77,7 +83,8 @@ def show_stream(system_uuid, stream_name):
         # else:
         #     set_status_to(system_uuid, stream_name, "idle")
 
-    return render_template("/streamhub/show_stream.html", payload=payload, filter_logic=payload["filter_logic"])
+    app_status = ""  # get_streamapp_status(system_uuid, stream_name)
+    return render_template("/streamhub/show_stream.html", payload=payload, app_status=app_status)
 
 
 # Streamhub Form Class
@@ -310,11 +317,30 @@ def start_stream(system_uuid, stream_name):
     set_status_to(system_uuid, stream_name, "starting")
 
     transaction.commit()
-    app.logger.debug("Stream with pid {} runs? {}".format(proc.pid, check_if_proc_runs(system_uuid, stream_name)))
-    msg = "The stream '{}' is starting.".format(payload["name"])
-    app.logger.info(msg)
-    flash(msg, "success")
+    # app.logger.debug("Stream with pid {} runs? {}".format(proc.pid, check_if_proc_runs(system_uuid, stream_name)))
+    # msg = "The stream '{}' is starting.".format(payload["name"])
+    # app.logger.info(msg)
 
+    time.sleep(5)  # Waiting if the process is stable
+    ret_code = proc.poll()
+    # if True:
+    if ret_code is not None and ret_code >= 1:
+        log = f"Stream crashed immediately with return code {ret_code}. A log file will be downloaded!"
+        app.logger.info(log)
+        flash(log, "warning")
+
+        # store_stream(system_uuid, stream_name, proc, with_stdout=True)
+        try:
+            stdout = proc.communicate(timeout=0.1)  # timeout returns during execution
+        except subprocess.TimeoutExpired:
+            stdout = f"Process {stream_name} is still running."
+        from flask import send_file
+        with open(LOG_FILE, "w") as f:
+            f.write(json.dumps({"return_code": ret_code, "stdout": stdout, "timestamp":
+                datetime.utcnow().replace(tzinfo=pytz.UTC).replace(microsecond=0).isoformat()}, indent=4))
+        return send_file(LOG_FILE, as_attachment=True, mimetype='application/text')
+
+    flash(f"The stream {stream_name} was started successfully.", "success")
     return redirect(url_for("streamhub.show_stream", system_uuid=system_uuid, stream_name=payload["name"]))
 
 
@@ -419,6 +445,10 @@ def set_status_to(system_uuid, stream_name, status):
     engine.dispose()
 
 
+def get_streamapp_status(system_uuid, stream_name):
+    pass
+
+
 def load_stream(system_uuid, stream_name):
     """
     Loads some information of the stream-app process
@@ -463,6 +493,8 @@ def store_stream(system_uuid, stream_name, proc, with_stdout=False):
         content[system_uuid][stream_name] = dict()
     content[system_uuid][stream_name]["pid"] = proc.pid
     content[system_uuid][stream_name]["cmd"] = proc.args
+    content[system_uuid][stream_name]["datetime"] = \
+        datetime.utcnow().replace(tzinfo=pytz.UTC).replace(microsecond=0).isoformat()
     if with_stdout:
         content[system_uuid][stream_name]["stdout"] = proc.communicate(timeout=1)  # timeout returns during execution
 
