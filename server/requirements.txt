@@ -10,3 +10,4 @@ Flask-Bootstrap==3.3.7.1
 Flask-Cache==0.13.1
 passlib==1.7.1
 python-dotenv==0.10.3
+Fabric3==1.14.post1

@@ -44,12 +44,15 @@
        <td><a class="btn btn-success float-right mb-2" href="/show_stream/{{payload.system_uuid}}/{{payload.name}}"
           data-toggle="tooltip" title="The stream is running.">{{payload.status}}</a></td>
       {% elif payload.status == "stopping" %}
-       <td><a class="btn btn-warning float-right mb-2" href="/show_stream/{{payload.system_uuid}}/{{payload.name}}"
+       <td><a class="btn btn-info float-right mb-2" href="/show_stream/{{payload.system_uuid}}/{{payload.name}}"
           data-toggle="tooltip" title="This stream will stopping.">{{payload.status}}</a></td>
       {% elif payload.status == "idle" %}
        <td><a class="btn btn-primary float-right mb-2" href="/show_stream/{{payload.system_uuid}}/{{payload.name}}"
           data-toggle="tooltip" title="This stream is idle.">{{payload.status}}</a></td>
       {% elif payload.status == "failing" %}
+       <td><a class="btn btn-warning float-right mb-2" href="/show_stream/{{payload.system_uuid}}/{{payload.name}}"
+          data-toggle="tooltip" title="This stream is failing.">{{payload.status}}</a></td>
+      {% elif payload.status == "crashed" %}
        <td><a class="btn btn-danger float-right mb-2" href="/show_stream/{{payload.system_uuid}}/{{payload.name}}"
           data-toggle="tooltip" title="This stream is failing.">{{payload.status}}</a></td>
       {% else %}
@@ -71,7 +74,7 @@
   <hr>
   <table class="table table-striped">
     <tr>
-      <th><h2> <small> Stream Filter Logic: </small></h2></th>
+      <th><h2> <small> Stream App Filter Logic: </small></h2></th>
     </tr>
     <tr>
       <td>
@@ -83,22 +86,38 @@
   <hr>
   <table class="table table-striped">
     <tr>
-      <th><h2> <small> StreamApp Status </small></h2></th>
+      <th><h2> <small> Stream App Stats </small></h2></th>
+      <th></th>
     </tr>
     <tr>
       <td>
-      {{app_status}}
+        {% if app_stats %}
+            <pre id="json"></pre>
+
+            <script>
+              var stats = {
+                  "Running": '{{app_stats.Running}}',
+                  "Restarting": '{{app_stats.Restarting}}',
+                  "StartedAt": '{{app_stats.StartedAt}}',
+                  "FinishedAt": '{{app_stats.FinishedAt}}',
+                  "ExitCode": '{{app_stats.ExitCode}}'
+                  // ".Config.Env": '{{app_stats[".Config.Env"]}}'
+                  // ".NetworkSettings.Gateway": '{{app_stats.StartedAt}}'
+              };
+              document.getElementById("json").innerHTML = JSON.stringify(stats, undefined, 2);
+            </script>
+        {% else %}
+          Stats are not available for this an undeployed stream.
+        {% endif %}
+      </td>
+      <td>
+      <a class="btn btn-info float-right mb-2" href="/download_log/{{payload.system_uuid}}/{{payload.name}}"
+            data-toggle="tooltip" title="Click to download the full logs.">download logfile</a>
       </td>
     </tr>
   </table>
 
-<!--  <pre id="json"></pre>-->
 
-<!--  <script>-->
-<!--    var data = {-->
-<!--        "filter": '{{payload.filter}}'};-->
-<!--    document.getElementById("json").innerHTML = JSON.stringify(data, undefined, 2);-->
-<!--  </script>-->
   <hr>
   <br>
   <br>

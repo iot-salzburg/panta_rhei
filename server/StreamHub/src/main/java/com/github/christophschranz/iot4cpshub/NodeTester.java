@@ -14,8 +14,7 @@ public class NodeTester {
                 globalOptions.setProperty("KAFKA_BOOTSTRAP_SERVERS", "192.168.48.179:9092");
                 globalOptions.setProperty("GOST_SERVER", "192.168.48.179:8082");
                 globalOptions.setProperty("FILTER_LOGIC",
-                        "SELECT * FROM is.iceland.iot4cps-wp5-WeatherService.Stations " +
-                                "WHERE name = 'Station_1.Air Temperature' AND result < 4");
+                        "SELECT * FROM * WHERE (name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_1.Air Temperature' OR name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_2.Air Temperature') AND result < 30;");
 
                 JsonObject jsonInput = new JsonObject();
                 jsonInput.addProperty("name", "Station_1.Air Temperature");
@@ -50,8 +49,9 @@ public class NodeTester {
 
                 System.out.println("#######################################################\n");
 
-                String str = "SELECT * FROM is.iceland.iot4cps-wp5-WeatherService.Stations " +
-                        "WHERE name = 'is.iceland.iot4cps-wp5-WeatherService.Station_1.Air Temperature' AND result < 0;";
+                String str = "SELECT * FROM * WHERE (name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_1.Air Temperature' " +
+                        "OR name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_2.Air Temperature') AND result < 30;";
+
                 System.out.println(str.substring(str.indexOf(" WHERE ") + 7).replace(";", ""));
 
                 expr =  "name = 'Station_1.Air Temperature' AND result > 4";
