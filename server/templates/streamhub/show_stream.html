@@ -60,12 +60,12 @@
           data-toggle="tooltip" title="This stream status is unknown.">{{payload.status}}</a></td>
       {% endif %}
 
-        {% if payload.status == "running" or payload.status == "starting" %}
+        {% if payload.status == "init" or payload.status == "idle" %}
+         <td><a class="btn btn-success float-right mb-2" href="/start_stream/{{payload.system_uuid}}/{{payload.name}}"
+            data-toggle="tooltip" title="Start this stream application.">deploy stream</a></td>
+        {% else %}
          <td><a class="btn btn-warning float-right mb-2" href="/stop_stream/{{payload.system_uuid}}/{{payload.name}}"
             data-toggle="tooltip" title="Stop this stream application.">stop stream</a></td>
-        {% else %}
-         <td><a class="btn btn-success float-right mb-2" href="/start_stream/{{payload.system_uuid}}/{{payload.name}}"
-            data-toggle="tooltip" title="Start this stream application.">start stream</a></td>
         {% endif %}
       </tr>
   </table>

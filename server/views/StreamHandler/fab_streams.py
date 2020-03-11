@@ -142,7 +142,6 @@ def local_stats(system_uuid="0000", stream_name="test-stream"):
 
     # Return none if there the container is not running
     if not local_is_deployed(system_uuid, stream_name):
-        print(f"Nothing to remove, no container called '{container_name}'.")
         return None
 
     # Fill a stats dictionary with relevant info
