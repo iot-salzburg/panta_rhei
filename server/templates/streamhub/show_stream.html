@@ -29,10 +29,10 @@
       <th>Action</th>
     </tr>
       <tr>
-        <td><a href="/show_stream/{{payload.system_uuid}}/{{payload.name}}" class="btn btn-block">{{payload.source_system}}</a></td>
-        <td><a href="/show_stream/{{payload.system_uuid}}/{{payload.name}}" class="btn btn-block">{{payload.target_system}}</a></td>
-        <td><a href="/show_stream/{{payload.system_uuid}}/{{payload.name}}" class="btn btn-block">{{payload.contact_mail}}</a></td>
-        <td><a href="/show_stream/{{payload.system_uuid}}/{{payload.name}}" class="btn btn-block">{{payload.datetime}}</a></td>
+        <td><center>{{payload.source_system}}</center></td>
+        <td><center>{{payload.target_system}}</center></td>
+        <td><center>{{payload.contact_mail}}</center></td>
+        <td><center>{{payload.datetime}}</center></td>
 
       {% if payload.status == "init" %}
        <td><a class="btn btn-info float-right mb-2" href="/show_stream/{{payload.system_uuid}}/{{payload.name}}"
@@ -77,9 +77,7 @@
       <th><h2> <small> Stream App Filter Logic: </small></h2></th>
     </tr>
     <tr>
-      <td>
-      {{payload.filter_logic}}
-      </td>
+      <td><center>{{payload.filter_logic}}</center></td>
     </tr>
   </table>
 

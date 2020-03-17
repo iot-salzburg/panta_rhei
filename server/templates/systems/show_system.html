@@ -38,10 +38,10 @@
     </tr>
       {% for client in clients %}
       <tr>
-        <td><a href="/show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-block">{{client.name}}</a></td>
-        <td><a href="/show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-block">{{client.domain}}.{{client.enterprise}}</a></td>
-        <td><a href="/show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-block">{{client.workcenter}}.{{client.station}}</a></td>
-        <td><a href="/show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-block">{{client.contact_mail}}</a></td>
+        <td><center>{{client.name}}</center></td>
+        <td><center>{{client.domain}}.{{client.enterprise}}</center></td>
+        <td><center>{{client.workcenter}}.{{client.station}}</center></td>
+        <td><center>{{client.contact_mail}}</center></td>
 <!--        <td><a href="/show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-block">{{client.datetime}}</a></td>-->
         <td><a href="/show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-info float-right"
           data-toggle="tooltip" title="Manage this client.">manage</a></td>
@@ -71,10 +71,10 @@
     </tr>
       {% for stream in streams %}
       <tr>
-        <td><a href="/show_stream/{{stream.system_uuid}}/{{stream.name}}" class="btn btn-block">{{stream.name}}</a></td>
-        <td><a href="/show_stream/{{stream.system_uuid}}/{{stream.name}}" class="btn btn-block">{{stream.source_system}}</a></td>
-        <td><a href="/show_stream/{{stream.system_uuid}}/{{stream.name}}" class="btn btn-block">{{stream.target_system}}</a></td>
-        <td><a href="/show_stream/{{stream.system_uuid}}/{{stream.name}}" class="btn btn-block">{{stream.contact_mail}}</a></td>
+        <td><center>{{stream.name}}</center></td>
+        <td><center>{{stream.source_system}}</center></td>
+        <td><center>{{stream.target_system}}</center></td>
+        <td><center>{{stream.contact_mail}}</center></td>
 
         <td><a href="/show_stream/{{stream.system_uuid}}/{{stream.name}}" class="btn btn-info float-right"
                 data-toggle="tooltip" title="Manage this stream.">manage</a></td>
@@ -100,8 +100,8 @@
     </tr>
       {% for agent in agents %}
       <tr>
-        <td>{{agent.first_name}} {{agent.sur_name}}</td>
-        <td>{{agent.agent_mail}}</td>
+        <td><center>{{agent.first_name}} {{agent.sur_name}}</center></td>
+        <td><center>{{agent.agent_mail}}</center></td>
         <td>
             <a class="btn btn-danger float-right" href="/delete_agent_system/{{agent.system_uuid}}/{{agent.agent_uuid}}"
         data-toggle="tooltip" title="Remove this user as admin from the company."> remove </a>

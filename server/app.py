@@ -52,7 +52,6 @@ if __name__ == '__main__':
     app.logger.addHandler(kh)
 
     app.logger.info("Starting the platform.")
-    app.logger.info("Connection to Kafka Servers are okay.")
 
     # Create postgres tables to get the data model
     create_tables(app)

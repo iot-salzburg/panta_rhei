@@ -34,11 +34,11 @@
     </tr>
       {% for system in systems %}
       <tr>
-        <td><a href="/show_system/{{system.system_uuid}}" class="btn btn-block">{{system.system_uuid}}</a></td>
 <!--        <td><a href="/show_system/{{system.system_uuid}}" class="btn btn-block">{{system.domain}}</a></td>-->
 <!--        <td><a href="/show_system/{{system.system_uuid}}" class="btn btn-block">{{system.enterprise}}</a></td>-->
-        <td><a href="/show_system/{{system.system_uuid}}" class="btn btn-block">{{system.workcenter}}</a></td>
-        <td><a href="/show_system/{{system.system_uuid}}" class="btn btn-block">{{system.station}}</a></td>
+        <td><center>{{system.system_uuid}}</center></td>
+        <td><center>{{system.workcenter}}</center></td>
+        <td><center>{{system.station}}</center></td>
 <!--        <td>{{system.contact_mail}}</td>-->
         <td><a href="/show_system/{{system.system_uuid}}" class="btn btn-info float-right"
         data-toggle="tooltip" title="Manage this system.">manage system</a></td>
