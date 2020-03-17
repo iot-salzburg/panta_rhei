@@ -6,7 +6,10 @@ def is_valid(payload):
     :param payload: String instance from the database
     :return: True if valid, else False
     """
-    logic = payload.get("FILTER_LOGIC", "")
+    if isinstance(payload, dict):
+        logic = payload.get("FILTER_LOGIC", "")
+    else:  # if the payload is the filter logic
+        logic = payload
 
     # An empty filter_logic is valid
     if logic == "":

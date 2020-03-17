@@ -2,7 +2,8 @@
 
 {% block body %}
 
-  <table class="table">
+
+<table class="table" xmlns="http://www.w3.org/1999/html">
     <td>
       <h1> <small>Stream name: </small>{{payload.name}}</h1>
       {% if payload.description %}
@@ -75,11 +76,54 @@
   <table class="table table-striped">
     <tr>
       <th><h2> <small> Stream App Filter Logic: </small></h2></th>
-    </tr>
-    <tr>
-      <td><center>{{payload.filter_logic}}</center></td>
+      <th></th>
     </tr>
   </table>
+
+    <div class="form-group">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!--  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">-->
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <!--  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>-->
+
+        <div class="container">
+
+            <table class="table">
+                {% if payload.filter_logic %}
+                    <td><center>{{payload.filter_logic}}</center></td>
+                {% else %}
+                    <td>There is no Filter Logic set.</td>
+                {% endif %}
+            <td><button type="button" class="btn btn-info float-right mb-2" data-toggle="collapse" data-target="#demo">edit</button></td>
+            </table>
+
+            <div id="demo" class="collapse">
+                {% from "includes/_formhelpers.html" import render_field %}
+              <form method="POST">
+
+                <br>
+
+                <table class="table">
+<!--                <td>-->
+<!--                    {{render_field(form.filter_logic, class_="form-control", value=filter_logic)}}-->
+<!--                     <small id="filterHelp" class="form-text text-muted">The Filter Logic will be tested and updated.</small>-->
+<!--                </td>-->
+                <td>
+                    <div class="md-form">
+                      <i class="fas fa-pencil-alt prefix"></i>
+                      <textarea id="filter_logic" name="filter_logic" class="md-textarea form-control" rows="3">{{payload.filter_logic}}</textarea>
+                      <small id="filterHelp" class="form-text text-muted">The Filter Logic will be tested and updated.</small>
+                    </div>
+                </td>
+                <td>
+                    <input type="submit" class="btn btn-success float-right mb-2"
+                        data-toggle="tooltip" title="Click to update the filter logic" value="test & update">
+                </td>
+                </table>
+              </form>
+            </div>
+        </div>
+    </div>
 
   <hr>
   <table class="table table-striped">
@@ -114,7 +158,6 @@
       </td>
     </tr>
   </table>
-
 
   <hr>
   <br>

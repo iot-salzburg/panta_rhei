@@ -45,15 +45,26 @@ def show_all_streams():
     return render_template("streamhub/streams.html", streams=streams)
 
 
-@streamhub_bp.route("/show_stream/<string:system_uuid>/<string:stream_name>")
+# Filter Logic Form Class for editing
+class FilterForm(Form):
+    filter_logic = StringField('New Filter Logic', [validators.Length(max=4*1024)])
+
+
+@streamhub_bp.route("/show_stream/<string:system_uuid>/<string:stream_name>", methods=["GET", "POST"])
 @is_logged_in
 def show_stream(system_uuid, stream_name):
     # Show a warning if the gost servers are not available
     if not check_gost_connection():
         flash("The GOST server is not available, but required to deploy a Stream App.", "warning")
 
-    # Get current user_uuid
+    # Get current user_uuid and form
     user_uuid = session["user_uuid"]
+    form = FilterForm(request.form)
+
+    # Update filter logic on post
+    if request.method == 'POST':
+        app.logger.debug("Update filter logic")
+        update_filter_logic(system_uuid, stream_name)
 
     payload = get_stream_payload(user_uuid, system_uuid, stream_name)
     if not isinstance(payload, dict):
@@ -63,7 +74,7 @@ def show_stream(system_uuid, stream_name):
         app.logger.info("The connection to Kafka is disabled. Check the '.env' file!")
         flash("This platform runs in the 'platform-only' mode and doesn't provide the stream functionality.",
               "warning")
-        return render_template("/streamhub/show_stream.html", payload=payload)
+        return render_template("/streamhub/show_stream.html", payload=payload, form=form)
 
     # Check if the stream app is running
     # status is one of ["idle", "starting", "running", "stopping", "idle"]
@@ -92,7 +103,7 @@ def show_stream(system_uuid, stream_name):
             status = "stopping"
 
     payload["status"] = status
-    return render_template("/streamhub/show_stream.html", payload=payload, app_stats=app_stats)
+    return render_template("/streamhub/show_stream.html", payload=payload, app_stats=app_stats, form=form)
 
 
 # Streamhub Form Class
@@ -224,7 +235,7 @@ def delete_stream(system_uuid, stream_name):
     # Check if the current user is agent of the system
     if user_uuid not in [c["agent_uuid"] for c in streams]:
         engine.dispose()
-        flash("You are not permitted to delete streams of this system.", "danger")
+        flash("You are not permitted to delete this stream.", "danger")
         return redirect(url_for("streamhub.show_stream", system_uuid=system_uuid, client_name=stream_name))
 
     # Delete the specified stream
@@ -239,6 +250,55 @@ def delete_stream(system_uuid, stream_name):
 
     # Redirect to /show_system/system_uuid
     return redirect(url_for("system.show_system", system_uuid=system_uuid))
+
+
+# Update filter logic
+def update_filter_logic(system_uuid, stream_name):
+    # Get current user_uuid
+    user_uuid = session["user_uuid"]
+
+    form = FilterForm(request.form)
+    filter_logic = form.filter_logic.data.strip().replace("'", "''")  # Postgres needs doubled quotes
+
+    # Check if the filter logic is valid, abort if not
+    if not stream_checks.is_valid(filter_logic):
+        flash("The filter logic is not valid! Changes discarded.", "danger")
+        return
+
+    app.logger.info(f"Updating stream '{system_uuid}/{stream_name}' with new filter_logic '{filter_logic}'.")
+
+    # Fetch streams of the system, for with the user is agent
+    engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
+    conn = engine.connect()
+    query = f"""SELECT sys.uuid AS system_uuid, streams.name AS name, source_system, target_system, 
+    creator.email AS contact_mail, agent.uuid AS agent_uuid
+    FROM streams
+    INNER JOIN users as creator ON creator.uuid=streams.creator_uuid
+    INNER JOIN systems AS sys ON streams.system_uuid=sys.uuid
+    INNER JOIN companies AS com ON sys.company_uuid=com.uuid
+    INNER JOIN is_admin_of_sys AS agf ON sys.uuid=agf.system_uuid 
+    INNER JOIN users as agent ON agent.uuid=agf.user_uuid
+    WHERE agent.uuid='{user_uuid}' AND name='{stream_name}'
+    AND sys.uuid='{system_uuid}';"""
+    result_proxy = conn.execute(query)
+    streams = [dict(c.items()) for c in result_proxy.fetchall()]
+    # print("Fetched streams: {}".format(streams))
+
+    # Check if the system exists and you are an agent
+    if len(streams) == 0:
+        engine.dispose()
+        flash("You are not permitted to edit this stream.", "danger")
+        return redirect(url_for("streamhub.show_stream", system_uuid=system_uuid, client_name=stream_name))
+
+    # Update filter logic of the specified stream
+    query = f"""UPDATE streams SET filter_logic = '{filter_logic}'
+        WHERE system_uuid='{system_uuid}' AND name='{stream_name}';"""
+    conn.execute(query)
+    engine.dispose()
+
+    msg = "The filter logic of stream '{}' of system '{}' was updated.".format(stream_name, streams[0]["source_system"])
+    app.logger.info(msg)
+    flash(msg, "success")
 
 
 def get_stream_payload(user_uuid, system_uuid, stream_name):

@@ -102,11 +102,11 @@ def create_tables(app):
         db.Column('system_uuid', db.ForeignKey('systems.uuid'), primary_key=True),
         db.Column('source_system', db.VARCHAR(72), nullable=False),
         db.Column('target_system', db.VARCHAR(72), nullable=False),
-        db.Column('filter_logic', db.VARCHAR(1024), nullable=True),
+        db.Column('filter_logic', db.VARCHAR(4*1024), nullable=True),
         db.Column('status', db.VARCHAR(20), nullable=False, default="init"),
         db.Column('datetime', db.DateTime, nullable=True),
         db.Column('creator_uuid', db.ForeignKey("users.uuid"), nullable=False),
-        db.Column('description', db.VARCHAR(1024), nullable=True)
+        db.Column('description', db.VARCHAR(16*1024), nullable=True)
     )
     # Creates the tables
     app.config['metadata'].create_all(engine)
