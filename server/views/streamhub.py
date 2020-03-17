@@ -1,26 +1,21 @@
-import json
-import string
-import subprocess
 import time
-from functools import wraps, update_wrapper
 
-import pytz
-from datetime import datetime
-
+import requests
 import sqlalchemy as db
 from flask import Blueprint, render_template, flash, redirect, url_for, session, request, send_file, make_response
 
 from flask import current_app as app, Response
 from wtforms import Form, StringField, validators, TextAreaField
 
-from .useful_functions import get_datetime, is_logged_in, valid_name, valid_system, nocache
-from .StreamHandler import stream_checks, fab_streams
+if __name__ == '__main__':
+    from useful_functions import get_datetime, is_logged_in, valid_name, valid_system, nocache
+    from StreamHandler import stream_checks, fab_streams
+else:
+    from .useful_functions import get_datetime, is_logged_in, valid_name, valid_system, nocache
+    from .StreamHandler import stream_checks, fab_streams
 
 
 streamhub_bp = Blueprint("streamhub", __name__)
-
-# PROCESS_FILE = "templates/streamhub/streamhub.json"
-LOG_FILE = "templates/streamhub/template_stream.log"
 
 
 @streamhub_bp.route("/streamhub")
@@ -53,6 +48,10 @@ def show_all_streams():
 @streamhub_bp.route("/show_stream/<string:system_uuid>/<string:stream_name>")
 @is_logged_in
 def show_stream(system_uuid, stream_name):
+    # Show a warning if the gost servers are not available
+    if not check_gost_connection():
+        flash("The GOST server is not available, but required to deploy a Stream App.", "warning")
+
     # Get current user_uuid
     user_uuid = session["user_uuid"]
 
@@ -62,7 +61,8 @@ def show_stream(system_uuid, stream_name):
 
     if not app.config["KAFKA_BOOTSTRAP_SERVER"]:
         app.logger.info("The connection to Kafka is disabled. Check the '.env' file!")
-        flash("This platform runs in the 'platform-only' mode and doesn't provide the stream functionality.", "info")
+        flash("This platform runs in the 'platform-only' mode and doesn't provide the stream functionality.",
+              "warning")
         return render_template("/streamhub/show_stream.html", payload=payload)
 
     # Check if the stream app is running
@@ -154,7 +154,7 @@ def add_stream_for_system(system_uuid):
         if source_system == form_target_system:
             msg = "The source and target system can't be the equal."
             app.logger.info(msg)
-            flash(msg, "danger")
+            flash(msg, "warning")
             return redirect(url_for("streamhub.add_stream_for_system", system_uuid=system_uuid))
 
         # Create stream and check if the combination of the system_uuid and name exists
@@ -185,7 +185,7 @@ def add_stream_for_system(system_uuid):
             engine.dispose()
             msg = "The stream with name '{}' was already created for system '{}'.".format(form_name, source_system)
             app.logger.info(msg)
-            flash(msg, "danger")
+            flash(msg, "warning")
             return redirect(url_for("streamhub.add_stream_for_system", system_uuid=system_uuid))
 
     return render_template("/streamhub/add_stream.html", form=form, payload=payload)
@@ -437,55 +437,24 @@ def get_streamapp_stats(system_uuid, stream_name):
     return fab_streams.local_stats(system_uuid=system_uuid, stream_name=stream_name)
 
 
-# def load_stream(system_uuid, stream_name):
-#     """
-#     Loads some information of the stream-app process
-#     :param system_uuid: UUID of the current system
-#     :param stream_name: name of the current stream
-#     :return: a dictionary consisting of pid, cmd line and stdout
-#     """
-#     try:
-#         with open(PROCESS_FILE, "r") as f:
-#             content = json.loads(f.read())
-#     except FileNotFoundError:
-#         with open(PROCESS_FILE, "w") as f:
-#             f.write(json.dumps(dict(), indent=2))
-#         return dict()
-#     try:
-#         # pid = content[system_uuid][stream_name]["pid"]
-#         # cmd = content[system_uuid][stream_name]["cmd"]
-#         # stdout = content[system_uuid][stream_name].get("stdout")
-#         return content[system_uuid][stream_name]
-#     except KeyError:
-#         return dict()
-#
-#
-# def store_stream(system_uuid, stream_name, proc, with_stdout=False):
-#     """
-#     Stores the current process in the status file and index by system uuid and stream_name
-#     :param system_uuid: UUID of the current system
-#     :param stream_name: name of the current stream
-#     :param proc: process object, only attributes can be stored, not the whole object
-#     :param with_stdout: store with stdout of process or not. Output of proc.communicate() can only called once.
-#     :return:
-#     """
-#     try:
-#         with open(PROCESS_FILE, "r") as f:
-#             content = json.loads(f.read())
-#     except FileNotFoundError:
-#         content = dict()
-#
-#     if system_uuid not in content.keys():
-#         content[system_uuid] = dict()
-#     if stream_name not in content[system_uuid].keys():
-#         content[system_uuid][stream_name] = dict()
-#     content[system_uuid][stream_name]["pid"] = proc.pid
-#     content[system_uuid][stream_name]["cmd"] = proc.args
-#     content[system_uuid][stream_name]["datetime"] = \
-#         datetime.utcnow().replace(tzinfo=pytz.UTC).replace(microsecond=0).isoformat()
-#     if with_stdout:
-#         content[system_uuid][stream_name]["stdout"] = proc.communicate(timeout=1)  # timeout returns during execution
-#
-#     with open(PROCESS_FILE, "w") as f:
-#         f.write(json.dumps(content, indent=2))
+def check_gost_connection():
+    """
+    Checks the connection to the gost server, as this module is required to start Stream Apps
+    :return: boolean value, True if the connection can be established or the platform-only mode is used
+    """
+    if app.config.get("GOST_SERVER") is None:
+        app.logger.warning("The connection to GOST is disabled. Check the '.env' file!")
+        return True
 
+    gost_url = "http://" + app.config["GOST_SERVER"]
+    try:
+        res = requests.get(gost_url + "/v1.0/Things")
+        if res.status_code in [200, 201, 202]:
+            return True
+        else:
+            app.logger.error(f"init: Error, couldn't connect to GOST server: {gost_url}, "
+                             f"status code: {res.status_code}, result: {res.json()}")
+            return False
+    except Exception as e:
+        app.logger.error("init: Error, couldn't connect to GOST server: {}".format(gost_url))
+        return False

@@ -29,7 +29,7 @@ class KafkaInterface:
     def get_connection(self):
         if not self.bootstrap_server:
             self.app.logger.info("The connection to Kafka is disabled. Check the '.env' file!")
-            return None
+            return True  # True is needed to run in platform-only mode
         try:
             # Check the connectivity and update kafka topics
             self.system_topics = self.k_admin_client.list_topics(timeout=3.0).topics
@@ -46,6 +46,8 @@ class KafkaInterface:
             return False
 
     def recreate_lost_topics(self):
+        if not self.bootstrap_server:  # Skip in platform-only mode
+            return None
         self.app.logger.info("Recreating lost system topics.")
         # recreate lost system topics. Load the list from the database and topic list and create missing.
         if self.get_connection():
