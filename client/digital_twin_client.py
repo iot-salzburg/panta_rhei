@@ -80,8 +80,13 @@ class DigitalTwinClient:
             # Create Kafka Producer
             self.producer = confluent_kafka.Producer({'bootstrap.servers': self.config["kafka_bootstrap_servers"],
                                                       'client.id': self.config["client_name"],
-
+                                                      'request.timeout.ms': 10000,  # wait up to 10 seconds
                                                       'default.topic.config': {'acks': 'all'}})
+            ret_poll = self.producer.poll(3)
+            if ret_poll != 0:  # unfortunately, polling may return 0 even if the connection is disturbed
+                self.logger.error(f"init: Error, couldn't connect to kafka bootstrap server "
+                                  f"'{self.config['kafka_bootstrap_servers']}', poll() returns {ret_poll}")
+                raise Exception(f"init: Error, couldn't connect to kafka bootstrap server.")
 
         else:
             kafka_rest_url = "http://" + self.config["kafka_rest_server"] + "/topics"
