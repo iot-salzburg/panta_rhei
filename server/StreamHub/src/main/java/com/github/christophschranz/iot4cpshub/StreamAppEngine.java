@@ -14,14 +14,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.security.KeyException;
-import java.util.Arrays;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
 /** The StreamAppEngine generates streams between Panta Rhei Systems in Kafka, based on System variables
 java -jar target/streamApp-1.1-jar-with-dependencies.jar --STREAM_NAME test-jar --SOURCE_SYSTEM is.iceland.iot4cps-wp5-WeatherService.Stations --TARGET_SYSTEM cz.icecars.iot4cps-wp5-CarFleet.Car1 --KAFKA_BOOTSTRAP_SERVERS 192.168.48.179:9092 --GOST_SERVER 192.168.48.179:8082 --FILTER_LOGIC "SELECT * FROM * WHERE (name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_1.Air Temperature' OR name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_2.Air Temperature') AND result < 30;"
@@ -48,6 +46,7 @@ public class StreamAppEngine {
         if (System.getenv().containsKey("FILTER_LOGIC"))
             globalOptions.setProperty("FILTER_LOGIC",
                     System.getenv("FILTER_LOGIC").replaceAll("\"", ""));
+        // env vars: STREAM_NAME="test-stream";SOURCE_SYSTEM=is.iceland.iot4cps-wp5-WeatherService.Stations;TARGET_SYSTEM=cz.icecars.iot4cps-wp5-CarFleet.Car1;KAFKA_BOOTSTRAP_SERVERS=192.168.48.179:9092;GOST_SERVER=192.168.48.179:8082;FILTER_LOGIC="SELECT * FROM * WHERE (name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_1.Air Temperature' OR name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_2.Air Temperature') AND result < 30\;"
 
         // parse input parameter to options and check completeness, must be a key-val pair
         if (1 == args.length % 2) {
@@ -82,9 +81,18 @@ public class StreamAppEngine {
 
 
         /**************************        load json from SensorThings         **************************/
+        // the json value is not ordered properly, restructure such that we have {iot_id0: {}, iot_id1: {}, ...}
+        sensorThingsStreams = new JsonObject();  // set ST to jsonObject
 
-        reloadGOSTServer();
-        String name = sensorThingsStreams.get(Integer.toString(58)).getAsJsonObject().get("name").getAsString();
+//        // Tests:
+//        fetchFromGOST("1"); // -> single fetch, should work
+//        fetchFromGOST(9); // -> single fetch, should work
+//
+//        // test if the entry is available with key 1
+//        System.out.println(sensorThingsStreams.get("1").getAsJsonObject());
+//
+//        fetchFromGOST();  // -> batch fetch, should work
+//        fetchFromGOST(31232);  // -> should fail, as the id does not exist
 
 
         /**************************   set up the topology and then start it    **************************/
@@ -129,11 +137,21 @@ public class StreamAppEngine {
 
     public static JsonParser jsonParser = new JsonParser();
 
+    /**
+     * Check whether or not a msg fulfills the given query or not. Check twice, reload the SensorThings entries
+     * if the msg's quantity name can't be found and check a second time.
+     * @return boolean whether the msg holds the conditions of the query or not
+     */
     public static boolean check_condition(Node queryParser, String inputJson) {
         return check_condition(queryParser, inputJson, false);
     }
 
-    public static boolean check_condition(Node queryParser, String inputJson, boolean second_try) {
+    /**
+     * Check whether or not a msg fulfills the given query or not. Check twice, reload the SensorThings entries
+     * if the msg's quantity name can't be found and check a second time. Parameter second_trial specifies this trial.
+     * @return boolean whether the msg holds the conditions of the query or not
+     */
+    public static boolean check_condition(Node queryParser, String inputJson, boolean second_trial) {
         // json library
         String iot_id = "-1";
         try {
@@ -147,16 +165,16 @@ public class StreamAppEngine {
             jsonObject.addProperty("name", quantity_name);
             logger.info("Getting new (augmented) kafka message: {}", jsonObject);
 
-            boolean queryCondition = queryParser.isTrue(jsonObject);
+            boolean queryCondition = queryParser.evaluate(jsonObject);
             System.out.println("Query condition: " + queryCondition);
             return queryCondition;
 
 //            return quantity_name.endsWith(".Station_1.Air Temperature") && result < 10;  // filter on name and condition
 
         } catch (NullPointerException e) {
-            if (!second_try) {
-                System.out.println("iot_id '" + iot_id + "' was not found, refetching sensorthings.");
-                reloadGOSTServer();
+            if (!second_trial) {
+                System.out.println("iot_id '" + iot_id + "' was not found, re-fetching SensorThings.");
+                fetchFromGOST(iot_id);
                 return check_condition(queryParser, inputJson, true);
             }
             else {
@@ -166,17 +184,43 @@ public class StreamAppEngine {
         }
     }
 
-    /* reload GOST Server entries into json, forward with -1 if no iot_id is specified */
-    public static void reloadGOSTServer() {
-        reloadGOSTServer(-1);
+    /**
+     *  fetches all datastreams from GOST Server and stores the mapping of the form iot.id: entry
+     *  (hash-indexed) into a jsonObject, such that the entry is available with complexity O(1).
+     *  default parameter -1 triggers to fetch all entries, as it is useful at the startup.
+     *  */
+    public static void fetchFromGOST() {
+        fetchFromGOST(-1);
     }
-    public static void reloadGOSTServer(int iot_id) {
-        if (iot_id == -1) {
-            String urlString = "http://" + globalOptions.getProperty("GOST_SERVER").replace("\"", "");
-            urlString += "/v1.0/Datastreams";
-//            System.out.println(urlString);
-            StringBuilder result = new StringBuilder();
+    /**
+     *  receives the datastream iot_id as String. Trying to convert the String to an Integer and fetching this
+     *  datastream from GOST Server. If not possible, all datastreams are fetched.
+     *  */
+    public static void fetchFromGOST(String iot_id_str) {
+        try {
+            fetchFromGOST(Integer.parseInt(iot_id_str.trim()));
+        } catch (NumberFormatException e) {
+            System.out.println("");
+            logger.warn("fetchFromGOST, iot_id string couldn't be converted to integer, fetching all datastreams.");
+            fetchFromGOST(-1);
+        }
+    }
+    /**
+     *  fetches all datastreams from GOST Server and stores the mapping of the form iot.id: entry
+     *  (hash-indexed) into a jsonObject, such that the entry is available with complexity O(1).
+     *  default parameter -1 triggers to fetch all entries, as it is useful at the startup.
+     *  */
+    public static void fetchFromGOST(int iot_id) {
+        // urlString that is appended by the appropriate mode (all ds or a specified)
+        String urlString = "http://" + globalOptions.getProperty("GOST_SERVER").replace("\"", "");
 
+        if (iot_id <= 0)  // fetching all datastreams for iot_id <= 0
+            urlString += "/v1.0/Datastreams";
+        else              // fetching a singe datastream
+            urlString += "/v1.0/Datastreams(" + iot_id + ")";
+//        System.out.println(urlString);
+
+        StringBuilder result = new StringBuilder();
         try {
             URL url = new URL(urlString);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -188,25 +232,35 @@ public class StreamAppEngine {
             }
             rd.close();
             JsonElement rawJsonObject = jsonParser.parse(result.toString());
-            JsonArray rawJsonArray = rawJsonObject.getAsJsonObject().get("value").getAsJsonArray();
 
-            // the json value is not ordered properly, restructure such that we have {iot_id0: {}, iot_id1: {}, ...}
-            sensorThingsStreams = new JsonObject();  // set ST to jsonObject
-
-            // adding the name
-            for (int i=1; i < rawJsonArray.size(); i++ ) {
-                System.out.println("Adding " + rawJsonArray.get(i).getAsJsonObject().get("name").getAsString());
+            // storing all datastreams
+            if (iot_id <= 0) {
+                JsonArray rawJsonArray = rawJsonObject.getAsJsonObject().get("value").getAsJsonArray();
+                // adding the iot.id: entry mapping to the object
+                for (int i = 1; i < rawJsonArray.size(); i++) {
+                    System.out.println("Adding new datastream with name '" +
+                            rawJsonArray.get(i).getAsJsonObject().get("name").getAsString() + "' to mappings.");
+                    sensorThingsStreams.add(
+                            rawJsonArray.get(i).getAsJsonObject().get("@iot.id").getAsString(),
+                            rawJsonArray.get(i).getAsJsonObject());
+                }
+            }
+            // adding only a single datastream
+            else {
+                JsonObject rawJsonDS = rawJsonObject.getAsJsonObject();
+                System.out.println("Adding new datastream with name '" + rawJsonDS.get("name").getAsString() +
+                        "' to mappings.");
                 sensorThingsStreams.add(
-                        rawJsonArray.get(i).getAsJsonObject().get("@iot.id").getAsString(),
-                        rawJsonArray.get(i).getAsJsonObject());
+                        rawJsonDS.get("@iot.id").getAsString(),
+                        rawJsonDS);
             }
 
+        } catch (FileNotFoundException e) {
+            logger.error("@iot.id '" + iot_id + "' is not available on SensorThings server '" + urlString + "'.");
+            logger.error("Try to restart the client application as it may use a deprecated datastream mapping!");
+            System.exit(21);
         } catch (IOException e) {
             e.printStackTrace();
-        }
-        } else {
-            System.out.println("Iot id was specified, however, not implemented yet.");
-            System.exit(5);
         }
     }
 }
