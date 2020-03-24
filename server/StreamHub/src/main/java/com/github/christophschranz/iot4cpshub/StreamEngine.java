@@ -73,7 +73,6 @@ public class StreamEngine {
         KStream<String, String> inputTopic = streamsBuilder.stream(inputTopicName);
         KStream<String, String> filteredStream = inputTopic.filter((k, jsonTweet) -> true);
 
-        // TODO apply filter logic
         if (targetTopic.endsWith(".ext"))
             filteredStream.to(targetTopic);
         else

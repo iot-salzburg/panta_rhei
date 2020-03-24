@@ -52,7 +52,7 @@ public class StreamAppEngine {
         if (1 == args.length % 2) {
             logger.error("Error: Expected key val pairs as arguments.");
             logger.error("Usage: java -jar path/to/streamhub_apps.jar --key1 val1 .. --keyN valN");
-            System.exit(2);
+            System.exit(11);
         }
         for (int i=0; i<args.length; i+=2){
             String key = args[i].replace("--", "");
@@ -66,21 +66,21 @@ public class StreamAppEngine {
                 logger.error("Error: You have to define the parameter " + key +
                         " either as environment variable or pass it in the arguments.");
                 logger.error("Usage: java -jar path/to/streamhub_apps.jar --key1 val1 .. --keyN valN");
-                System.exit(3);
+                System.exit(12);
             }
             logger.info("  " + key + ": " + globalOptions.getProperty(key));
         }
 
 
-        /**************************        build the Stream Parser class         **************************/
+        /* *************************        build the Stream Parser class         **************************/
         String expr =  globalOptions.getProperty("FILTER_LOGIC").substring(
                 globalOptions.getProperty("FILTER_LOGIC").indexOf(" WHERE ") + 7).replace(";", "");
 
         Node queryParser = new Node(expr);
-        System.out.println(queryParser);
+        logger.info(queryParser.toString());
 
 
-        /**************************        load json from SensorThings         **************************/
+        /* *************************        load json from SensorThings         **************************/
         // the json value is not ordered properly, restructure such that we have {iot_id0: {}, iot_id1: {}, ...}
         sensorThingsStreams = new JsonObject();  // set ST to jsonObject
 
@@ -95,7 +95,7 @@ public class StreamAppEngine {
 //        fetchFromGOST(31232);  // -> should fail, as the id does not exist
 
 
-        /**************************   set up the topology and then start it    **************************/
+        /* *************************   set up the topology and then start it    **************************/
         // create input and output topics from system name
         String inputTopicName = globalOptions.getProperty("SOURCE_SYSTEM") + ".int";
         String targetTopic = globalOptions.getProperty("TARGET_SYSTEM") + ".ext";
@@ -114,7 +114,6 @@ public class StreamAppEngine {
         // input topic, application logic
         KStream<String, String> inputTopic = streamsBuilder.stream(inputTopicName);
 
-        // TODO apply filter logic
         KStream<String, String> filteredStream = inputTopic.filter((k, value) -> check_condition(queryParser, value));
 //        KStream<String, String> filteredStream = inputTopic.filter((k, value) -> true);
 
@@ -128,14 +127,6 @@ public class StreamAppEngine {
         // start our streams application
         kafkaStreams.start();
     }
-
-    public static Properties globalOptions = new Properties();
-
-    public static JsonObject sensorThingsStreams = new JsonObject();
-
-    public static Logger logger = LoggerFactory.getLogger(StreamAppEngine.class);
-
-    public static JsonParser jsonParser = new JsonParser();
 
     /**
      * Check whether or not a msg fulfills the given query or not. Check twice, reload the SensorThings entries
@@ -166,14 +157,14 @@ public class StreamAppEngine {
             logger.info("Getting new (augmented) kafka message: {}", jsonObject);
 
             boolean queryCondition = queryParser.evaluate(jsonObject);
-            System.out.println("Query condition: " + queryCondition);
+            logger.debug("Query condition: " + queryCondition);
             return queryCondition;
 
 //            return quantity_name.endsWith(".Station_1.Air Temperature") && result < 10;  // filter on name and condition
 
         } catch (NullPointerException e) {
             if (!second_trial) {
-                System.out.println("iot_id '" + iot_id + "' was not found, re-fetching SensorThings.");
+                logger.info("iot_id '" + iot_id + "' was not found, re-fetching SensorThings.");
                 fetchFromGOST(iot_id);
                 return check_condition(queryParser, inputJson, true);
             }
@@ -200,9 +191,8 @@ public class StreamAppEngine {
         try {
             fetchFromGOST(Integer.parseInt(iot_id_str.trim()));
         } catch (NumberFormatException e) {
-            System.out.println("");
             logger.warn("fetchFromGOST, iot_id string couldn't be converted to integer, fetching all datastreams.");
-            fetchFromGOST(-1);
+            fetchFromGOST();
         }
     }
     /**
@@ -218,7 +208,7 @@ public class StreamAppEngine {
             urlString += "/v1.0/Datastreams";
         else              // fetching a singe datastream
             urlString += "/v1.0/Datastreams(" + iot_id + ")";
-//        System.out.println(urlString);
+//        logger.debug(urlString);
 
         StringBuilder result = new StringBuilder();
         try {
@@ -238,7 +228,7 @@ public class StreamAppEngine {
                 JsonArray rawJsonArray = rawJsonObject.getAsJsonObject().get("value").getAsJsonArray();
                 // adding the iot.id: entry mapping to the object
                 for (int i = 1; i < rawJsonArray.size(); i++) {
-                    System.out.println("Adding new datastream with name '" +
+                    logger.info("Adding new datastream with name '" +
                             rawJsonArray.get(i).getAsJsonObject().get("name").getAsString() + "' to mappings.");
                     sensorThingsStreams.add(
                             rawJsonArray.get(i).getAsJsonObject().get("@iot.id").getAsString(),
@@ -248,7 +238,7 @@ public class StreamAppEngine {
             // adding only a single datastream
             else {
                 JsonObject rawJsonDS = rawJsonObject.getAsJsonObject();
-                System.out.println("Adding new datastream with name '" + rawJsonDS.get("name").getAsString() +
+                logger.info("Adding new datastream with name '" + rawJsonDS.get("name").getAsString() +
                         "' to mappings.");
                 sensorThingsStreams.add(
                         rawJsonDS.get("@iot.id").getAsString(),
@@ -258,9 +248,22 @@ public class StreamAppEngine {
         } catch (FileNotFoundException e) {
             logger.error("@iot.id '" + iot_id + "' is not available on SensorThings server '" + urlString + "'.");
             logger.error("Try to restart the client application as it may use a deprecated datastream mapping!");
-            System.exit(21);
+            System.exit(15);
         } catch (IOException e) {
+            // print stack trace but do not exit
             e.printStackTrace();
         }
     }
+
+    /**
+     * create required class instances
+     */
+    public static Properties globalOptions = new Properties();
+
+    public static JsonObject sensorThingsStreams = new JsonObject();
+
+    public static Logger logger = LoggerFactory.getLogger(StreamAppEngine.class);
+
+    public static JsonParser jsonParser = new JsonParser();
+
 }
