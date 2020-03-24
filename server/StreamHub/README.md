@@ -16,8 +16,8 @@ This are the variables:
 STREAM_NAME="test-stream"
 SOURCE_SYSTEM=is.iceland.iot4cps-wp5-WeatherService.Stations
 TARGET_SYSTEM=cz.icecars.iot4cps-wp5-CarFleet.Car1
-KAFKA_BOOTSTRAP_SERVERS=192.168.48.179:9092
-GOST_SERVER=192.168.48.179:8082;
+KAFKA_BOOTSTRAP_SERVERS=127.0.0.1:9092
+GOST_SERVER=127.0.0.1:8082;
 FILTER_LOGIC="SELECT * FROM * WHERE (name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_1.Air Temperature' OR name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_2.Air Temperature') AND result < 30\;"
 ```
 
@@ -31,7 +31,7 @@ To build a *jar* file, open the **Maven** sidebar and click
 
 Afterwards, the **jar** file can be executed using:
 ```bash
-java -jar target/streamApp-1.1-jar-with-dependencies.jar --STREAM_NAME test-jar --SOURCE_SYSTEM is.iceland.iot4cps-wp5-WeatherService.Stations --TARGET_SYSTEM cz.icecars.iot4cps-wp5-CarFleet.Car1 --KAFKA_BOOTSTRAP_SERVERS 192.168.48.179:9092 --GOST_SERVER 192.168.48.179:8082 --FILTER_LOGIC "SELECT * FROM * WHERE (name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_1.Air Temperature' OR name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_2.Air Temperature') AND result < 30;"
+java -jar target/streamApp-1.1-jar-with-dependencies.jar --STREAM_NAME test-jar --SOURCE_SYSTEM is.iceland.iot4cps-wp5-WeatherService.Stations --TARGET_SYSTEM cz.icecars.iot4cps-wp5-CarFleet.Car1 --KAFKA_BOOTSTRAP_SERVERS 127.0.0.1:9092 --GOST_SERVER 127.0.0.1:8082 --FILTER_LOGIC "SELECT * FROM * WHERE (name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_1.Air Temperature' OR name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_2.Air Temperature') AND result < 30;"
 ```
 
 ### Deploying inside a Docker Container

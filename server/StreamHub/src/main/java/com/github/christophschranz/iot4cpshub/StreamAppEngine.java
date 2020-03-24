@@ -46,7 +46,10 @@ public class StreamAppEngine {
         if (System.getenv().containsKey("FILTER_LOGIC"))
             globalOptions.setProperty("FILTER_LOGIC",
                     System.getenv("FILTER_LOGIC").replaceAll("\"", ""));
-        // env vars: STREAM_NAME="test-stream";SOURCE_SYSTEM=is.iceland.iot4cps-wp5-WeatherService.Stations;TARGET_SYSTEM=cz.icecars.iot4cps-wp5-CarFleet.Car1;KAFKA_BOOTSTRAP_SERVERS=192.168.48.179:9092;GOST_SERVER=192.168.48.179:8082;FILTER_LOGIC="SELECT * FROM * WHERE (name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_1.Air Temperature' OR name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_2.Air Temperature') AND result < 30\;"
+        // env vars: STREAM_NAME="test-stream";SOURCE_SYSTEM=is.iceland.iot4cps-wp5-WeatherService.Stations;
+        // TARGET_SYSTEM=cz.icecars.iot4cps-wp5-CarFleet.Car1;KAFKA_BOOTSTRAP_SERVERS=127.0.0.1:9092;
+        // GOST_SERVER=127.0.0.1:8082;
+        // FILTER_LOGIC="SELECT * FROM * WHERE (name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_1.Air Temperature' OR name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_2.Air Temperature') AND result < 30\;"
 
         // parse input parameter to options and check completeness, must be a key-val pair
         if (1 == args.length % 2) {
