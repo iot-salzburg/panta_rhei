@@ -2,10 +2,9 @@ package com.github.christophschranz.iot4cpshub;
 
 import com.google.gson.JsonObject;
 
-import java.util.Arrays;
 import java.util.Properties;
 
-public class NodeTester {
+public class Tester {
 
         public static void main(String[] args) {
                 globalOptions.setProperty("STREAM_NAME", "test-stream");
@@ -49,13 +48,11 @@ public class NodeTester {
 
                 System.out.println("#######################################################\n");
 
-                String str = "SELECT * FROM * WHERE (name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_1.Air Temperature' " +
-                        "OR name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_2.Air Temperature') AND result < 30;";
-
-                System.out.println(str.substring(str.indexOf(" WHERE ") + 7).replace(";", ""));
+                Node node;
 
                 expr =  "name = 'Station_1.Air Temperature' AND result > 4";
-//                Node node = new Node(expr);
+                node = new Node(expr);
+
 //                System.out.println(node.isTrue(jsonInput));
 //                System.out.println();
 
@@ -66,9 +63,27 @@ public class NodeTester {
                 expr =  "((name = 'Station_1.Air Temperature' OR (((result < 30) AND result > 4))))";
                 expr =  "(name = 'Station_1.Air Temperature' OR name = 'Station_2.Air Temperature') AND ((result < 30) AND result > 4)";
                 expr =  "(result < 30 AND result > 4) OR name = 'Station_1.Air Temperature'";
-                Node node = new Node(expr);
+                node = new Node(expr);
                 System.out.println(node);
-                System.out.println(node.isTrue(jsonInput));
+                System.out.println(node.evaluate(jsonInput));
+
+
+                System.out.println("#######################################################\n");
+
+
+                globalOptions.setProperty("STREAM_NAME", "test-stream");
+                globalOptions.setProperty("SOURCE_SYSTEM", "is.iceland.iot4cps-wp5-WeatherService.Stations");
+                globalOptions.setProperty("TARGET_SYSTEM", "cz.icecars.iot4cps-wp5-CarFleet.Car1");
+                globalOptions.setProperty("KAFKA_BOOTSTRAP_SERVERS", "192.168.48.179:9092");
+                globalOptions.setProperty("GOST_SERVER", "192.168.48.179:8082");
+                globalOptions.setProperty("FILTER_LOGIC",
+                        "SELECT * FROM * WHERE (name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_1.Air Temperature' OR name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_2.Air Temperature') AND result < 30;");
+
+
+                StreamParser stream_parser = new StreamParser(globalOptions);
+                System.out.println(stream_parser);
+                System.out.println(stream_parser.evaluate(jsonInput));
+
 
         }
 
