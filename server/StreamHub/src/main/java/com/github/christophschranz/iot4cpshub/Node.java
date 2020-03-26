@@ -1,6 +1,9 @@
 package com.github.christophschranz.iot4cpshub;
 
 import com.google.gson.JsonObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 
 
@@ -25,27 +28,6 @@ public class Node {
     boolean interchanged;
 
 
-    /** toString-method
-     * @return the node
-     */
-    public String toString(){
-        String ch1_expr = null;
-        String ch2_expr = null;
-        if (this.child1 != null)
-            ch1_expr = this.child1.rawExpression;
-        if (this.child1 != null)
-            ch2_expr = this.child2.rawExpression;
-        return "\tNode: " +
-                "\n\t rawExpression: " + this.rawExpression +
-                "\n\t logicOperation: " + this.logicOperation +
-                "\n\t child1: '" + ch1_expr + "'" +
-                "\n\t child2: '" + ch2_expr + "'" +
-                "\n\t degree: " + this.degree +
-                "\n\t comparisonOperation: " + this.comparisonOperation +
-                "\n\t exprKey: " + this.exprKey +
-                "\n\t strValue: " + this.strValue + " \tdblValue: " + this.dblValue;
-    }
-
     /**
      * Initializes a new Node. Take a string expression and build the operator and children
      * @param str String expression that describes an comparison operation
@@ -56,12 +38,12 @@ public class Node {
 
         // extract the outer logic operator. First iterate through the expr
         String outer_str = getOuterExpr(str);
-        if (outer_str.contains(" AND "))
-            this.logicOperation = "AND";
+        if (outer_str.contains(" XOR "))
+            this.logicOperation = "XOR";
         else if (outer_str.contains(" OR "))
             this.logicOperation = "OR";
-        else if (outer_str.contains(" XOR "))
-            this.logicOperation = "XOR";
+        else if (outer_str.contains(" AND "))
+            this.logicOperation = "AND";
         else {
             this.isLeaf = true;
         }
@@ -89,6 +71,8 @@ public class Node {
                 operator = this.comparisonOperation = "<";
             else if (str.contains(">"))
                 operator = this.comparisonOperation = ">";
+            else if (str.contains("<>"))
+                operator = this.comparisonOperation = "<>";
             else {
                 System.out.println("couldn't find operator for string expr. " + this.rawExpression);
                 System.exit(11);
@@ -127,12 +111,33 @@ public class Node {
         this.degree = this.getDegree();
     }
 
+    /** toString-method
+     * @return the node
+     */
+    public String toString(){
+        String ch1_expr = null;
+        String ch2_expr = null;
+        if (this.child1 != null)
+            ch1_expr = this.child1.rawExpression;
+        if (this.child1 != null)
+            ch2_expr = this.child2.rawExpression;
+        return "\tNode: " +
+                "\n\t rawExpression: " + this.rawExpression +
+                "\n\t logicOperation: " + this.logicOperation +
+                "\n\t child1: '" + ch1_expr + "'" +
+                "\n\t child2: '" + ch2_expr + "'" +
+                "\n\t degree: " + this.degree +
+                "\n\t comparisonOperation: " + this.comparisonOperation +
+                "\n\t exprKey: " + this.exprKey +
+                "\n\t strValue: " + this.strValue + " \tdblValue: " + this.dblValue;
+    }
+
     /**
-     * Return a boolean expression whether the expression of the comparison expression is true or false
-     * or the subtree is true or false. This works by traversing the Nodes recursively to the comparision leaf nodes.
+     * Return a boolean expression whether the jsonInput is evaluated by the expression as true or false
+     * This works by traversing the Nodes recursively to the comparision leaf nodes.
      * @return boolean expression
      */
-    public boolean isTrue(JsonObject jsonInput) {
+    public boolean evaluate(JsonObject jsonInput) {
         if (this.isLeaf) {
             System.out.println("Check the comparison '" + this.rawExpression + "':");
             if (stringOperation) {
@@ -141,6 +146,8 @@ public class Node {
                 String dataValue = jsonInput.get(exprKey).getAsString();
                 if (comparisonOperation.equals("=="))
                     return dataValue.equals(strValue);
+                if (comparisonOperation.equals("<>"))
+                    return !dataValue.equals(strValue);
                 if (comparisonOperation.equals("<"))
                     return this.interchanged ^ dataValue.compareTo(strValue) < 0;
                 if (comparisonOperation.equals(">"))
@@ -157,12 +164,12 @@ public class Node {
         }
         else {
             System.out.println("Check the logical statement '" + this.rawExpression + "':");
-            if (logicOperation.equals("AND"))
-                return (child1.isTrue(jsonInput) && child2.isTrue(jsonInput));
-            if (logicOperation.equals("OR"))
-                return (child1.isTrue(jsonInput) || child2.isTrue(jsonInput));
             if (logicOperation.equals("XOR"))
-                return (child1.isTrue(jsonInput) ^ child2.isTrue(jsonInput));
+                return (child1.evaluate(jsonInput) ^ child2.evaluate(jsonInput));
+            if (logicOperation.equals("OR"))
+                return (child1.evaluate(jsonInput) || child2.evaluate(jsonInput));
+            if (logicOperation.equals("AND"))
+                return (child1.evaluate(jsonInput) && child2.evaluate(jsonInput));
         }
         System.out.println("Exception in Node: " + this.toString());
         return false;
@@ -236,4 +243,6 @@ public class Node {
         else
             return Math.max(this.child1.getDegree(), this.child2.getDegree()) + 1;
     }
+
+    public static Logger logger = LoggerFactory.getLogger(StreamAppEngine.class);
 }
