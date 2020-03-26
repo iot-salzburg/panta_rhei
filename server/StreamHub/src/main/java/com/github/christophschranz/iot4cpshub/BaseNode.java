@@ -14,7 +14,6 @@ import java.util.ArrayList;
 public abstract class BaseNode {
     String rawExpression;
     private int degree;
-    boolean isLeaf;
 
     String operation;  // can be any form of operation: logical, comparison, or arithmetic.
     BaseNode child1;  // left term of an expression
@@ -59,6 +58,12 @@ public abstract class BaseNode {
      * @return boolean expression
      */
     public abstract boolean evaluate(JsonObject jsonInput);
+
+    /**
+     * Return the result of an arithmetic expression, by recursively calling this function until the leaf nodes yield a number.
+     * @return int the degree of the node
+     */
+    public abstract float arithmeticEvaluate();
     /**
      * Return the degree of the node, by recursively calling the children's getDegree till leafNode with degree 0.
      * @return int the degree of the node
@@ -102,7 +107,7 @@ public abstract class BaseNode {
             System.exit(15);
 
         }
-        if (idx <= 1) {
+        if (idx <= 0) {
             // recursive call to remove outer parentheses
             if (str.startsWith("(") && str.endsWith(")")) {
                 logger.debug("case idx <= idx, " + str);

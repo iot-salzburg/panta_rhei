@@ -15,7 +15,6 @@ public class LogicalNode extends BaseNode {
 //    // variables or BaseNode
 //    String rawExpression;
 //    int degree;
-//    boolean isLeaf;
 //    String operation;  // can be any form of operation: logical, comparison, or arithmetic.
 //    BaseNode child1;  // left term of an expression
 //    BaseNode child2;  // right term of an expression.
@@ -76,23 +75,25 @@ public class LogicalNode extends BaseNode {
         }
 
         // create the child nodes that are LogicalNodes if they are not variables
-        if (this.expressionType.equals("proposition")) {
-            String expr1 = str.substring(0, str.indexOf(" " + super.operation + " ")).trim();
-            this.child1 = new LogicalNode(expr1);
-
-            String expr2 = str.substring(
-                    str.indexOf(" " + super.operation + " ")+super.operation.length()+2).trim();
-            this.child2 = new LogicalNode(expr2);
-        }
-        // "NOT" is an unary operation, where child2 is set to TRUE and the operation to XOR
-        else if (this.expressionType.equals("negation")) {
-            System.out.println("building negation");
-            String expr1 = str.substring(str.indexOf("NOT ") + "NOT ".length()).trim();
-            System.out.println(expr1);
-            this.child1 = new LogicalNode(expr1);
-        }
-        else if (this.expressionType.equals("comparision")) {
-            this.child1 = new ComparisonNode(str);
+        switch (this.expressionType) {
+            case "proposition": {
+                String expr1 = str.substring(0, str.indexOf(" " + super.operation + " ")).trim();
+                this.child1 = new LogicalNode(expr1);
+                String expr2 = str.substring(str.indexOf(" " + super.operation + " ") + super.operation.length() + 2).trim();
+                this.child2 = new LogicalNode(expr2);
+                break;
+            }
+            // "NOT" is an unary operation, where child2 is set to TRUE and the operation to XOR
+            case "negation": {
+                System.out.println("building negation");
+                String expr1 = str.substring(str.indexOf("NOT ") + "NOT ".length()).trim();
+                System.out.println(expr1);
+                this.child1 = new LogicalNode(expr1);
+                break;
+            }
+            case "comparision":
+                this.child1 = new ComparisonNode(str);
+                break;
         }
         // logical variables are evaluated directly
 
@@ -135,6 +136,12 @@ public class LogicalNode extends BaseNode {
         System.exit(33);
         return false;
     }
+
+    @Override
+    public float arithmeticEvaluate() {
+        return 0;
+    }
+
     /**
      * Return the degree of the node, by recursively calling the children's getDegree till leafNode with degree 0.
      * @return int the degree of the node

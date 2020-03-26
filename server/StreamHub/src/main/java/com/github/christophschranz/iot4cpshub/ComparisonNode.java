@@ -16,7 +16,6 @@ public class ComparisonNode extends BaseNode {
 //    // variables or BaseNode
 //    String rawExpression;
 //    int degree;
-//    boolean isLeaf;
 //    String operation;  // can be any form of operation: logical, comparison, or arithmetic.
 //    BaseNode child1;  // left term of an expression
 //    BaseNode child2;  // right term of an expression.
@@ -96,7 +95,9 @@ public class ComparisonNode extends BaseNode {
             this.strValue = rawValue.replaceAll("'", "");
         } else {
             this.stringOperation = false;
-            this.dblValue = Double.parseDouble(rawValue);
+            this.child1 = new ArithmeticNode(rawValue);
+//            this.dblValue = Double.parseDouble(rawValue);
+            this.dblValue = child1.arithmeticEvaluate();
         }
         super.setDegree(this.getDegree());
     }
@@ -140,6 +141,12 @@ public class ComparisonNode extends BaseNode {
         System.exit(43);
         return false;
     }
+
+    @Override
+    public float arithmeticEvaluate() {
+        return 0;
+    }
+
     /**
      * Return the degree of the node, by recursively calling the children's getDegree till leafNode with degree 0.
      * @return int the degree of the node
@@ -152,5 +159,4 @@ public class ComparisonNode extends BaseNode {
 //            return Math.max(this.child1.getDegree(), this.child2.getDegree()) + 1;
     }
 
-    public static Logger logger = LoggerFactory.getLogger(StreamAppEngine.class);
 }
