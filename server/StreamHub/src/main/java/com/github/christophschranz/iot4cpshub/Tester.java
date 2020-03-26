@@ -56,16 +56,41 @@ public class Tester {
 //                System.out.println(node.isTrue(jsonInput));
 //                System.out.println();
 
-                // recursive test
+                // recursive tests:
+                expr =  "name = 'Station_1.Air Temperature'";
+                expr =  "name == 'Station_1.Air Temperature'";  // must fail
                 expr =  "name = 'Station_1.Air Temperature' OR result > 4";
                 expr =  "(name = 'Station_1.Air Temperature' OR result > 4)";
                 expr =  "name = 'Station_1.Air Temperature' OR (result > 30 AND result > 4)";
                 expr =  "((name = 'Station_1.Air Temperature' OR (((result < 30) AND result > 4))))";
-                expr =  "(name = 'Station_1.Air Temperature' OR name = 'Station_2.Air Temperature') AND ((result < 30) AND result > 4)";
-                expr =  "(result < 30 AND result > 4) OR name = 'Station_1.Air Temperature'";
-                node = new Node(expr);
-                System.out.println(node);
-                System.out.println(node.evaluate(jsonInput));
+                expr =  "(name = 'Station_1.Air Temperature' OR name = 'Station_2.Air Temperature') AND ((result < 30) AND result > 4)";  // must fail
+                expr =  "(result < 30 AND result < 4) OR name = 'Station_1.Air Temperature'";
+
+                expr =  "result < 30 AND result < 4 OR name = 'Station_1.Air Temperature'";  // should be equal than the one above
+                expr =  "result > 0 XOR name = 'Station_1.Air Temperature'";  // intro of XOR
+                expr =  "result = 0 XOR name = 'Station_1.Air Temperature'";  // intro of XOR
+                expr =  "name <> 'Station_1.Air Temperature'";  // intro of not equal, false
+                expr =  "name <> 'Station_123.Air Temperature'";  // intro of not equal, true
+
+                expr =  "NOT result > 30";  // intro of not, true
+                expr =  " NOT NOT result > 30";  // intro of not, false
+                expr =  "result < 30 AND NOT name = 'Station_123.Air Temperature'";  // intro of not, true
+                expr =  "NOT (result < 30 AND NOT name = 'Station_1.Air Temperature')";  // intro of not, false
+                expr =  "NOT NOT (result < 30 AND NOT NOT name = 'Station_1.Air Temperature')";  // intro of not, true
+
+                // ordering and hierarchy
+                expr =  "result < 30 AND result > 4 AND name = 'Station_1.Air Temperature' ";  // true
+                expr =  "result > 30 AND result > 4 AND name = 'Station_1.Air Temperature' ";  // false
+                expr =  "result < 30 AND result > 4 AND name <> 'Station_1.Air Temperature' ";  // false
+                expr =  "result > 30 AND result > 4 XOR name = 'Station_1.Air Temperature' ";  // true
+                expr =  "name = 'Station_1.Air Temperature' XOR result > 30 AND result > 4";  // ordering, true
+                expr =  "result > 30 AND result > 4 OR name = 'Station_123.Air Temperature'";  // false
+                expr =  "name = 'Station_123.Air Temperature' OR result > 30 AND result > 4";  // false
+
+
+//                node = new Node(expr);
+//                System.out.println(node);
+//                System.out.println(node.evaluate(jsonInput));
 
 
                 System.out.println("#######################################################\n");
@@ -80,14 +105,16 @@ public class Tester {
                         "SELECT * FROM * WHERE (name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_1.Air Temperature' OR name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_2.Air Temperature') AND result < 30;");
 
 
-                StreamParser stream_parser = new StreamParser(globalOptions);
-                System.out.println(stream_parser);
-                System.out.println(stream_parser.evaluate(jsonInput));
+//                StreamQuery stream_parser = new StreamQuery(globalOptions);
+//                System.out.println(stream_parser);
+//                System.out.println(stream_parser.evaluate(jsonInput));
 
-
+                LogicalNode logNode = new LogicalNode(expr);
+                System.out.println(logNode);
+                System.out.println(logNode.getDegree());
+                System.out.println(logNode.evaluate(jsonInput));
         }
 
         public static Properties globalOptions = new Properties();
 
 }
-
