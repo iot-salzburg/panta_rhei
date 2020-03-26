@@ -85,9 +85,7 @@ public class LogicalNode extends BaseNode {
             }
             // "NOT" is an unary operation, where child2 is set to TRUE and the operation to XOR
             case "negation": {
-                System.out.println("building negation");
                 String expr1 = str.substring(str.indexOf("NOT ") + "NOT ".length()).trim();
-                System.out.println(expr1);
                 this.child1 = new LogicalNode(expr1);
                 break;
             }
@@ -132,7 +130,7 @@ public class LogicalNode extends BaseNode {
                 return this.logicalValue;  // logicalValue is either true or false
         }
         logger.error("Exception for expressionType " + this.expressionType + " in Node: " + this.toString());
-        System.out.println(this.child1.child1.toString());
+        BaseNode.logger.error(this.child1.child1.toString());
         System.exit(33);
         return false;
     }

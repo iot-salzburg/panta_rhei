@@ -94,10 +94,10 @@ public class ComparisonNode extends BaseNode {
             this.stringOperation = true;
             this.strValue = rawValue.replaceAll("'", "");
         } else {
+            // the strValue is an arithmetic expression that is build in the child Node
             this.stringOperation = false;
-            this.child1 = new ArithmeticNode(rawValue);
-//            this.dblValue = Double.parseDouble(rawValue);
-            this.dblValue = child1.arithmeticEvaluate();
+            this.child2 = new ArithmeticNode(rawValue);
+            this.dblValue = child2.arithmeticEvaluate();
         }
         super.setDegree(this.getDegree());
     }
@@ -152,7 +152,13 @@ public class ComparisonNode extends BaseNode {
      * @return int the degree of the node
      */
     public int getDegree() {
-        return 0;  // as this is the leaf if no ArithmeticNode exists
+        int degree = 1;
+        if (this.child1 != null)
+            degree = this.child1.getDegree();
+        if (this.child2 != null)
+            degree = Math.max(degree, this.child2.getDegree());
+
+        return degree;  // as this is the leaf if no ArithmeticNode exists
 //        if (this.isLeaf)
 //            return 0;
 //        else
