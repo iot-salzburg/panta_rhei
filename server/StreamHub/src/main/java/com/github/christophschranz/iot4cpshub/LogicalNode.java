@@ -136,7 +136,7 @@ public class LogicalNode extends BaseNode {
     }
 
     @Override
-    public float arithmeticEvaluate() {
+    public double arithmeticEvaluate(JsonObject jsonInput) {
         return 0;
     }
 

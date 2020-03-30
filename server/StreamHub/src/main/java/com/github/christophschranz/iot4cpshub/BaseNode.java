@@ -14,11 +14,18 @@ import java.util.ArrayList;
 public abstract class BaseNode {
     String rawExpression;
     private int degree;
+    boolean isLeaf;
 
     String operation;  // can be any form of operation: logical, comparison, or arithmetic.
     BaseNode child1;  // left term of an expression
     BaseNode child2;  // right term of an expression.
 
+    ArrayList<String> allowedKeys = new ArrayList<String>() {{
+        add("name");
+        add("result");
+        add("time");
+    }};
+    String arithmeticKeyword = "result";
 
     /** toString-method
      * @return the node
@@ -63,7 +70,7 @@ public abstract class BaseNode {
      * Return the result of an arithmetic expression, by recursively calling this function until the leaf nodes yield a number.
      * @return int the degree of the node
      */
-    public abstract float arithmeticEvaluate();
+    public abstract double arithmeticEvaluate(JsonObject jsonInput);
     /**
      * Return the degree of the node, by recursively calling the children's getDegree till leafNode with degree 0.
      * @return int the degree of the node

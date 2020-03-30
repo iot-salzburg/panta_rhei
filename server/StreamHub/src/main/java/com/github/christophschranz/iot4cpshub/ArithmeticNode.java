@@ -1,7 +1,6 @@
 package com.github.christophschranz.iot4cpshub;
 
 import com.google.gson.JsonObject;
-import org.apache.kafka.common.protocol.types.Field;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,9 +27,12 @@ public class ArithmeticNode extends BaseNode {
 //    public static String strip(String str);
 //    public static Logger logger = LoggerFactory.getLogger(StreamAppEngine.class);
 
-    boolean isNumber = false;  // specifies if the Node represents a number or an arithmetic expression
-    float number;
-
+    boolean isAtomic = false;  // specifies if the Node represents a number or an arithmetic expression
+    boolean isNumber = false;
+    boolean isKeyword = false;
+    String keyword = "";
+    float numberValue;
+    String strValue;
 
     /**
      * Initializes a new Node. Take a string expression and build the operator and children
@@ -57,11 +59,43 @@ public class ArithmeticNode extends BaseNode {
         else if (outer_str.contains("%"))
             this.operation = "%";
         else {
-            this.isNumber = true;
+            // expression is a keyword and this will be set
+            if (allowedKeys.stream().anyMatch(outer_str::contains)) {
+                for (String key: this.allowedKeys) {
+                    if (outer_str.equals(key)) {
+                        this.keyword = key;
+                        this.isKeyword = true;
+                    }
+                }
+                // exit in case that should not happen
+                if (!this.isKeyword) {
+                    BaseNode.logger.error("the expression is not valid for keys ['name', 'result' or 'time'], syntax error near '"
+                            + this.rawExpression + "'.");
+                    System.exit(51);
+                }
+            }
+            // the expression must be a number or string and is tried to be parsed
+            else {
+                this.isAtomic = true;
+                if (outer_str.contains("'")) {
+                    this.isNumber = false;
+                    this.strValue = outer_str.replaceAll("'", "");
+                }
+                else  {
+                    try {
+                        this.numberValue = Float.parseFloat(rawExpression);
+                        this.isNumber = true;
+                    } catch (NumberFormatException e) {
+                        BaseNode.logger.error("Couldn't parse arithmetic expression '" + rawExpression + "'.");
+                        System.exit(52);
+                    }
+                }
+            }
         }
 
-        // create the child nodes if not a leaf
-        if (!this.isNumber) {  // TODO substring the string with the operation found in the OUTER_STR
+        // this node could be an inner node which gets two ArithmeticNodes as childs. Or a leaf node, that is either
+        // a number or a keyword expression
+        if (!this.isAtomic && !this.isKeyword) {  // TODO substring the string with the operation found in the OUTER_STR
             String expr1 = str.substring(0, str.indexOf(this.operation)).trim();
             this.child1 = new ArithmeticNode(expr1);
 
@@ -69,14 +103,7 @@ public class ArithmeticNode extends BaseNode {
                     str.indexOf(this.operation)+1).trim();
             this.child2 = new ArithmeticNode(expr2);
         }
-        // expression is a number
-        else
-            try {
-                this.number = Float.parseFloat(rawExpression);
-            } catch (NumberFormatException e) {
-                BaseNode.logger.error("Couldn't parse arithmetic expression '" + rawExpression + "'.");
-                System.exit(52);
-            }
+
         super.setDegree(this.getDegree());
     }
 
@@ -96,28 +123,36 @@ public class ArithmeticNode extends BaseNode {
      * Return the result of an arithmetic expression, by recursively calling this function until the leaf nodes yield a number.
      * @return int the degree of the node
      */
-    public float arithmeticEvaluate() {
+    public double arithmeticEvaluate() {
+        JsonObject jsonInput = new JsonObject();
+        return arithmeticEvaluate(jsonInput);
+    }
+    public double arithmeticEvaluate(JsonObject jsonInput) {
         // base case. The Node represents a number
-        if (this.isNumber)
-            return this.number;
+        if (this.isAtomic)
+            return this.numberValue;
+        if (this.isKeyword) {
+            double asDouble = jsonInput.get(this.arithmeticKeyword).getAsDouble();  // the keyword should be result
+            return asDouble;
+        }
         // recursive case. The nodes subtree must be evaluated
         switch (this.operation) {
             case "-":
-                return this.child1.arithmeticEvaluate() - this.child2.arithmeticEvaluate();
+                return this.child1.arithmeticEvaluate(jsonInput) - this.child2.arithmeticEvaluate(jsonInput);
             case "+":
-                return this.child1.arithmeticEvaluate() + this.child2.arithmeticEvaluate();
+                return this.child1.arithmeticEvaluate(jsonInput) + this.child2.arithmeticEvaluate(jsonInput);
             case "/":
-                return this.child1.arithmeticEvaluate() / this.child2.arithmeticEvaluate();
+                return this.child1.arithmeticEvaluate(jsonInput) / this.child2.arithmeticEvaluate(jsonInput);
             case "*":
-                return this.child1.arithmeticEvaluate() * this.child2.arithmeticEvaluate();
+                return this.child1.arithmeticEvaluate(jsonInput) * this.child2.arithmeticEvaluate(jsonInput);
             case "^":
-                return (float) Math.pow(this.child1.arithmeticEvaluate(), this.child2.arithmeticEvaluate());
+                return (float) Math.pow(this.child1.arithmeticEvaluate(jsonInput), this.child2.arithmeticEvaluate(jsonInput));
             case "%":
-                return this.child1.arithmeticEvaluate() % this.child2.arithmeticEvaluate();
+                return this.child1.arithmeticEvaluate(jsonInput) % this.child2.arithmeticEvaluate(jsonInput);
         }
         logger.error("Exception for operation " + this.operation + " in Node: " + this.toString());
         System.exit(53);
-        return this.number;
+        return this.numberValue;
     }
 
     /**
@@ -125,7 +160,7 @@ public class ArithmeticNode extends BaseNode {
      * @return int the degree of the node
      */
     public int getDegree() {
-        if (this.isNumber)
+        if (this.isAtomic || this.isKeyword)
             return 0;
         else
             return Math.max(this.child1.getDegree(), this.child2.getDegree()) + 1;

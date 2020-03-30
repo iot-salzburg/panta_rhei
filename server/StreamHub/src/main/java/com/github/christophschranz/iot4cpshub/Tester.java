@@ -2,6 +2,7 @@ package com.github.christophschranz.iot4cpshub;
 
 import com.google.gson.JsonObject;
 
+import java.util.ArrayList;
 import java.util.Properties;
 
 public class Tester {
@@ -219,14 +220,19 @@ public class Tester {
                 expr =  "result < 100 % 13 AND result > 0.4^10";
                 if (new LogicalNode(expr).evaluate(jsonInput))
                         System.out.println("Test 41 failed.");
-
                 expr =  "100 > result AND result > 0.4^10";
                 if (!new LogicalNode(expr).evaluate(jsonInput))
                         System.out.println("Test 42 failed.");
 
-//                expr =  "result - 5 < 100";
-//                if (!new LogicalNode(expr).evaluate(jsonInput))
-//                        System.out.println("Test 43 failed.");
+                expr =  "result - 5 < 10";
+                System.out.println(new LogicalNode(expr).evaluate(jsonInput));
+                if (!new LogicalNode(expr).evaluate(jsonInput))
+                        System.out.println("Test 43 failed.");
+
+                expr =  "(result - 12.3)^2 = 0";
+                if (!new LogicalNode(expr).evaluate(jsonInput))
+                        System.out.println("Test 44 failed.");
+
 
                 System.out.println("\n######## Testing the degree of the trees #########\n");
 
