@@ -1,10 +1,6 @@
 package com.github.christophschranz.iot4cpshub;
 
 import com.google.gson.JsonObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
 
 
 /**
@@ -19,6 +15,11 @@ public class ArithmeticNode extends BaseNode {
 //    String operation;  // can be any form of operation: logical, comparison, or arithmetic.
 //    BaseNode child1;  // left term of an expression
 //    BaseNode child2;  // right term of an expression.
+//    ArrayList<String> allowedKeys = new ArrayList<String>() {{
+//        add("name");
+//        add("result");
+//        add("time");
+//    }};
 //    // methods:
 //    public String toString();
 //    public abstract boolean evaluate(JsonObject jsonInput);
@@ -30,7 +31,7 @@ public class ArithmeticNode extends BaseNode {
     boolean isAtomic = false;  // specifies if the Node represents a number or an arithmetic expression
     boolean isNumber = false;
     boolean isKeyword = false;
-    String keyword = "";
+    String keyword;
     float numberValue;
     String strValue;
 
@@ -41,10 +42,10 @@ public class ArithmeticNode extends BaseNode {
     public ArithmeticNode(String str) {
         super();
         // remove recursively outer brackets and trim spaces
-        this.rawExpression = str = strip(str);
+        this.rawExpression = strip(str);
 
         // extract the outer logic operator. First iterate through the expr
-        String outer_str = getOuterExpr(str);
+        String outer_str = getOuterExpr(this.rawExpression);
 
         if (outer_str.contains("-"))
             this.operation = "-";
@@ -95,12 +96,11 @@ public class ArithmeticNode extends BaseNode {
 
         // this node could be an inner node which gets two ArithmeticNodes as childs. Or a leaf node, that is either
         // a number or a keyword expression
-        if (!this.isAtomic && !this.isKeyword) {  // TODO substring the string with the operation found in the OUTER_STR
-            String expr1 = str.substring(0, str.indexOf(this.operation)).trim();
+        if (!this.isAtomic && !this.isKeyword) {
+            String expr1 = this.rawExpression.substring(0, this.rawExpression.indexOf(this.operation)).trim();
             this.child1 = new ArithmeticNode(expr1);
 
-            String expr2 = str.substring(
-                    str.indexOf(this.operation)+1).trim();
+            String expr2 = this.rawExpression.substring(this.rawExpression.indexOf(this.operation)+1).trim();
             this.child2 = new ArithmeticNode(expr2);
         }
 
@@ -124,6 +124,7 @@ public class ArithmeticNode extends BaseNode {
      * @return int the degree of the node
      */
     public double arithmeticEvaluate() {
+        // for testing expressions, it is useful to call evaluation without input
         JsonObject jsonInput = new JsonObject();
         return arithmeticEvaluate(jsonInput);
     }
@@ -132,8 +133,7 @@ public class ArithmeticNode extends BaseNode {
         if (this.isAtomic)
             return this.numberValue;
         if (this.isKeyword) {
-            double asDouble = jsonInput.get(this.arithmeticKeyword).getAsDouble();  // the keyword should be result
-            return asDouble;
+            return jsonInput.get(this.arithmeticKeyword).getAsDouble();  // the keyword should be result
         }
         // recursive case. The nodes subtree must be evaluated
         switch (this.operation) {
@@ -165,6 +165,4 @@ public class ArithmeticNode extends BaseNode {
         else
             return Math.max(this.child1.getDegree(), this.child2.getDegree()) + 1;
     }
-
-    public static Logger logger = LoggerFactory.getLogger(StreamAppEngine.class);
 }

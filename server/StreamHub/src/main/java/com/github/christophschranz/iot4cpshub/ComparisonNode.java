@@ -12,7 +12,6 @@ public class ComparisonNode extends BaseNode {
 //    // variables or BaseNode
 //    String rawExpression;
 //    int degree;
-//    boolean isLeaf;
 //    String operation;  // can be any form of operation: logical, comparison, or arithmetic.
 //    BaseNode child1;  // left term of an expression
 //    BaseNode child2;  // right term of an expression.
@@ -32,7 +31,6 @@ public class ComparisonNode extends BaseNode {
     boolean stringOperation;
     String left_expr;
     String right_expr;
-    double dblValue;
     boolean switchedKeySide;
 
     /**
@@ -42,11 +40,13 @@ public class ComparisonNode extends BaseNode {
     public ComparisonNode(String str) {
         super();
         // remove recursively outer brackets and trim spaces
-        this.rawExpression = str = strip(str);  // TODO substitute outer_str with class var
+        this.rawExpression = strip(str);
 
         // extract the outer logic operator. First iterate through the expr
-        String outer_str = getOuterExpr(str);
-        if (this.allowedKeys.stream().noneMatch(this.rawExpression::contains)) {
+        String outer_str = getOuterExpr(this.rawExpression);
+
+        // sanity check if the raw expression contains a keyword
+        if (safeFreeOfKeywords(this.rawExpression)) {
             BaseNode.logger.error("the expression does not contain a key for ['name', 'result' or 'time'], syntax error near '"
                     + this.rawExpression + "'.");
             System.exit(40);
@@ -75,11 +75,11 @@ public class ComparisonNode extends BaseNode {
         }
 
         // separate the expressions
-        left_expr = str.substring(0, str.indexOf(operator));
-        right_expr = str.substring(str.indexOf(operator) + operator.length());
+        left_expr = this.rawExpression.substring(0, this.rawExpression.indexOf(operator));
+        right_expr = this.rawExpression.substring(this.rawExpression.indexOf(operator) + operator.length());
 
         // check which side contains the the keyword, if the key is on the right, switch the sides
-        if (this.allowedKeys.stream().noneMatch(this.left_expr::contains)) {
+        if (safeFreeOfKeywords(this.left_expr)) {
             String helper = this.right_expr;
             this.right_expr = this.left_expr;
             this.left_expr = helper;
@@ -88,7 +88,8 @@ public class ComparisonNode extends BaseNode {
 
         // check whether the key can be evaluated as arithmetic operation for keyword = result, or as
         // string operation, e.g., for name = 'asdf' or time='2020-04-23'
-        if (this.left_expr.contains(this.arithmeticKeyword)) { //TODO here is a bug for result -5 > 124
+        // it the expression contains the arithmeticKeyword, then two children are created as ArithmeticNode
+        if (safeContainsKeyword(this.left_expr, this.arithmeticKeyword)) {
             // extract both children, convert the correct object. (the one must match 'name', 'result' or 'time'
             this.child1 = new ArithmeticNode(left_expr);
             this.child2 = new ArithmeticNode(right_expr);
@@ -103,7 +104,6 @@ public class ComparisonNode extends BaseNode {
                 System.exit(42);
             }
         }
-
         super.setDegree(this.getDegree());
     }
 
@@ -152,6 +152,47 @@ public class ComparisonNode extends BaseNode {
     public double arithmeticEvaluate(JsonObject jsonInput) {
         return 0;
     }
+    /**
+     * Secure return whether the expr contains one of multiple keywords that are given as global variable.
+     * It ignores keywords in quotes.
+     * @return boolean whether the expr contains a keyword or not
+     */
+    private boolean safeFreeOfKeywords(String expr) {
+//      if (this.allowedKeys.stream().noneMatch(this.rawExpression::contains)) {
+        for (String keyword: this.allowedKeys)
+            if (this.safeContainsKeyword(expr, keyword)) {
+                return false;
+            }
+        return true;
+    }
+    /**
+     * Secure return whether the expr contains a keyword or not, it ignores keywords in quotes
+     * @return boolean whether the expr contains a keyword or not
+     */
+    private boolean safeContainsKeyword(String expr, String keyword) {
+        // copy all chars that are not in quotes to new char array
+        int expr_i = 0;  // idx for str
+        int res_i = 0;  // idx for outerString generation
+        boolean isInQuotes = false;
+        char[] ca = new char[expr.length()];
+        while (expr_i<expr.length()) {
+            if (expr.charAt(expr_i) == '\'')
+                isInQuotes = !isInQuotes;
+            if (!isInQuotes) {
+                ca[res_i] = expr.charAt(expr_i);
+                res_i ++;
+            }
+            expr_i ++;
+        }
+        // correct invalid number of quotes
+        if (isInQuotes) {
+            logger.error("Query is invalid, odd number of single quotes: " + this.rawExpression);
+            System.exit(44);
+        }
+        // create new String from resulting char array and check if the arithmetic key word is in it
+        String outerString = String.valueOf(ca);
+        return outerString.contains(keyword);
+    }
 
     /**
      * Return the degree of the node, by recursively calling the children's getDegree till leafNode with degree 0.
@@ -163,12 +204,6 @@ public class ComparisonNode extends BaseNode {
             degree = this.child1.getDegree();
         if (this.child2 != null)
             degree = Math.max(degree, this.child2.getDegree());
-
         return degree;  // as this is the leaf if no ArithmeticNode exists
-//        if (this.isLeaf)
-//            return 0;
-//        else
-//            return Math.max(this.child1.getDegree(), this.child2.getDegree()) + 1;
     }
-
 }

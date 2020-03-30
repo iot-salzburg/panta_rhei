@@ -18,6 +18,11 @@ public class LogicalNode extends BaseNode {
 //    String operation;  // can be any form of operation: logical, comparison, or arithmetic.
 //    BaseNode child1;  // left term of an expression
 //    BaseNode child2;  // right term of an expression.
+//    ArrayList<String> allowedKeys = new ArrayList<String>() {{
+//        add("name");
+//        add("result");
+//        add("time");
+//    }};
 //    // methods:
 //    public String toString();
 //    public abstract boolean evaluate(JsonObject jsonInput);
@@ -37,10 +42,10 @@ public class LogicalNode extends BaseNode {
     public LogicalNode(String str) {
         super();
         // remove recursively outer brackets and trim spaces
-        this.rawExpression = str = strip(str);
+        this.rawExpression = strip(str);
         
         // extract the outer logic operator. First iterate through the expr
-        String outer_str = getOuterExpr(str);
+        String outer_str = getOuterExpr(this.rawExpression);
 
         this.expressionType = "proposition";
         // select the main operation of the abstract proposition, if there isn't any, it must be a logical variable
@@ -51,7 +56,6 @@ public class LogicalNode extends BaseNode {
         else if (outer_str.contains(" AND "))
             super.operation = "AND";
         else if (outer_str.contains("NOT ")) {  // left bound may not exist in unary operation
-//            super.operation = "XOR";  // operation is set to XOR such that child1 XOR TRUE equals NOT child1
             super.operation = this.expressionType = "negation";
         }
 
@@ -77,20 +81,22 @@ public class LogicalNode extends BaseNode {
         // create the child nodes that are LogicalNodes if they are not variables
         switch (this.expressionType) {
             case "proposition": {
-                String expr1 = str.substring(0, str.indexOf(" " + super.operation + " ")).trim();
+                String expr1 = this.rawExpression.substring(0,
+                        this.rawExpression.indexOf(" " + super.operation + " ")).trim();
                 this.child1 = new LogicalNode(expr1);
-                String expr2 = str.substring(str.indexOf(" " + super.operation + " ") + super.operation.length() + 2).trim();
+                String expr2 = this.rawExpression.substring(
+                        this.rawExpression.indexOf(" " + super.operation + " ") + super.operation.length() + 2).trim();
                 this.child2 = new LogicalNode(expr2);
                 break;
             }
             // "NOT" is an unary operation, where child2 is set to TRUE and the operation to XOR
             case "negation": {
-                String expr1 = str.substring(str.indexOf("NOT ") + "NOT ".length()).trim();
+                String expr1 = this.rawExpression.substring(this.rawExpression.indexOf("NOT ") + "NOT ".length()).trim();
                 this.child1 = new LogicalNode(expr1);
                 break;
             }
             case "comparision":
-                this.child1 = new ComparisonNode(str);
+                this.child1 = new ComparisonNode(this.rawExpression);
                 break;
         }
         // logical variables are evaluated directly

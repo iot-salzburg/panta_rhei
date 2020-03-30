@@ -14,7 +14,6 @@ import java.util.ArrayList;
 public abstract class BaseNode {
     String rawExpression;
     private int degree;
-    boolean isLeaf;
 
     String operation;  // can be any form of operation: logical, comparison, or arithmetic.
     BaseNode child1;  // left term of an expression
@@ -47,8 +46,8 @@ public abstract class BaseNode {
      * @return the node
      */
     public String toStringSingleLine(){
-        String ch1_expr = null;
-        String ch2_expr = null;
+        String ch1_expr;
+        String ch2_expr;
         if (this.child1 != null)
             ch1_expr = this.child1.toStringSingleLine();
         else

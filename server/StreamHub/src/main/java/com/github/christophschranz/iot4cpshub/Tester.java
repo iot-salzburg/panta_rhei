@@ -225,13 +225,20 @@ public class Tester {
                         System.out.println("Test 42 failed.");
 
                 expr =  "result - 5 < 10";
-                System.out.println(new LogicalNode(expr).evaluate(jsonInput));
                 if (!new LogicalNode(expr).evaluate(jsonInput))
                         System.out.println("Test 43 failed.");
-
                 expr =  "(result - 12.3)^2 = 0";
                 if (!new LogicalNode(expr).evaluate(jsonInput))
                         System.out.println("Test 44 failed.");
+
+                expr =  "'trickyname' = name";  // false
+                logNode = new LogicalNode(expr);
+                if (logNode.evaluate(jsonInput))
+                        System.out.println("Test 45 failed.");
+                expr =  "name = 'tricky_result_for this name' XOR result < 30 AND result > 4";
+                logNode = new LogicalNode(expr);
+                if (!logNode.evaluate(jsonInput))
+                        System.out.println("Test 46 failed.");
 
 
                 System.out.println("\n######## Testing the degree of the trees #########\n");
@@ -245,6 +252,11 @@ public class Tester {
 //                System.out.println(logNode.getDegree());
                 if (logNode.getDegree() != 4)
                         System.out.println("Test 52 failed.");
+
+                expr =  "name = 'tricky_result_for this name' XOR result < 30 AND result > 4";
+                if (new LogicalNode(expr).getDegree() != 3)
+                        System.out.println("Test 53 failed, -> correct: " + new LogicalNode(expr).getDegree());
+
 
 //                StreamQuery stream_parser = new StreamQuery(globalOptions);
 //                System.out.println(stream_parser);
