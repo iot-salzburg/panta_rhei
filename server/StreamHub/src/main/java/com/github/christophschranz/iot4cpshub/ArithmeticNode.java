@@ -6,28 +6,27 @@ import com.google.gson.JsonObject;
 /**
  * Class representing the ArithmeticNode of the stream Parser and is represented by an arithmetic operation and two
  * children that are ArithmeticNodes.
+ *     inherited variables and methods:
+ *     // variables or BaseNode
+ *     String rawExpression;
+ *     int degree;
+ *     String operation;  // can be any form of operation: logical, comparison, or arithmetic.
+ *     BaseNode child1;  // left term of an expression
+ *     BaseNode child2;  // right term of an expression.
+ *     ArrayList<String> allowedKeys = new ArrayList<String>() {{
+ *         add("name");
+ *         add("result");
+ *         add("time");
+ *     }};
+ *     // methods:
+ *     public String toString();
+ *     public abstract boolean evaluate(JsonObject jsonInput);
+ *     public abstract int getDegree();
+ *     public static String getOuterExpr(String str);
+ *     public static String strip(String str);
+ *     public static Logger logger = LoggerFactory.getLogger(StreamAppEngine.class);
  */
 public class ArithmeticNode extends BaseNode {
-//    inherited variables and methods:
-//    // variables or BaseNode
-//    String rawExpression;
-//    int degree;
-//    String operation;  // can be any form of operation: logical, comparison, or arithmetic.
-//    BaseNode child1;  // left term of an expression
-//    BaseNode child2;  // right term of an expression.
-//    ArrayList<String> allowedKeys = new ArrayList<String>() {{
-//        add("name");
-//        add("result");
-//        add("time");
-//    }};
-//    // methods:
-//    public String toString();
-//    public abstract boolean evaluate(JsonObject jsonInput);
-//    public abstract int getDegree();
-//    public static String getOuterExpr(String str);
-//    public static String strip(String str);
-//    public static Logger logger = LoggerFactory.getLogger(StreamAppEngine.class);
-
     boolean isAtomic = false;  // specifies if the Node represents a number or an arithmetic expression
     boolean isNumber = false;
     boolean isKeyword = false;
