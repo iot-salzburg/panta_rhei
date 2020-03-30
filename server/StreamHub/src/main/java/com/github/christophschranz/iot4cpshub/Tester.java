@@ -65,7 +65,7 @@ public class Tester {
                 if (!new LogicalNode(expr).evaluate(jsonInput))
                         System.out.println("Test 3 failed.");
 
-                expr =  "(name = 'Station_1.Air Temperature' OR result > 4)";
+                expr =  "(name = 'Station_1.Air Temperature' OR result > 4.3210)";
                 if (!new LogicalNode(expr).evaluate(jsonInput))
                         System.out.println("Test 4 failed.");
 
@@ -110,7 +110,7 @@ public class Tester {
 //                logNode = new LogicalNode(expr);
 //                System.out.println(logNode.evaluate(jsonInput));
 //
-//                expr =  "name = 'tricky_result_for this name' XORG result < 30"; // TODO sanity check to catch wrong key words
+//                expr =  "name = 'tricky_result_for this name' XORG result < 30"; // exit code 45
 //                logNode = new LogicalNode(expr);
 //                System.out.println(logNode.evaluate(jsonInput));
 //

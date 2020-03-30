@@ -44,6 +44,9 @@ public class ComparisonNode extends BaseNode {
         // extract the outer logic operator. First iterate through the expr
         String outer_str = getOuterExpr(this.rawExpression);
 
+        // do sanity check
+        sanityCheck(outer_str);
+
         // sanity check if the raw expression contains a keyword
         if (safeFreeOfKeywords(this.rawExpression)) {
             BaseNode.logger.error("the expression does not contain a key for ['name', 'result' or 'time'], syntax error near '"
@@ -193,6 +196,43 @@ public class ComparisonNode extends BaseNode {
         return outerString.contains(keyword);
     }
 
+    /**
+     * Does a sanity check of the comparision expression
+     * @return boolean whether the expr seems to be sane or not
+     */
+    private boolean sanityCheck(String expr) {
+        // remove all allowed Keywords
+        for (String keyword: this.allowedKeys)
+            expr = expr.replaceAll(keyword, "");
+
+        // remove all strings
+        int expr_i = 0;  // idx for str
+        int res_i = 0;  // idx for outerString generation
+        boolean isInQuotes = false;
+        char[] ca = new char[expr.length()];
+        while (expr_i<expr.length()) {
+            if (expr.charAt(expr_i) == '\'')
+                isInQuotes = !isInQuotes;
+            if (!isInQuotes) {
+                ca[res_i] = expr.charAt(expr_i);
+                res_i ++;
+            }
+            expr_i ++;
+        }
+        expr = String.valueOf(ca);
+        res_i = Math.min(res_i, expr.length());
+        expr = expr.substring(0, res_i);
+
+        expr = expr.replaceAll("[\\d.]","");  // remove all numbers
+        expr = expr.replaceAll(" ","");  // remove all spaces
+
+        if (expr.length() > 3) {
+            BaseNode.logger.error("The sanity check fails for expression '" + this.rawExpression + "'.");
+            System.exit(45);
+            return false;
+        }
+        return true;
+    }
     /**
      * Return the degree of the node, by recursively calling the children's getDegree till leafNode with degree 0.
      * @return int the degree of the node
