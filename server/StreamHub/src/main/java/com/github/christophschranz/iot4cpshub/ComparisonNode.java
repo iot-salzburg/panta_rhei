@@ -54,7 +54,7 @@ public class ComparisonNode extends BaseNode {
         }
 
         // extract the comparision operator else
-        String operator = " = ";
+        String operator;
         if (outer_str.contains(" = ")) {
             operator = " = ";
             this.operation = "==";
@@ -193,9 +193,8 @@ public class ComparisonNode extends BaseNode {
 
     /**
      * Does a sanity check of the comparision expression
-     * @return boolean whether the expr seems to be sane or not
      */
-    private boolean sanityCheck(String expr) throws StreamSQLException {
+    private void sanityCheck(String expr) throws StreamSQLException {
         // remove all allowed Keywords
         for (String keyword: this.allowedKeys)
             expr = expr.replaceAll(keyword, "");
@@ -223,7 +222,6 @@ public class ComparisonNode extends BaseNode {
 
         if (expr.length() > 3)
             throw new StreamSQLException("The sanity check fails for expression '" + this.rawExpression + "'.");
-        return true;
     }
     /**
      * Return the degree of the node, by recursively calling the children's getDegree till leafNode with degree 0.

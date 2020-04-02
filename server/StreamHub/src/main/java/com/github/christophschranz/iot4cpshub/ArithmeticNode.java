@@ -150,7 +150,6 @@ public class ArithmeticNode extends BaseNode {
         }
         throw new StreamSQLException("Exception for operation " + this.operation + " in Node: " + this.toString());
     }
-
     /**
      * Return the degree of the node, by recursively calling the children's getDegree till leafNode with degree 0.
      * @return int the degree of the node
