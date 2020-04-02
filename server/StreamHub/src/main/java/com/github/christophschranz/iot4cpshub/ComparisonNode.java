@@ -89,7 +89,7 @@ public class ComparisonNode extends BaseNode {
         // check whether the key can be evaluated as arithmetic operation for keyword = result, or as
         // string operation, e.g., for name = 'asdf' or time='2020-04-23'
         // it the expression contains the arithmeticKeyword, then two children are created as ArithmeticNode
-        if (safeContainsKeyword(this.left_expr, this.arithmeticKeyword)) {
+        if (StreamQuery.safeContainsKeyword(this.left_expr, this.arithmeticKeyword)) {
             // extract both children, convert the correct object. (the one must match 'name', 'result' or 'time'
             this.child1 = new ArithmeticNode(left_expr);
             this.child2 = new ArithmeticNode(right_expr);
@@ -155,42 +155,14 @@ public class ComparisonNode extends BaseNode {
      * It ignores keywords in quotes.
      * @return boolean whether the expr contains a keyword or not
      */
-    private boolean safeFreeOfKeywords(String expr) throws StreamSQLException {
+    public boolean safeFreeOfKeywords(String expr) throws StreamSQLException {
 //      if (this.allowedKeys.stream().noneMatch(this.rawExpression::contains)) {
         for (String keyword: this.allowedKeys)
-            if (this.safeContainsKeyword(expr, keyword)) {
+            if (StreamQuery.safeContainsKeyword(expr, keyword)) {
                 return false;
             }
         return true;
     }
-    /**
-     * Secure return whether the expr contains a keyword or not, it ignores keywords in quotes
-     * @return boolean whether the expr contains a keyword or not
-     */
-    private boolean safeContainsKeyword(String expr, String keyword) throws StreamSQLException {
-        // copy all chars that are not in quotes to new char array
-        int expr_i = 0;  // idx for str
-        int res_i = 0;  // idx for outerString generation
-        boolean isInQuotes = false;
-        char[] ca = new char[expr.length()];
-        while (expr_i<expr.length()) {
-            if (expr.charAt(expr_i) == '\'')
-                isInQuotes = !isInQuotes;
-            if (!isInQuotes) {
-                ca[res_i] = expr.charAt(expr_i);
-                res_i ++;
-            }
-            expr_i ++;
-        }
-        // correct invalid number of quotes
-        if (isInQuotes)
-            throw new  StreamSQLException("Query is invalid, odd number of single quotes: " + this.rawExpression);
-
-        // create new String from resulting char array and check if the arithmetic key word is in it
-        String outerString = String.valueOf(ca);
-        return outerString.contains(keyword);
-    }
-
     /**
      * Does a sanity check of the comparision expression
      */

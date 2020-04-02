@@ -27,7 +27,7 @@ java -jar target/streamApp-1.1-jar-with-dependencies.jar --STREAM_NAME test-jar 
 */
 public class StreamAppEngine {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws StreamSQLException {
         final Logger logger = LoggerFactory.getLogger(StreamAppEngine.class);
 
         /* *************************   fetching the parameters and check them    **************************/
@@ -76,17 +76,10 @@ public class StreamAppEngine {
         }
 
 
-        /* *************************        build the Stream Parser class         **************************/
-        String expr =  globalOptions.getProperty("FILTER_LOGIC").substring(
-                globalOptions.getProperty("FILTER_LOGIC").indexOf(" WHERE ") + 7).replace(";", "");
+        /* *************************        create the Stream Query class         **************************/
 
-        LogicalNode queryParser = null;
-        try {
-            queryParser = new LogicalNode(expr);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        logger.info(queryParser.toString());
+        StreamQuery streamQuery = new StreamQuery(globalOptions);
+        logger.info(streamQuery.toString());
 
 
         /* *************************        load json from SensorThings         **************************/
@@ -123,8 +116,8 @@ public class StreamAppEngine {
         // input topic, application logic
         KStream<String, String> inputTopic = streamsBuilder.stream(inputTopicName);
 
-        LogicalNode finalQueryParser = queryParser;
-        KStream<String, String> filteredStream = inputTopic.filter((k, value) -> check_condition(finalQueryParser, value));
+
+        KStream<String, String> filteredStream = inputTopic.filter((k, value) -> streamQuery.evaluate(value));
 //        KStream<String, String> filteredStream = inputTopic.filter((k, value) -> true);
 
         filteredStream.to(targetTopic);
@@ -136,6 +129,8 @@ public class StreamAppEngine {
 
         // start our streams application
         kafkaStreams.start();
+
+
     }
 
     /**

@@ -50,7 +50,6 @@ public class Tester {
 
                 System.out.println("#######################################################\n");
 
-                Node node;
                 LogicalNode logNode;
                 ComparisonNode comNode;
                 ArithmeticNode ariNode;
@@ -367,14 +366,42 @@ public class Tester {
                                 e.printStackTrace();
                 }
 
-                System.out.println("\n######## Tests were completed successfully. #########\n");
+                System.out.println("\n######## Node were completed successfully. #########\n");
+                System.out.println("#######################################################");
+                System.out.println("\n######## Testing the StreamQuery class. #########\n");
 
+                StreamQuery streamQuery;
 
-//                StreamQuery stream_parser = new StreamQuery(globalOptions);
-//                System.out.println(stream_parser);
-//                System.out.println(stream_parser.evaluate(jsonInput));
+                globalOptions.setProperty("SOURCE_SYSTEM", "is.iceland.iot4cps-wp5-WeatherService.Stations");
+                globalOptions.setProperty("TARGET_SYSTEM", "cz.icecars.iot4cps-wp5-CarFleet.Car1");
+                globalOptions.setProperty("FILTER_LOGIC", "SELECT * FROM * WHERE " +
+                        "(name = 'Station_1.Air Temperature' OR " +
+                        "name = 'Station_2.Air Temperature') AND result < 30;");
+                try {
+                        streamQuery = new StreamQuery(globalOptions);
+                        System.out.println(streamQuery);
+                        System.out.println(streamQuery.evaluate(jsonInput));
+                } catch (StreamSQLException e) {
+                        e.printStackTrace();
+                }
 
+                globalOptions.setProperty("FILTER_LOGIC", "SELECT * FROM is.iceland.iot4cps-wp5-WeatherService.Stations AS s" +
+                        "WHERE (s.name = 'Station_1.Air Temperature' OR s.name = 'Station_2.Air Temperature') AND result < 30;");
+//                globalOptions.setProperty("FILTER_LOGIC", "SELECT * FROM is.iceland.iot4cps-wp5-WeatherService.Stations AS st,is.iceland.iot4cps-wp5-WeatherService.Services AS se" +
+//                        "WHERE (st.name = 'Station_1.Air Temperature' OR se.name = 'Service_3.temp_in_1_hour') AND result < 30;");
+                // TODO augment here, until the tests hold
+                /* how to query here? What is the instance, and what the table??
+                 */
+                try {
+                streamQuery = new StreamQuery(globalOptions);
+                System.out.println(streamQuery);
+                        System.out.println(streamQuery.conditionTree.child1);
+                        System.out.println(streamQuery.conditionTree.child1.child1.child1);
+                System.out.println(streamQuery.evaluate(jsonInput));
+        } catch (StreamSQLException e) {
+                e.printStackTrace();
         }
+}
 
         public static Properties globalOptions = new Properties();
 
