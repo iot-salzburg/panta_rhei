@@ -63,13 +63,13 @@ public abstract class BaseNode {
      * This works by traversing the Nodes recursively to the comparision leaf nodes.
      * @return boolean expression
      */
-    public abstract boolean evaluate(JsonObject jsonInput);
+    public abstract boolean evaluate(JsonObject jsonInput) throws StreamSQLException;
 
     /**
      * Return the result of an arithmetic expression, by recursively calling this function until the leaf nodes yield a number.
      * @return int the degree of the node
      */
-    public abstract double arithmeticEvaluate(JsonObject jsonInput);
+    public abstract double arithmeticEvaluate(JsonObject jsonInput) throws StreamSQLException;
     /**
      * Return the degree of the node, by recursively calling the children's getDegree till leafNode with degree 0.
      * @return int the degree of the node
@@ -85,7 +85,7 @@ public abstract class BaseNode {
      * Remove brackets if no outer statement was found.
      * @return String of the outer expression
      */
-    public static String getOuterExpr(String str) {
+    public static String getOuterExpr(String str) throws StreamSQLException {
         str = str.trim();
         int i = 0;  // idx for str
         int idx = 0;  // idx for outerString generation
@@ -109,8 +109,7 @@ public abstract class BaseNode {
                 return getOuterExpr(str.substring(1));
             if (depth >= -1 && str.charAt(str.length()-1) == ')')  // trim ')' for split
                 return getOuterExpr(str.substring(0, str.length()-1));
-            logger.error("Query is invalid, parentheses are not closing: " + str);
-            System.exit(15);
+            throw new StreamSQLException("Query is invalid, parentheses are not closing: '" + str + "'.");
 
         }
         if (idx <= 0) {
@@ -119,8 +118,7 @@ public abstract class BaseNode {
                 logger.debug("case idx <= idx, " + str);
                 return getOuterExpr(str.substring(1, str.length()-1));
             }
-            logger.error("Query is invalid: " + str);
-            System.exit(16);
+            throw new StreamSQLException("Query is invalid: '" + str + "'.");
         }
         String outerString = String.valueOf(ca);
         idx = Math.min(idx, str.length()-1);

@@ -38,7 +38,7 @@ public class LogicalNode extends BaseNode {
      * Initializes a new LogicalNode. Take a string expression and build the operator and children.
      * @param str String expression that describes an comparison operation
      */
-    public LogicalNode(String str) {
+    public LogicalNode(String str) throws StreamSQLException {
         super();
         // remove recursively outer brackets and trim spaces
         this.rawExpression = strip(str);
@@ -116,7 +116,7 @@ public class LogicalNode extends BaseNode {
      * @return boolean expression
      */
 
-    public boolean evaluate(JsonObject jsonInput) {
+    public boolean evaluate(JsonObject jsonInput) throws StreamSQLException {
         logger.info("Check the logical expression '" + this.rawExpression + "'.");
         switch (this.expressionType) {
             case "proposition":
@@ -134,10 +134,8 @@ public class LogicalNode extends BaseNode {
             case "variable":
                 return this.logicalValue;  // logicalValue is either true or false
         }
-        logger.error("Exception for expressionType " + this.expressionType + " in Node: " + this.toString());
-        BaseNode.logger.error(this.child1.child1.toString());
-        System.exit(33);
-        return false;
+        throw new StreamSQLException("Exception for expressionType " + this.expressionType +
+                " in Node: " + this.toString());
     }
 
     @Override

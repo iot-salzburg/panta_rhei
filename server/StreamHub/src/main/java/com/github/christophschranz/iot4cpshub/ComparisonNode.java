@@ -36,7 +36,7 @@ public class ComparisonNode extends BaseNode {
      * Initializes a new ComparisionNode. Take a string expression and build the operator and children
      * @param str String expression that describes an comparison operation
      */
-    public ComparisonNode(String str) {
+    public ComparisonNode(String str) throws StreamSQLException {
         super();
         // remove recursively outer brackets and trim spaces
         this.rawExpression = strip(str);
@@ -49,9 +49,8 @@ public class ComparisonNode extends BaseNode {
 
         // sanity check if the raw expression contains a keyword
         if (safeFreeOfKeywords(this.rawExpression)) {
-            BaseNode.logger.error("the expression does not contain a key for ['name', 'result' or 'time'], syntax error near '"
-                    + this.rawExpression + "'.");
-            System.exit(40);
+            throw new StreamSQLException("The expression does not contain a key for ['name', 'result' or 'time'], " +
+                    "syntax error near '" + this.rawExpression + "'.");
         }
 
         // extract the comparision operator else
@@ -72,8 +71,7 @@ public class ComparisonNode extends BaseNode {
             this.operation = "<>";
         }
         else {
-            BaseNode.logger.error("couldn't find operator for string expr. " + this.rawExpression);
-            System.exit(41);
+            throw new StreamSQLException("Couldn't find operator for string expression '" + this.rawExpression + "'.");
         }
 
         // separate the expressions
@@ -102,8 +100,8 @@ public class ComparisonNode extends BaseNode {
                 this.right_expr = this.right_expr.replaceAll("'","");
             }
             else {
-                BaseNode.logger.error("Unexpected situation. There might be a syntax error in '" + this.rawExpression + "'.");
-                System.exit(42);
+                throw new  StreamSQLException("Unexpected situation. There might be a syntax error in '" +
+                        this.rawExpression + "'.");
             }
         }
         super.setDegree(this.getDegree());
@@ -121,7 +119,7 @@ public class ComparisonNode extends BaseNode {
      * This works by traversing the Nodes recursively to the comparision leaf nodes.
      * @return boolean expression
      */
-    public boolean evaluate(JsonObject jsonInput) {
+    public boolean evaluate(JsonObject jsonInput) throws StreamSQLException {
         BaseNode.logger.info("Checking the comparison '" + this.rawExpression + "'.");
 
         if (stringOperation) {
@@ -145,9 +143,7 @@ public class ComparisonNode extends BaseNode {
                 return this.switchedKeySide ^ this.child1.arithmeticEvaluate(jsonInput) > this.child2.arithmeticEvaluate(jsonInput);
         }
 
-        BaseNode.logger.error("Exception in ComparisonNode: " + this.toString());
-        System.exit(43);
-        return false;
+        throw new  StreamSQLException("Exception in ComparisonNode: " + this.toString());
     }
 
     @Override
@@ -159,7 +155,7 @@ public class ComparisonNode extends BaseNode {
      * It ignores keywords in quotes.
      * @return boolean whether the expr contains a keyword or not
      */
-    private boolean safeFreeOfKeywords(String expr) {
+    private boolean safeFreeOfKeywords(String expr) throws StreamSQLException {
 //      if (this.allowedKeys.stream().noneMatch(this.rawExpression::contains)) {
         for (String keyword: this.allowedKeys)
             if (this.safeContainsKeyword(expr, keyword)) {
@@ -171,7 +167,7 @@ public class ComparisonNode extends BaseNode {
      * Secure return whether the expr contains a keyword or not, it ignores keywords in quotes
      * @return boolean whether the expr contains a keyword or not
      */
-    private boolean safeContainsKeyword(String expr, String keyword) {
+    private boolean safeContainsKeyword(String expr, String keyword) throws StreamSQLException {
         // copy all chars that are not in quotes to new char array
         int expr_i = 0;  // idx for str
         int res_i = 0;  // idx for outerString generation
@@ -187,10 +183,9 @@ public class ComparisonNode extends BaseNode {
             expr_i ++;
         }
         // correct invalid number of quotes
-        if (isInQuotes) {
-            logger.error("Query is invalid, odd number of single quotes: " + this.rawExpression);
-            System.exit(44);
-        }
+        if (isInQuotes)
+            throw new  StreamSQLException("Query is invalid, odd number of single quotes: " + this.rawExpression);
+
         // create new String from resulting char array and check if the arithmetic key word is in it
         String outerString = String.valueOf(ca);
         return outerString.contains(keyword);
@@ -200,7 +195,7 @@ public class ComparisonNode extends BaseNode {
      * Does a sanity check of the comparision expression
      * @return boolean whether the expr seems to be sane or not
      */
-    private boolean sanityCheck(String expr) {
+    private boolean sanityCheck(String expr) throws StreamSQLException {
         // remove all allowed Keywords
         for (String keyword: this.allowedKeys)
             expr = expr.replaceAll(keyword, "");
@@ -226,11 +221,8 @@ public class ComparisonNode extends BaseNode {
         expr = expr.replaceAll("[\\d.]","");  // remove all numbers
         expr = expr.replaceAll(" ","");  // remove all spaces
 
-        if (expr.length() > 3) {
-            BaseNode.logger.error("The sanity check fails for expression '" + this.rawExpression + "'.");
-            System.exit(45);
-            return false;
-        }
+        if (expr.length() > 3)
+            throw new StreamSQLException("The sanity check fails for expression '" + this.rawExpression + "'.");
         return true;
     }
     /**

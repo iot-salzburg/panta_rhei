@@ -1,6 +1,7 @@
 package com.github.christophschranz.iot4cpshub;
 
 import com.google.gson.JsonObject;
+import org.apache.kafka.common.protocol.types.Field;
 
 
 /**
@@ -38,7 +39,7 @@ public class ArithmeticNode extends BaseNode {
      * Initializes a new Node. Take a string expression and build the operator and children
      * @param str String expression that describes an arithmetic operation or number
      */
-    public ArithmeticNode(String str) {
+    public ArithmeticNode(String str) throws StreamSQLException {
         super();
         // remove recursively outer brackets and trim spaces
         this.rawExpression = strip(str);
@@ -69,9 +70,8 @@ public class ArithmeticNode extends BaseNode {
                 }
                 // exit in case that should not happen
                 if (!this.isKeyword) {
-                    BaseNode.logger.error("the expression is not valid for keys ['name', 'result' or 'time'], syntax error near '"
-                            + this.rawExpression + "'.");
-                    System.exit(51);
+                    throw new StreamSQLException("the expression is not valid for keys ['name', 'result' or 'time']," +
+                            " syntax error near '" + this.rawExpression + "'.");
                 }
             }
             // the expression must be a number or string and is tried to be parsed
@@ -86,8 +86,7 @@ public class ArithmeticNode extends BaseNode {
                         this.numberValue = Float.parseFloat(rawExpression);
                         this.isNumber = true;
                     } catch (NumberFormatException e) {
-                        BaseNode.logger.error("Couldn't parse arithmetic expression '" + rawExpression + "'.");
-                        System.exit(52);
+                        throw new StreamSQLException("Couldn't parse arithmetic expression '" + rawExpression + "'.");
                     }
                 }
             }
@@ -122,12 +121,12 @@ public class ArithmeticNode extends BaseNode {
      * Return the result of an arithmetic expression, by recursively calling this function until the leaf nodes yield a number.
      * @return int the degree of the node
      */
-    public double arithmeticEvaluate() {
+    public double arithmeticEvaluate() throws StreamSQLException {
         // for testing expressions, it is useful to call evaluation without input
         JsonObject jsonInput = new JsonObject();
         return arithmeticEvaluate(jsonInput);
     }
-    public double arithmeticEvaluate(JsonObject jsonInput) {
+    public double arithmeticEvaluate(JsonObject jsonInput) throws StreamSQLException {
         // base case. The Node represents a number
         if (this.isAtomic)
             return this.numberValue;
@@ -149,9 +148,7 @@ public class ArithmeticNode extends BaseNode {
             case "%":
                 return this.child1.arithmeticEvaluate(jsonInput) % this.child2.arithmeticEvaluate(jsonInput);
         }
-        logger.error("Exception for operation " + this.operation + " in Node: " + this.toString());
-        System.exit(53);
-        return this.numberValue;
+        throw new StreamSQLException("Exception for operation " + this.operation + " in Node: " + this.toString());
     }
 
     /**

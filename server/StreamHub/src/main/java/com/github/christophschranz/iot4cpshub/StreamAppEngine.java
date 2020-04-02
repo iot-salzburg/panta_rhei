@@ -12,6 +12,7 @@ import org.apache.kafka.streams.kstream.KStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.rmi.runtime.Log;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -79,7 +80,12 @@ public class StreamAppEngine {
         String expr =  globalOptions.getProperty("FILTER_LOGIC").substring(
                 globalOptions.getProperty("FILTER_LOGIC").indexOf(" WHERE ") + 7).replace(";", "");
 
-        Node queryParser = new Node(expr);
+        LogicalNode queryParser = null;
+        try {
+            queryParser = new LogicalNode(expr);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         logger.info(queryParser.toString());
 
 
@@ -117,7 +123,8 @@ public class StreamAppEngine {
         // input topic, application logic
         KStream<String, String> inputTopic = streamsBuilder.stream(inputTopicName);
 
-        KStream<String, String> filteredStream = inputTopic.filter((k, value) -> check_condition(queryParser, value));
+        LogicalNode finalQueryParser = queryParser;
+        KStream<String, String> filteredStream = inputTopic.filter((k, value) -> check_condition(finalQueryParser, value));
 //        KStream<String, String> filteredStream = inputTopic.filter((k, value) -> true);
 
         filteredStream.to(targetTopic);
@@ -136,7 +143,7 @@ public class StreamAppEngine {
      * if the msg's quantity name can't be found and check a second time.
      * @return boolean whether the msg holds the conditions of the query or not
      */
-    public static boolean check_condition(Node queryParser, String inputJson) {
+    public static boolean check_condition(LogicalNode queryParser, String inputJson) {
         return check_condition(queryParser, inputJson, false);
     }
 
@@ -145,7 +152,7 @@ public class StreamAppEngine {
      * if the msg's quantity name can't be found and check a second time. Parameter second_trial specifies this trial.
      * @return boolean whether the msg holds the conditions of the query or not
      */
-    public static boolean check_condition(Node queryParser, String inputJson, boolean second_trial) {
+    public static boolean check_condition(LogicalNode queryParser, String inputJson, boolean second_trial) {
         // json library
         String iot_id = "-1";
         try {
@@ -175,7 +182,10 @@ public class StreamAppEngine {
                 e.printStackTrace();
                 return false;
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+        return false;
     }
 
     /**
