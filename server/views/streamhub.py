@@ -78,7 +78,7 @@ def show_stream(system_uuid, stream_name):
 
     # Check if the stream app is running
     # status is one of ["idle", "starting", "running", "stopping", "idle"]
-    # real_status is one of ["idle", "starting", "running", "failing", "crashed", "stopping", "idle"]
+    # real_status is one of ["init", "starting", "running", "failing", "crashed", "stopping", "idle"]
     status = payload["status"]
     app_stats = None
     app.logger.debug(f"SOLL status for stream app '{fab_streams.build_name(system_uuid, stream_name)}' is '{status}'")
@@ -86,6 +86,10 @@ def show_stream(system_uuid, stream_name):
         pass  # skip init step as there is nothing to do
     elif status in ["starting", "running"]:
         app_stats = fab_streams.local_stats(system_uuid=system_uuid, stream_name=stream_name)
+        if app_stats is None:
+            status = "init"
+            set_status_to(system_uuid, stream_name, "init")
+            flash("The stream has to be initialized.", "info")
         if app_stats.get("Running") != "true":  # The stream app has been crashed.
             status = "crashed"
         elif app_stats.get("Restarting") == "true":  # The stream app has been restarted caused by errors
