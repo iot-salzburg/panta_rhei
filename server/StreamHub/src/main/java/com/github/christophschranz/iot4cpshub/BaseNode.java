@@ -138,6 +138,5 @@ public abstract class BaseNode {
         return str;
     }
 
-
-    public static Logger logger = LoggerFactory.getLogger(StreamAppEngine.class);
+    public static Logger logger = LoggerFactory.getLogger(BaseNode.class);
 }

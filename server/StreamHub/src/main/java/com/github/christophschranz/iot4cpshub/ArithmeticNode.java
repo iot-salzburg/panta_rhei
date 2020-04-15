@@ -2,6 +2,8 @@ package com.github.christophschranz.iot4cpshub;
 
 import com.google.gson.JsonObject;
 import org.apache.kafka.common.protocol.types.Field;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -160,4 +162,6 @@ public class ArithmeticNode extends BaseNode {
         else
             return Math.max(this.child1.getDegree(), this.child2.getDegree()) + 1;
     }
+
+    public static Logger logger = LoggerFactory.getLogger(ArithmeticNode.class);
 }

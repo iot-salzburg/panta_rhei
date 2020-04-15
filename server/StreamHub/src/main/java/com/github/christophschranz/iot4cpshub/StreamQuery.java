@@ -67,6 +67,8 @@ public class StreamQuery {
 
         // build the conditional expression via a node tree
         this.conditionTree = new LogicalNode(condition);
+
+        logger.info(this.toString());
     }
 
     /** toString-method
@@ -84,14 +86,11 @@ public class StreamQuery {
                 + "\n\tCondition Node: \t" + this.condition;
     }
     /**
-     * Return a boolean expression whether the jsonInput data point is evaluated by the expression as true or false.
+     * Return a boolean value whether the jsonInput data point is evaluated by the expression as true or false.
      * This works recursively by traversing the Nodes of the conditionTree down to the leaf nodes.
+     * The jsonInput must be augmented and therefore contain any value required to validate it.
      * @return boolean expression
      */
-
-    public boolean evaluate(String input) {
-        return evaluate(jsonParser.parse(input).getAsJsonObject());
-    }
     public boolean evaluate(JsonObject jsonInput) {
         if (this.condition.equals("TRUE"))  // return true directly as it is faster
             return true;
@@ -124,18 +123,15 @@ public class StreamQuery {
         }
         // correct invalid number of quotes
         if (isInQuotes)
-            throw new  StreamSQLException("Query is invalid, odd number of single quotes: " + expr);
+            throw new StreamSQLException("Query is invalid, odd number of single quotes: " + expr);
 
         // create new String from resulting char array and check if the arithmetic key word is in it
         String outerString = String.valueOf(ca);
         return outerString.contains(keyword);
     }
+
     /**
-     * Property object for the stream app config
+     * create required class instances
      */
-    public static Properties stream_config = new Properties();
-
-    public static JsonParser jsonParser = new JsonParser();
-
-    public static Logger logger = LoggerFactory.getLogger(StreamAppEngine.class);
+    public static Logger logger = LoggerFactory.getLogger(StreamQuery.class);
 }

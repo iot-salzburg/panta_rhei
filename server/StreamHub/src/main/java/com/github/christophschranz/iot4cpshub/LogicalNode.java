@@ -1,6 +1,8 @@
 package com.github.christophschranz.iot4cpshub;
 
 import com.google.gson.JsonObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -115,7 +117,6 @@ public class LogicalNode extends BaseNode {
      * This works by traversing the Nodes recursively to the comparision leaf nodes.
      * @return boolean expression
      */
-
     public boolean evaluate(JsonObject jsonInput) throws StreamSQLException {
         logger.info("Check the logical expression '" + this.rawExpression + "'.");
         switch (this.expressionType) {
@@ -158,4 +159,6 @@ public class LogicalNode extends BaseNode {
         }
         return 0;
     }
+
+    public static Logger logger = LoggerFactory.getLogger(LogicalNode.class);
 }

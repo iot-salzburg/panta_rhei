@@ -1,9 +1,6 @@
 package com.github.christophschranz.iot4cpshub;
 
 import com.google.gson.JsonObject;
-
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Properties;
 
 public class Tester {
@@ -12,8 +9,8 @@ public class Tester {
                 globalOptions.setProperty("STREAM_NAME", "test-stream");
                 globalOptions.setProperty("SOURCE_SYSTEM", "is.iceland.iot4cps-wp5-WeatherService.Stations");
                 globalOptions.setProperty("TARGET_SYSTEM", "cz.icecars.iot4cps-wp5-CarFleet.Car1");
-                globalOptions.setProperty("KAFKA_BOOTSTRAP_SERVERS", "192.168.48.179:9092");
-                globalOptions.setProperty("GOST_SERVER", "192.168.48.179:8082");
+                globalOptions.setProperty("KAFKA_BOOTSTRAP_SERVERS", "127.0.0.1:9092");
+                globalOptions.setProperty("GOST_SERVER", "127.0.0.1:8082");
                 globalOptions.setProperty("FILTER_LOGIC",
                         "SELECT * FROM * WHERE (name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_1.Air Temperature' OR name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_2.Air Temperature') AND result < 30;");
 
@@ -371,6 +368,16 @@ public class Tester {
                 System.out.println("\n######## Testing the StreamQuery class. #########\n");
 
                 StreamQuery streamQuery;
+                Semantics semantics;
+
+                jsonInput = new JsonObject();
+                JsonObject ds = new JsonObject();
+                ds.addProperty("@iot.id", "31");
+                jsonInput.add("Datastream", ds);
+                jsonInput.addProperty("result", 12.3);
+                jsonInput.addProperty("phenomenonTime", "2020-02-24T11:26:02");
+                jsonInput.addProperty("time", "2020-02-24T11:26:02");  // adding extra time key
+//                System.out.println(jsonInput.get("Datastream").getAsJsonObject().get("@iot.id").getAsString());
 
                 globalOptions.setProperty("SOURCE_SYSTEM", "is.iceland.iot4cps-wp5-WeatherService.Stations");
                 globalOptions.setProperty("TARGET_SYSTEM", "cz.icecars.iot4cps-wp5-CarFleet.Car1");
@@ -379,29 +386,31 @@ public class Tester {
                         "name = 'Station_2.Air Temperature') AND result < 30;");
                 try {
                         streamQuery = new StreamQuery(globalOptions);
-                        System.out.println(streamQuery);
-                        System.out.println(streamQuery.evaluate(jsonInput));
-                } catch (StreamSQLException e) {
+                        semantics = new Semantics(globalOptions, "SensorThings");
+
+                        System.out.println(semantics.augmentJsonInput(jsonInput));
+                        System.out.println(streamQuery.evaluate(semantics.augmentJsonInput(jsonInput)));
+                } catch (Exception e) {
                         e.printStackTrace();
                 }
 
-                globalOptions.setProperty("FILTER_LOGIC", "SELECT * FROM is.iceland.iot4cps-wp5-WeatherService.Stations AS s" +
-                        "WHERE (s.name = 'Station_1.Air Temperature' OR s.name = 'Station_2.Air Temperature') AND result < 30;");
+//                globalOptions.setProperty("FILTER_LOGIC", "SELECT * FROM is.iceland.iot4cps-wp5-WeatherService.Stations AS s" +
+//                        "WHERE (s.name = 'Station_1.Air Temperature' OR s.name = 'Station_2.Air Temperature') AND result < 30;");
 //                globalOptions.setProperty("FILTER_LOGIC", "SELECT * FROM is.iceland.iot4cps-wp5-WeatherService.Stations AS st,is.iceland.iot4cps-wp5-WeatherService.Services AS se" +
 //                        "WHERE (st.name = 'Station_1.Air Temperature' OR se.name = 'Service_3.temp_in_1_hour') AND result < 30;");
                 // TODO augment here, until the tests hold
                 /* how to query here? What is the instance, and what the table??
                  */
-                try {
-                streamQuery = new StreamQuery(globalOptions);
-                System.out.println(streamQuery);
-                        System.out.println(streamQuery.conditionTree.child1);
-                        System.out.println(streamQuery.conditionTree.child1.child1.child1);
-                System.out.println(streamQuery.evaluate(jsonInput));
-        } catch (StreamSQLException e) {
-                e.printStackTrace();
+//                try {
+//                        streamQuery = new StreamQuery(globalOptions);
+//                        System.out.println(streamQuery);
+//                        System.out.println(streamQuery.conditionTree.child1);
+//                        System.out.println(streamQuery.conditionTree.child1.child1.child1);
+//                        System.out.println(streamQuery.evaluate(jsonInput));
+//                } catch (StreamSQLException e) {
+//                        e.printStackTrace();
+//                }
         }
-}
 
         public static Properties globalOptions = new Properties();
 

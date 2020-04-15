@@ -1,6 +1,8 @@
 package com.github.christophschranz.iot4cpshub;
 
 import com.google.gson.JsonObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -120,7 +122,7 @@ public class ComparisonNode extends BaseNode {
      * @return boolean expression
      */
     public boolean evaluate(JsonObject jsonInput) throws StreamSQLException {
-        BaseNode.logger.info("Checking the comparison '" + this.rawExpression + "'.");
+        logger.info("Checking the comparison '" + this.rawExpression + "'.");
 
         if (stringOperation) {
             String dataValue = jsonInput.get(this.left_expr).getAsString();
@@ -207,4 +209,6 @@ public class ComparisonNode extends BaseNode {
             degree = Math.max(degree, this.child2.getDegree());
         return degree;  // as this is the leaf if no ArithmeticNode exists
     }
+
+    public static Logger logger = LoggerFactory.getLogger(ComparisonNode.class);
 }
