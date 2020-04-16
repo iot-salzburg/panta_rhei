@@ -365,14 +365,14 @@ public class Tester {
 
                 System.out.println("\n######## Node were completed successfully. #########\n");
                 System.out.println("#######################################################");
-                System.out.println("\n######## Testing the StreamQuery class. #########\n");
+                System.out.println("\n######## StreamQuery and Semantics class. #########\n");
 
                 StreamQuery streamQuery;
                 Semantics semantics;
 
                 jsonInput = new JsonObject();
                 JsonObject ds = new JsonObject();
-                ds.addProperty("@iot.id", "31");
+                ds.addProperty("@iot.id", "1");
                 jsonInput.add("Datastream", ds);
                 jsonInput.addProperty("result", 12.3);
                 jsonInput.addProperty("phenomenonTime", "2020-02-24T11:26:02");
@@ -398,7 +398,6 @@ public class Tester {
 //                        "WHERE (s.name = 'Station_1.Air Temperature' OR s.name = 'Station_2.Air Temperature') AND result < 30;");
 //                globalOptions.setProperty("FILTER_LOGIC", "SELECT * FROM is.iceland.iot4cps-wp5-WeatherService.Stations AS st,is.iceland.iot4cps-wp5-WeatherService.Services AS se" +
 //                        "WHERE (st.name = 'Station_1.Air Temperature' OR se.name = 'Service_3.temp_in_1_hour') AND result < 30;");
-                // TODO augment here, until the tests hold
                 /* how to query here? What is the instance, and what the table??
                  */
 //                try {
@@ -412,6 +411,8 @@ public class Tester {
 //                }
         }
 
+        /**
+         * create required class instances
+         */
         public static Properties globalOptions = new Properties();
-
 }

@@ -76,14 +76,14 @@ public class StreamQuery {
      */
     public String toString(){
         return "StreamQuery Object " + getClass()
-                + "\n\tStream name: \t\t" + this.stream_name
-                + "\n\tSource system: \t\t" + this.source_system
-                + "\n\tTarget system: \t\t" + this.target_system
-                + "\n\tKafka servers: \t\t" + this.kafka_bootstrap_servers
-                + "\n\tGOST server: \t\t" + this.gost_server
+                + "\n\tStream name:     \t" + this.stream_name
+                + "\n\tSource system:   \t" + this.source_system
+                + "\n\tTarget system:   \t" + this.target_system
+                + "\n\tKafka servers:   \t" + this.kafka_bootstrap_servers
+                + "\n\tGOST server:     \t" + this.gost_server
                 + "\n\tProjection List: \t" + this.projection_list
-                + "\n\tCPS List: \t\t\t" + this.cps_list
-                + "\n\tCondition Node: \t" + this.condition;
+                + "\n\tCPS List:        \t" + this.cps_list
+                + "\n\tCondition Node:  \t" + this.condition;
     }
     /**
      * Return a boolean value whether the jsonInput data point is evaluated by the expression as true or false.

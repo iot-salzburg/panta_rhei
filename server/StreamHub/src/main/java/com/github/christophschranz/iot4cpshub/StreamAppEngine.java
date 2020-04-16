@@ -41,8 +41,12 @@ public class StreamAppEngine {
         // TARGET_SYSTEM=cz.icecars.iot4cps-wp5-CarFleet.Car1;KAFKA_BOOTSTRAP_SERVERS=127.0.0.1:9092;
         // GOST_SERVER=127.0.0.1:8082;
         // FILTER_LOGIC="SELECT * FROM * WHERE (name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_1.Air Temperature' OR name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_2.Air Temperature') AND result < 30\;"
+        // set to hostname
+//        globalOptions.setProperty("GOST_SERVER", "172.17.0.1:8082");  // works
+//        globalOptions.setProperty("KAFKA_BOOTSTRAP_SERVERS", "172.17.0.1:9092");
 
-        // parse input parameter to options and check completeness, must be a key-val pair
+
+                // parse input parameter to options and check completeness, must be a key-val pair
         if (1 == args.length % 2) {
             logger.error("Error: Expected key val pairs as arguments.");
             logger.error("Usage: java -jar path/to/streamhub_apps.jar --key1 val1 .. --keyN valN");
