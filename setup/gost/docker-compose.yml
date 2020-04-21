@@ -11,8 +11,6 @@ services:
         POSTGRES_DB: gost
         POSTGRES_USER: postgres
         POSTGRES_PASSWORD: postgres
-    networks:
-      - gost
 
   gost:
     image: geodan/gost
@@ -25,8 +23,6 @@ services:
         GOST_DB_HOST: gost-db
         GOST_SERVER_EXTERNAL_URI: http://localhost:8082
         GOST_SERVER_MAX_ENTITIES: 200
-    networks:
-      - gost
 
   dashboard:  # service reachable from kafka stack with: wget  --method GET   --output-document   - 'http://dashboard:8080/v1.0/Things(3)'
     image: geodan/gost-dashboard
@@ -35,22 +31,7 @@ services:
       - 8082:8080
     depends_on:
       - gost
-    networks:
-      - gost
 
 volumes:
   postgis: {}
   gost_conf: {}
-
-# In order create this overlay network, you must have a docker swarm. Basic set up:
-# docker swarm init --advertise-addr 127.0.0.1
-networks:
-  gost:
-    driver: overlay
-    attachable: true
-
-# If a 404 is shown try, to remove also the images and load again. This deletes all known instances
-# docker-compose down
-# docker image rm [UID]
-
-# It doesn't work with VPN!

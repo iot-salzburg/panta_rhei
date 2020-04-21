@@ -23,20 +23,14 @@ public class StreamAppEngine {
         /* *************************   fetching the parameters and check them    **************************/
         logger.info("Starting a new stream with the parameter:");
 
-        if (System.getenv().containsKey("STREAM_NAME"))
-            globalOptions.setProperty("STREAM_NAME",
-                    System.getenv("STREAM_NAME").replaceAll("\"", ""));
-        if (System.getenv().containsKey("SOURCE_SYSTEM"))
-            globalOptions.setProperty("SOURCE_SYSTEM", System.getenv("SOURCE_SYSTEM"));
-        if (System.getenv().containsKey("TARGET_SYSTEM"))
-            globalOptions.setProperty("TARGET_SYSTEM", System.getenv("TARGET_SYSTEM"));
-        if (System.getenv().containsKey("KAFKA_BOOTSTRAP_SERVERS"))
-            globalOptions.setProperty("KAFKA_BOOTSTRAP_SERVERS", System.getenv("KAFKA_BOOTSTRAP_SERVERS"));
-        if (System.getenv().containsKey("GOST_SERVER"))
-            globalOptions.setProperty("GOST_SERVER", System.getenv("GOST_SERVER"));
-        if (System.getenv().containsKey("FILTER_LOGIC"))
-            globalOptions.setProperty("FILTER_LOGIC",
-                    System.getenv("FILTER_LOGIC").replaceAll("\"", ""));
+        globalOptions.setProperty("STREAM_NAME",
+                System.getenv("STREAM_NAME").replaceAll("\"", ""));
+        globalOptions.setProperty("SOURCE_SYSTEM", System.getenv("SOURCE_SYSTEM"));
+        globalOptions.setProperty("TARGET_SYSTEM", System.getenv("TARGET_SYSTEM"));
+        globalOptions.setProperty("KAFKA_BOOTSTRAP_SERVERS", System.getenv("KAFKA_BOOTSTRAP_SERVERS"));
+        globalOptions.setProperty("GOST_SERVER", System.getenv("GOST_SERVER"));
+        globalOptions.setProperty("FILTER_LOGIC",
+                System.getenv("FILTER_LOGIC").replaceAll("\"", ""));
         // env vars: STREAM_NAME="test-stream";SOURCE_SYSTEM=is.iceland.iot4cps-wp5-WeatherService.Stations;
         // TARGET_SYSTEM=cz.icecars.iot4cps-wp5-CarFleet.Car1;KAFKA_BOOTSTRAP_SERVERS=127.0.0.1:9092;
         // GOST_SERVER=127.0.0.1:8082;

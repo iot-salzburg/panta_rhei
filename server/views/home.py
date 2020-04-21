@@ -114,7 +114,7 @@ def home():
 @home_bp.route('/favicon.ico')
 def favicon():
     return send_from_directory(os.path.join(app.root_path, "templates"),
-                               'favicon.png', mimetype='image/vnd.microsoft.icon')
+                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 
 @home_bp.route('/search', methods=['GET', 'POST'])

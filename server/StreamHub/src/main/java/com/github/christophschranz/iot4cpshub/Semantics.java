@@ -120,15 +120,17 @@ public class Semantics {
             logger.error("The datastream with @iot.id '" + iot_id + "' is not available.");
             if (this.exitOnUnknownIotID)
                 System.exit(61);
+            for (String att : this.augmentedAttributes) {
+                jsonInput.addProperty(att, "");
+            }
         }
-
-        String quantity;
-        for (String att: this.augmentedAttributes) {
-            quantity = sensorThingsStreams.get(iot_id).getAsJsonObject().get(att).getAsString();
-            jsonInput.addProperty(att, quantity);
+        else {
+            String quantity;
+            for (String att : this.augmentedAttributes) {
+                jsonInput.addProperty(att, sensorThingsStreams.get(iot_id).getAsJsonObject().get(att).getAsString());
+            }
+            logger.debug("Getting new (augmented) kafka message: {}", jsonInput);
         }
-
-        logger.debug("Getting new (augmented) kafka message: {}", jsonInput);
         return jsonInput;
     }
 
@@ -241,15 +243,12 @@ public class Semantics {
                         rawJsonDS.get("@iot.id").getAsString(),
                         rawJsonDS);
             }
-
-        } catch (IOException e) {
-            // print stack trace but do not exit
-            e.printStackTrace();
         } catch (Exception e) {
             logger.error("@iot.id '" + iot_id + "' is not available on SensorThings server '" + urlString + "'.");
             logger.error("Try to restart the client application as it may use a deprecated datastream mapping!");
             checkConnectionGOST();
-            throw new SemanticsException("@iot.id '" + iot_id + "' was not found on SensorThings server '" + urlString + "'.");
+            if (this.exitOnUnknownIotID)
+                throw new SemanticsException("@iot.id '" + iot_id + "' was not found on SensorThings server '" + urlString + "'.");
         }
     }
 

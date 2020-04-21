@@ -22,7 +22,8 @@ try:
     proc = subprocess.Popen("hostname -I | cut -d' ' -f1", shell=True, stdout=subprocess.PIPE)
     HOST_IP = proc.communicate()[0].decode().strip()
 except:
-    HOST_IP = "localhost"
+    HOST_IP = "127.0.0.1"
+HOST_IP = "127.0.0.1"  # in the current setup, localhost should be preferred
 KAFKA_BOOTSTRAP_SERVER = "{}:9092".format(HOST_IP)
 GOST_SERVER = "{}:8082".format(HOST_IP)
 

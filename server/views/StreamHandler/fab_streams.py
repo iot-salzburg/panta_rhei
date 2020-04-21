@@ -20,7 +20,7 @@ def local_deploy(system_uuid="0000", stream_name="test-stream", stream=None):
     with cd('../../StreamHub'):
         # image name is 'iot4cps/streamapp', container_name is the container name
         with hide('output', 'running'), settings(warn_only=True):
-            local('docker build -t iot4cps/streamengine ../StreamHub || true')
+            local('docker build -t iot4cps/streamengine ../../StreamHub')
 
         container_name = build_name(system_uuid, stream_name)
         if stream is None:  # fill with test values if emptystream = dict()
@@ -44,6 +44,7 @@ def local_deploy(system_uuid="0000", stream_name="test-stream", stream=None):
             with hide('output', 'running'), settings(warn_only=True):
                 return local('docker run '
                              '-dit '
+                             '--network host '
                              '--restart always '
                              '-e "STREAM_NAME=$STREAM_NAME" '
                              '-e "SOURCE_SYSTEM=$SOURCE_SYSTEM" '
