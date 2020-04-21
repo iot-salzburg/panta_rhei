@@ -60,13 +60,22 @@ public class ComparisonNode extends BaseNode {
         if (outer_str.contains(" = ")) {
             operator = " = ";
             this.operation = "==";
-        } else if (outer_str.contains(" < ")) {
+        }
+        else if (outer_str.contains(" < ")) {
             operator = " < ";
             this.operation = "<";
         }
         else if (outer_str.contains(" > ")) {
             operator = " > ";
             this.operation = ">";
+        }
+        else if (outer_str.contains(" <= ")) {
+            operator = " <= ";
+            this.operation = "<=";
+        }
+        else if (outer_str.contains(" >= ")) {
+            operator = " >= ";
+            this.operation = ">=";
         }
         else if (outer_str.contains(" <> ")) {
             operator = " <> ";
@@ -134,6 +143,10 @@ public class ComparisonNode extends BaseNode {
                 return this.switchedKeySide ^ dataValue.compareTo(this.right_expr) < 0;
             if (operation.equals(">"))
                 return this.switchedKeySide ^ dataValue.compareTo(this.right_expr) > 0;
+            if (operation.equals("<="))
+                return this.switchedKeySide ^ dataValue.compareTo(this.right_expr) <= 0;
+            if (operation.equals(">="))
+                return this.switchedKeySide ^ dataValue.compareTo(this.right_expr) >= 0;
         } else {
             // refer to ArithmeticNode for arithmetic operation
 //            double dataValue = jsonInput.get(this.left_expr).getAsDouble();
@@ -143,6 +156,10 @@ public class ComparisonNode extends BaseNode {
                 return this.switchedKeySide ^ this.child1.arithmeticEvaluate(jsonInput) < this.child2.arithmeticEvaluate(jsonInput);  // invert if the order of the expr is interchanged
             if (operation.equals(">"))
                 return this.switchedKeySide ^ this.child1.arithmeticEvaluate(jsonInput) > this.child2.arithmeticEvaluate(jsonInput);
+            if (operation.equals("<="))
+                return this.switchedKeySide ^ this.child1.arithmeticEvaluate(jsonInput) <= this.child2.arithmeticEvaluate(jsonInput);  // invert if the order of the expr is interchanged
+            if (operation.equals(">="))
+                return this.switchedKeySide ^ this.child1.arithmeticEvaluate(jsonInput) >= this.child2.arithmeticEvaluate(jsonInput);
         }
 
         throw new  StreamSQLException("Exception in ComparisonNode: " + this.toString());

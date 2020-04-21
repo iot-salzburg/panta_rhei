@@ -369,9 +369,10 @@ public class Tester {
 
                 StreamQuery streamQuery;
                 Semantics semantics;
+                JsonObject ds;
 
                 jsonInput = new JsonObject();
-                JsonObject ds = new JsonObject();
+                ds = new JsonObject();
                 ds.addProperty("@iot.id", "1");
                 jsonInput.add("Datastream", ds);
                 jsonInput.addProperty("result", 12.3);
@@ -384,6 +385,30 @@ public class Tester {
                 globalOptions.setProperty("FILTER_LOGIC", "SELECT * FROM * WHERE " +
                         "(name = 'Station_1.Air Temperature' OR " +
                         "name = 'Station_2.Air Temperature') AND result < 30;");
+                try {
+                        streamQuery = new StreamQuery(globalOptions);
+                        semantics = new Semantics(globalOptions, "SensorThings");
+
+                        semantics.augmentJsonInput(jsonInput);
+                        streamQuery.evaluate(semantics.augmentJsonInput(jsonInput));
+                } catch (Exception e) {
+                        e.printStackTrace();
+                }
+
+                jsonInput = new JsonObject();
+                ds = new JsonObject();
+                ds.addProperty("@iot.id", "2");
+                jsonInput.add("Datastream", ds);
+                jsonInput.addProperty("result", -4);
+                jsonInput.addProperty("phenomenonTime", "2020-02-24T11:26:02");
+                jsonInput.addProperty("time", "2020-02-24T11:26:02");  // adding extra time key
+//                System.out.println(jsonInput.get("Datastream").getAsJsonObject().get("@iot.id").getAsString());
+
+                globalOptions.setProperty("SOURCE_SYSTEM", "is.iceland.iot4cps-wp5-WeatherService.Stations");
+                globalOptions.setProperty("TARGET_SYSTEM", "cz.icecars.iot4cps-wp5-CarFleet.Car1");
+                globalOptions.setProperty("FILTER_LOGIC", "SELECT * FROM * WHERE " +
+                        "(name = 'cz.icecars.iot4cps-wp5-CarFleet.Car1.Main.Air Temperature' OR " +
+                        "name = 'cz.icecars.iot4cps-wp5-CarFleet.Car2.Main.Air Temperature') AND result >= -3.9999;");
                 try {
                         streamQuery = new StreamQuery(globalOptions);
                         semantics = new Semantics(globalOptions, "SensorThings");
