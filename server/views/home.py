@@ -1,6 +1,8 @@
 import logging
+import os
+
 import sqlalchemy as db
-from flask import current_app as app
+from flask import current_app as app, send_from_directory
 from flask import Blueprint, render_template, flash, redirect, url_for, session, request
 
 from .useful_functions import is_logged_in
@@ -44,7 +46,8 @@ def dashboard():
     INNER JOIN is_admin_of_com AS aof ON com.uuid=aof.company_uuid 
     INNER JOIN users as admin ON admin.uuid=aof.user_uuid
     INNER JOIN users as creator ON creator.uuid=aof.creator_uuid
-    WHERE admin.uuid='{}';""".format(user_uuid)
+    WHERE admin.uuid='{}'
+    ORDER BY domain, com;;""".format(user_uuid)
     result_proxy = conn.execute(query)
     companies = [dict(c.items()) for c in result_proxy.fetchall()]
     # print("Fetched companies: {}".format(companies))
@@ -55,7 +58,8 @@ def dashboard():
     INNER JOIN companies AS com ON sys.company_uuid=com.uuid
     INNER JOIN is_admin_of_sys AS agf ON sys.uuid=agf.system_uuid 
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
-    WHERE agent.uuid='{}';""".format(user_uuid)
+    WHERE agent.uuid='{}'
+    ORDER BY domain, com, workcenter, station;""".format(user_uuid)
     result_proxy = conn.execute(query)
     systems = [dict(c.items()) for c in result_proxy.fetchall()]
 
@@ -67,7 +71,8 @@ def dashboard():
     INNER JOIN companies AS com ON sys.company_uuid=com.uuid
     INNER JOIN is_admin_of_sys AS agf ON sys.uuid=agf.system_uuid 
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
-    WHERE agent.uuid='{}';""".format(user_uuid)
+    WHERE agent.uuid='{}'
+    ORDER BY domain, com, workcenter, station, name;""".format(user_uuid)
     result_proxy = conn.execute(query)
     clients = [dict(c.items()) for c in result_proxy.fetchall()]
     # print("Fetched clients: {}".format(clients))
@@ -81,7 +86,8 @@ def dashboard():
     INNER JOIN companies AS com ON sys.company_uuid=com.uuid
     INNER JOIN is_admin_of_sys AS agf ON sys.uuid=agf.system_uuid 
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
-    WHERE agent.uuid='{}';""".format(user_uuid)
+    WHERE agent.uuid='{}'
+    ORDER BY source_system, target_system, streams.name;""".format(user_uuid)
     result_proxy = conn.execute(query)
     streams = [dict(c.items()) for c in result_proxy.fetchall()]
     # print("Fetched streams: {}".format(streams))
@@ -103,6 +109,12 @@ def home():
     payload = dict()
     payload["SOURCE_URL"] = app.config["SOURCE_URL"]
     return render_template('home.html', payload=payload)
+
+
+@home_bp.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, "templates"),
+                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 
 @home_bp.route('/search', methods=['GET', 'POST'])

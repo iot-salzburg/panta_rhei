@@ -15,8 +15,7 @@ services:
     deploy:
 # Each service must be constrained on a single node, otherwise the volume will be switched
       placement:
-        constraints:
-          - node.labels.kafka==82
+        constraints: [node.hostname == "il082"]
       resources:
         limits:
           cpus: "1"
@@ -37,13 +36,11 @@ services:
         - gost-db
     environment:
         GOST_DB_HOST: gost-db
-        GOST_SERVER_EXTERNAL_URI: http://192.168.48.81:8082
-#        GOST_SERVER_EXTERNAL_URI: http://localhost:8082
+        GOST_SERVER_EXTERNAL_URI: http://192.168.48.82:8082
         GOST_SERVER_MAX_ENTITIES: 200
     deploy:
       placement:
-        constraints:
-          - node.labels.kafka==82
+        constraints: [node.hostname == "il082"]
       resources:
         limits:
           cpus: "1"
@@ -65,8 +62,7 @@ services:
       - gost
     deploy:
       placement:
-        constraints:
-          - node.labels.kafka==82
+        constraints: [node.hostname == "il082"]
       resources:
         limits:
           cpus: "1"

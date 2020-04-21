@@ -10,9 +10,9 @@ import time
 
 
 class SimulateTemperatures:
-    def __init__(self, t_factor=100, day_amplitude=5, year_amplitude=-5, average=2.5):
+    def __init__(self, time_factor=100, day_amplitude=5, year_amplitude=-5, average=2.5, seed=None):
         # Config parameters
-        self.t_factor = t_factor  # the simulated time is t_factor faster than the real time, 100: 1 Tag in 14,4 Minuten
+        self.t_factor = time_factor  # the simulated time is t_factor faster than the real time, 100: 1 day in 14,4 min
         self.day_amplitude = day_amplitude
         self.year_amplitude = year_amplitude  # if <0, it starts in winter
         self.average = average
@@ -22,7 +22,7 @@ class SimulateTemperatures:
         # Internal Variables
         self.start_time = time.time()
         self.moving_average = 0
-        random.seed(0)
+        random.seed(seed)
 
     def get_temp(self):
         current_time = time.time() - self.start_time
@@ -42,12 +42,12 @@ class SimulateTemperatures:
         temperature += self.moving_average
 
         # return the simulated part
-        return temperature
+        return round(temperature, 3)
 
 
 if __name__ == "__main__":
     print("Creating a class of simulated temperatures with day, year and random influence.")
-    simulator = SimulateTemperatures(t_factor=100, day_amplitude=5, year_amplitude=-5, average=2.5)
+    simulator = SimulateTemperatures(time_factor=100, day_amplitude=5, year_amplitude=-5, average=2.5)
 
     while True:
         print("The temperature is: {} °C".format(simulator.get_temp()))

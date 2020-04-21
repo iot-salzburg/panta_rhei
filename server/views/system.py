@@ -6,7 +6,6 @@ from sqlalchemy import exc as sqlalchemy_exc
 from wtforms import Form, StringField, validators, TextAreaField
 
 from .useful_functions import get_datetime, get_uid, is_logged_in, valid_level_name
-from .kafka_interface import check_kafka, create_system_topics, delete_system_topics
 
 system = Blueprint("system", __name__)  # url_prefix="/comp")
 
@@ -28,7 +27,8 @@ def show_all_systems():
     INNER JOIN companies AS com ON sys.company_uuid=com.uuid
     INNER JOIN is_admin_of_sys AS agf ON sys.uuid=agf.system_uuid 
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
-    WHERE agent.uuid='{}';""".format(user_uuid)
+    WHERE agent.uuid='{}'
+    ORDER BY domain, com, workcenter, station;""".format(user_uuid)
     result_proxy = conn.execute(query)
     engine.dispose()
     systems = [dict(c.items()) for c in result_proxy.fetchall()]
@@ -113,6 +113,7 @@ class SystemForm(Form):
     station = StringField("Station", [validators.Length(min=2, max=20), valid_level_name])
     description = TextAreaField("Description", [validators.Length(max=16*1024)])
 
+
 # Add system in system view, redirect to companies
 @system.route("/add_system")
 @is_logged_in
@@ -120,6 +121,7 @@ def add_system():
     # redirect to companies
     flash("Specify the company to which a system should be added.", "info")
     return redirect(url_for("company.show_all_companies"))
+
 
 # Add system in company view
 @system.route("/add_system/<string:company_uuid>", methods=["GET", "POST"])
@@ -140,7 +142,7 @@ def add_system_for_company(company_uuid):
     query = """
     SELECT company_uuid, domain, enterprise, admin.uuid AS admin_uuid, admin.first_name, admin.sur_name, admin.email 
     FROM companies AS com 
-    INNER JOIN is_admin_of AS aof ON com.uuid=aof.company_uuid 
+    INNER JOIN is_admin_of_com AS aof ON com.uuid=aof.company_uuid 
     INNER JOIN users as admin ON admin.uuid=aof.user_uuid 
     INNER JOIN users as creator ON creator.uuid=aof.creator_uuid 
     WHERE company_uuid='{}';""".format(company_uuid)
@@ -150,6 +152,7 @@ def add_system_for_company(company_uuid):
     # Check if the company exists and you are an admin
     if len(admins) == 0:
         engine.dispose()
+        app.logger.warning("It seems that the company with the uuid '{}' doesn't exist.".format(company_uuid))
         flash("It seems that this company doesn't exist.", "danger")
         return redirect(url_for("company.show_all_companies"))
 
@@ -197,8 +200,8 @@ def add_system_for_company(company_uuid):
                                            form_workcenter, form_station)
         transaction = conn.begin()
         try:
-            # Create new is_admin_of instance
-            query = db.insert(app.config["tables"]["is_agent_of"])
+            # Create new is_admin_of_sys instance
+            query = db.insert(app.config["tables"]["is_admin_of_sys"])
             values_list = [{"user_uuid": user_uuid,
                             "system_uuid": system_uuid,
                             "creator_uuid": user_uuid,
@@ -207,7 +210,7 @@ def add_system_for_company(company_uuid):
             engine.dispose()
 
             # Create system topics
-            create_system_topics(app, system_name=system_name)
+            app.kafka_interface.create_system_topics(system_name=system_name)
 
             transaction.commit()
             app.logger.info("The system '{}' was created.".format(system_name))
@@ -279,7 +282,7 @@ def delete_system(system_uuid):
 
     transaction = conn.begin()
     try:
-        # Delete new is_admin_of instance
+        # Delete new is_admin_of_sys instance
         query = """DELETE FROM is_admin_of_sys
             WHERE system_uuid='{}';""".format(system_uuid)
         conn.execute(query)
@@ -290,15 +293,18 @@ def delete_system(system_uuid):
         engine.dispose()
 
         # Delete Kafka topics
-        delete_system_topics(app, system_name=system_name)
-
-        transaction.commit()
-        app.logger.info("The system '{}' was deleted.".format(system_name))
-        flash("The system '{}' was deleted.".format(system_name), "success")
+        if app.kafka_interface.delete_system_topics(system_name=system_name):
+            transaction.commit()
+            app.logger.info("The system '{}' was deleted.".format(system_name))
+            flash("The system '{}' was deleted.".format(system_name), "success")
+        else:
+            transaction.rollback()
+            app.logger.warning("The system '{}' couldn't be deleted, returned False".format(system_name))
+            flash("The system '{}' couldn't be deleted.".format(system_name), "danger")
     except:
         transaction.rollback()
-        app.logger.warning("The system '{}' couldn't deleted.".format(system_name))
-        flash("The system '{}' couldn't deleted.".format(system_name), "danger")
+        app.logger.warning("The system '{}' couldn't be deleted.".format(system_name))
+        flash("The system '{}' couldn't be deleted.".format(system_name), "danger")
     finally:
         # Redirect to latest page, either /systems or /show_company/UID
         if session.get("last_url"):

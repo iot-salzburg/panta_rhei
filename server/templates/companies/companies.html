@@ -16,10 +16,10 @@ A list of companies that you are admin of:
     </tr>
       {% for company in companies %}
       <tr>
-        <td><a href="show_company/{{company.company_uuid}}" class="btn btn-block">{{company.company_uuid}}</a></td>
-        <td><a href="show_company/{{company.company_uuid}}" class="btn btn-block">{{company.domain}}</a></td>
-        <td><a href="show_company/{{company.company_uuid}}" class="btn btn-block">{{company.enterprise}}</a></td>
-        <td><a href="show_company/{{company.company_uuid}}" class="btn btn-block">{{company.contact_mail}}</a></td>
+        <td><center>{{company.company_uuid}}</center></td>
+        <td><center>{{company.domain}}</center></td>
+        <td><center>{{company.enterprise}}</center></td>
+        <td><center>{{company.contact_mail}}</center></td>
 <!--        <td>{{company.contact_mail}}</td>-->
         <td><a href="show_company/{{company.company_uuid}}" class="btn btn-info float-right"
         data-toggle="tooltip" title="Manage this company.">manage company</a></td>

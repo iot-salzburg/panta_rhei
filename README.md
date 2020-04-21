@@ -112,7 +112,7 @@ If multiple topics were generated, everything worked well.
     docker-compose -f setup/gost/docker-compose.yml up -d
 
 The flag `-d` stands for `daemon` mode. To check if everything worked well, open
-[http://localhost:8084/](http://localhost:8084/) or view the logs:
+[http://localhost:8082/](http://localhost:8082/) or view the logs:
 
     docker-compose -f setup/gost/docker-compose.yml logs -f
 
@@ -259,11 +259,11 @@ The platform is then, if the default developer-config is selected, available on 
 ![Platform](/extra/platform_home.png)
 
 There are demo-accounts available for:
-* sue.smith@gmail.com
-* stefan.gunnarsson@gmail.com
-* anna.gruber@gmail.com
+* sue.smith@example.com
+* stefan.gunnarsson@example.com
+* anna.gruber@example.com
 
-The password for each of them is `asdf`.
+The password of each user is `asdf`.
 
 <br>
 If you have feedback and ideas, please let me know.

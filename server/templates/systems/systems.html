@@ -17,10 +17,10 @@ A list of systems of CPSs and services that you are admin of:
 
       {% for system in systems %}
       <tr>
-        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.system_uuid}}</a></td>
-        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.domain}}.{{system.enterprise}}</a></td>
-        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.workcenter}}.{{system.station}}</a></td>
-        <td><a href="show_system/{{system.system_uuid}}" class="btn btn-block">{{system.contact_mail}}</a></td>
+        <td><center>{{system.system_uuid}}</center></td>
+        <td><center>{{system.domain}}.{{system.enterprise}}</center></td>
+        <td><center>{{system.workcenter}}.{{system.station}}</center></td>
+        <td><center>{{system.contact_mail}}</center></td>
         <td><a href="show_system/{{system.system_uuid}}" class="btn btn-info float-right"
             data-toggle="tooltip" title="Manage this system.">manage system</a></td>
 <!--        <td><a class="btn btn-danger" href="/delete_system/{{system.system_uuid}}"> delete</a></td>-->

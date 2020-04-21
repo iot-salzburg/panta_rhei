@@ -1,19 +1,17 @@
 import sys
-import logging
 
 from dotenv import load_dotenv
 from flask import Flask
 
-from server.create_database import create_tables
 # Import modules
+from server.create_database import create_tables
 from server.views.auth import auth
 from server.views.clients import client
 from server.views.company import company
 from server.views.home import home_bp
 
 # Import application-specific functions
-from server.views.kafka_interface import check_kafka, create_default_topics, KafkaHandler
-from server.views.kafka_interface import create_system_topics, delete_system_topics
+from server.views.kafka_interface import KafkaHandler, KafkaInterface
 from server.views.streamhub import streamhub_bp
 from server.views.system import system
 
@@ -38,11 +36,13 @@ if __name__ == '__main__':
     app.logger.setLevel(app.config["LOGLEVEL"])
     app.logger.info("Preparing the platform.")
 
-    # Check the connection to Kafka and create new tables if not already done
-    if check_kafka(app):
-        app.logger.debug("Connected to with bootstrap servers '{}'.".format(app.config["KAFKA_BOOTSTRAP_SERVER"]))
-    else:
-        app.logger.error("The connection to Kafka Servers couldn't be established.")
+    # Create and add a Kafka instance to app. Recreate lost Kafka topics
+    app.kafka_interface = KafkaInterface(app)
+    # time.sleep(10)
+    app.kafka_interface.recreate_lost_topics()
+    # Check the connection to Kafka exit if there isn't any
+    if not app.kafka_interface.get_connection():
+        app.logger.error("The connection to the Kafka Bootstrap Servers couldn't be established.")
         sys.exit(1)
 
     # Adding a KafkaHandler to the logger, ingests messages into kafka
@@ -50,15 +50,14 @@ if __name__ == '__main__':
     app.logger.addHandler(kh)
 
     app.logger.info("Starting the platform.")
-    app.logger.info("Connection to Kafka Servers are okay.")
 
     # Create postgres tables to get the data model
     create_tables(app)
-    create_default_topics(app)
+    app.kafka_interface.create_default_topics()
 
-    # Test the Kafka Interface by creating and deleting a test topic
-    create_system_topics(app, "test.test.test.test")
-    delete_system_topics(app, "test.test.test.test")
+    # # Test the Kafka Interface by creating and deleting a test topic
+    # app.kafka_interface.create_system_topics("test.test.test.test")
+    # app.kafka_interface.delete_system_topics("test.test.test.test")
 
     # Run application
     app.run(debug=app.config["DEBUG"], port=1908)

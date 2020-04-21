@@ -111,8 +111,8 @@ client/config.json.save*
 setup/gost/swarm_docker-compose-with-glusterfs.yml.s*
 README.md.*
 
-demo_applications/streamhub_apps/target
-demo_applications/streamhub_apps/.idea
+server/StreamHub/target
+server/StreamHub/.idea
 /demo_applications/Analytics/elasticStack/elasticsearch/provisioning/
 demo_applications/Analytics/jupyter/src/data
 demo_applications/Analytics/jupyter/share
@@ -122,3 +122,7 @@ server/views/keys/ssl*
 server/venv
 *fuse_hidden*
 /server/templates/streamhub/streamhub.json
+*.save*.*
+
+# temperarily not track changes
+server/.env
