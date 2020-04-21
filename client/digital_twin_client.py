@@ -80,8 +80,13 @@ class DigitalTwinClient:
             # Create Kafka Producer
             self.producer = confluent_kafka.Producer({'bootstrap.servers': self.config["kafka_bootstrap_servers"],
                                                       'client.id': self.config["client_name"],
-
+                                                      'request.timeout.ms': 10000,  # wait up to 10 seconds
                                                       'default.topic.config': {'acks': 'all'}})
+            ret_poll = self.producer.poll(3)
+            if ret_poll != 0:  # unfortunately, polling may return 0 even if the connection is disturbed
+                self.logger.error(f"init: Error, couldn't connect to kafka bootstrap server "
+                                  f"'{self.config['kafka_bootstrap_servers']}', poll() returns {ret_poll}")
+                raise Exception(f"init: Error, couldn't connect to kafka bootstrap server.")
 
         else:
             kafka_rest_url = "http://" + self.config["kafka_rest_server"] + "/topics"
@@ -205,9 +210,9 @@ class DigitalTwinClient:
         # Build the kafka-topic that is used
         # kafka_topic = "{}.{}.".format(self.config["system_prefix"], self.config["system_name"])
         if self.mapping[quantity]["observationType"] == "logging":
-            kafka_topic = self.config["system"] + "." + "log"
+            kafka_topic = self.config["system"] + ".log"
         else:
-            kafka_topic = self.config["system"] + "." + "int"
+            kafka_topic = self.config["system"] + ".int"
 
         # The key is of the form "thing" or "client-name" (for logging)
         kafka_key = str(self.mapping[quantity].get("Thing", self.config["client_name"]))
@@ -395,12 +400,12 @@ class DigitalTwinClient:
                                        in subscriptions["subscribed_datastreams"]}
 
         for key, value in self.subscribed_datastreams.items():
-            self.logger.info("subscribe: Subscribed to datastream: id: {} and metadata: {}".format(key, value))
+            self.logger.info("subscribe: Subscribed to datastream: id: '{}' and metadata: '{}'".format(key, value))
         if len(self.subscribed_datastreams.keys()) == 0:
             self.logger.warning("subscribe: No subscription matches an existing datastream.")
         for stream in subscriptions["subscribed_datastreams"]:
             if stream not in [subscribed_ds["name"] for subscribed_ds in self.subscribed_datastreams.values()]:
-                self.logger.warning("subscribe: Couldn't subscribe to {}, may not be registered".format(stream))
+                self.logger.warning("subscribe: Couldn't subscribe to {}, datastream is not registered".format(stream))
 
     def consume_via_bootstrap(self, timeout=0.1):
         """

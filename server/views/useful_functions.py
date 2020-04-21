@@ -18,6 +18,7 @@ def get_datetime():
 def is_logged_in(f):
     from flask import flash, redirect, url_for, session
     from functools import wraps
+
     @wraps(f)
     def wrap(*args, **kwargs):
         if 'logged_in' in session:
@@ -27,6 +28,22 @@ def is_logged_in(f):
             return redirect(url_for("auth.login"))
     return wrap
 
+
+def nocache(view):
+    from datetime import datetime
+    from functools import wraps, update_wrapper
+    from flask import make_response
+
+    @wraps(view)
+    def no_cache(*args, **kwargs):
+        response = make_response(view(*args, **kwargs))
+        response.headers['Last-Modified'] = datetime.now()
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '-1'
+        return response
+
+    return update_wrapper(no_cache, view)
 
 # Validator for company and system names
 # only 0-9, a-z, A-Z and "-" are allowed.

@@ -1,0 +1,14 @@
+version: '3.4'
+
+services:
+  stream-app:
+    build: .
+    network_mode: host
+    environment:
+      # StreamApp config
+      STREAM_NAME: "StreamHubDocker"
+      SOURCE_SYSTEM: "is.iceland.iot4cps-wp5-WeatherService.Stations"
+      TARGET_SYSTEM: "cz.icecars.iot4cps-wp5-CarFleet.Car1"
+      KAFKA_BOOTSTRAP_SERVERS: 127.0.0.1:9092
+      GOST_SERVER: 127.0.0.1:8082
+      FILTER_LOGIC: "SELECT * FROM * WHERE (name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_1.Air Temperature' OR name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_2.Air Temperature') AND result < 30;"

@@ -1,7 +1,7 @@
 {
   "Things": {
     "weatherstation_2": {
-      "name": "Demo Station 2",
+      "name": "Station_2",
       "description": "Weather Station that provides temperature data",
       "properties": {
         "specification": "https://www.machine-url.com/downloads/demo-machine.pdf"

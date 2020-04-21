@@ -1,6 +1,8 @@
 import logging
+import os
+
 import sqlalchemy as db
-from flask import current_app as app
+from flask import current_app as app, send_from_directory
 from flask import Blueprint, render_template, flash, redirect, url_for, session, request
 
 from .useful_functions import is_logged_in
@@ -107,6 +109,12 @@ def home():
     payload = dict()
     payload["SOURCE_URL"] = app.config["SOURCE_URL"]
     return render_template('home.html', payload=payload)
+
+
+@home_bp.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, "templates"),
+                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 
 @home_bp.route('/search', methods=['GET', 'POST'])

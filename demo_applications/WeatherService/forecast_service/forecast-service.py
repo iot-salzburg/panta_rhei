@@ -27,8 +27,8 @@ SUBSCRIPTIONS = os.path.join(dirname, "subscriptions.json")
 # This config is generated when registering a client application on the platform
 # Make sure that Kafka and GOST are up and running before starting the platform
 config = {"client_name": "forecast_service",
-          "system": "is.iceland.iot-iot4cps-wp5.WeatherService",
-          "gost_servers": "localhost:8084",
+          "system": "is.iceland.iot4cps-wp5-WeatherService.Services",
+          "gost_servers": "localhost:8082",
           "kafka_bootstrap_servers": "localhost:9092",  # kafka bootstrap server is the preferred way to connect
           "kafka_rest_server": "localhost:8082"}
 client = DigitalTwinClient(**config)
@@ -40,14 +40,12 @@ fan_status = False
 try:
     while True:
         # Receive all queued messages of the weather-service
-        received_quantities = client.consume(timeout=0.5)
+        received_quantities = client.consume(timeout=0.1)
         for received_quantity in received_quantities:
             # The resolves the all meta-data for an received data-point
-            print("  -> Received new external data-point at {}: '{}' = {} {}."
-                  .format(received_quantity["phenomenonTime"],
-                          received_quantity["Datastream"]["name"],
-                          received_quantity["result"],
-                          received_quantity["Datastream"]["unitOfMeasurement"]["symbol"]))
+            print(f"  -> Received new external data-point from {received_quantity['phenomenonTime']}: "
+                  f"'{received_quantity['Datastream']['name']}' = {received_quantity['result']} "
+                  f"{received_quantity['Datastream']['unitOfMeasurement']['symbol']}.")
 
         # To view the whole data-point in a pretty format, uncomment:
         # print("Received new data: {}".format(json.dumps(received_quantity, indent=2)))

@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Main-Class: com.github.christophschranz.iot4cpshub.StreamAppEngine
+Class-Path: connect-json-2.3.1.jar connect-api-2.3.1.jar jackson-core-2.
+ 10.0.jar zstd-jni-1.4.0-1.jar jackson-annotations-2.10.0.jar slf4j-api-1.
+ 7.25.jar kafka-clients-2.3.1.jar javax.ws.rs-api-2.1.1.jar kafka-stream
+ s-2.3.1.jar slf4j-simple-1.7.25.jar lz4-java-1.6.0.jar java-dotenv-3.0.
+ 0.jar gson-2.8.5.jar snappy-java-1.1.7.3.jar jackson-databind-2.10.0.jar
+  kotlin-stdlib-1.2.10.jar annotations-13.0.jar rocksdbjni-5.18.3.jar

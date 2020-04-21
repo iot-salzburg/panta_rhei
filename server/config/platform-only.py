@@ -18,5 +18,6 @@ SECRET_KEY = "changeme"
 
 # Bootstrap servers for Kafka
 KAFKA_BOOTSTRAP_SERVER = None
+GOST_SERVER = None
 
 SOURCE_URL = "https://git-service.ait.ac.at/im-IoT4CPS/WP5-lifecycle-mgmt"

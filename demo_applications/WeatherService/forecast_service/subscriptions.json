@@ -1,6 +1,6 @@
 {
   "subscribed_datastreams": [
-    "is.iceland.iot-iot4cps-wp5.WeatherService.weatherstation_1.Air Temperature",
-    "is.iceland.iot-iot4cps-wp5.WeatherService.weatherstation_2.Air Temperature"
+    "is.iceland.iot4cps-wp5-WeatherService.Stations.Station_1.Air Temperature",
+    "is.iceland.iot4cps-wp5-WeatherService.Stations.Station_2.Air Temperature"
   ]
 }

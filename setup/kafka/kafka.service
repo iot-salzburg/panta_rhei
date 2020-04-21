@@ -6,8 +6,9 @@ After=network.target
 User=iotdev
 Group=iotdev
 WorkingDirectory=/kafka
-ExecStartPre=/usr/bin/env bash -c "export HOST_IP=$(hostname -I | cut -d' ' -f1)"
-ExecStart=/kafka/bin/kafka-server-start.sh /kafka/config/server.properties --override listeners=PLAINTEXT://${HOST_IP}:9092
+#ExecStartPre=/usr/bin/env bash -c "export HOST_IP=$(hostname -I | cut -d' ' -f1)"
+ExecStart=/kafka/bin/kafka-server-start.sh /kafka/config/server.properties
+ #--override listeners=PLAINTEXT://${HOST_IP}:9092
 ExecReload=/kafka/bin/kafka-server-stop.sh
 
 [Install]

@@ -16,10 +16,10 @@ A list of client applications of whose dedicated system you are admin of:
     </tr>
       {% for client in clients %}
       <tr>
-        <td><a href="show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-block">{{client.name}}</a></td>
-        <td><a href="show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-block">{{client.domain}}.{{client.enterprise}}</a></td>
-        <td><a href="show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-block">{{client.workcenter}}.{{client.station}}</a></td>
-        <td><a href="show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-block">{{client.contact_mail}}</a></td>
+        <td><center>{{client.name}}</center></td>
+        <td><center>{{client.domain}}.{{client.enterprise}}</center></td>
+        <td><center>{{client.workcenter}}.{{client.station}}</center></td>
+        <td><center>{{client.contact_mail}}</center></td>
 <!--        <td>{{client.contact_mail}}</td>-->
         <td><a href="show_client/{{client.system_uuid}}/{{client.name}}" class="btn btn-info float-right"
                 data-toggle="tooltip" title="Manage this client application.">manage</a></td>

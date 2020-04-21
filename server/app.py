@@ -1,12 +1,10 @@
 import sys
-import logging
-import time
 
 from dotenv import load_dotenv
 from flask import Flask
 
-from server.create_database import create_tables
 # Import modules
+from server.create_database import create_tables
 from server.views.auth import auth
 from server.views.clients import client
 from server.views.company import company
@@ -52,15 +50,14 @@ if __name__ == '__main__':
     app.logger.addHandler(kh)
 
     app.logger.info("Starting the platform.")
-    app.logger.info("Connection to Kafka Servers are okay.")
 
     # Create postgres tables to get the data model
     create_tables(app)
     app.kafka_interface.create_default_topics()
 
-    # Test the Kafka Interface by creating and deleting a test topic
-    app.kafka_interface.create_system_topics("test.test.test.test")
-    app.kafka_interface.delete_system_topics("test.test.test.test")
+    # # Test the Kafka Interface by creating and deleting a test topic
+    # app.kafka_interface.create_system_topics("test.test.test.test")
+    # app.kafka_interface.delete_system_topics("test.test.test.test")
 
     # Run application
     app.run(debug=app.config["DEBUG"], port=1908)
