@@ -43,6 +43,10 @@ public class ArithmeticNode extends BaseNode {
      */
     public ArithmeticNode(String str) throws StreamSQLException {
         super();
+        // replace empty strings with '0', as negative numbers '-x' are parsed to '0-x'
+        if (str.equals("")) {
+            str = "0";
+        }
         // remove recursively outer brackets and trim spaces
         this.rawExpression = strip(str);
 

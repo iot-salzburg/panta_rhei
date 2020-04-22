@@ -45,8 +45,11 @@ advertised.listeners=PLAINTEXT://[your-ip]:9092
 where `[your-ip]` is the IP Address of your Kafka Bootstrap server that is accessible from other nodes,
 i.e., not `localhost`. The parameter `listeners` can stay on `localhost`, if wished. 
 
+It has been shown, that the advertised listeners don't have to be configured. Localhost suffices if the parameter
+`network_mode: host` is given in the `docker-compose.yml`.
+
 ```bash
-bash deployStreamApp.sh 
+docker-compose up --build -d
 docker-compose logs -f
 ```
 

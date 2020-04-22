@@ -127,10 +127,50 @@ public abstract class BaseNode {
         return outerString;
     }
     /**
-     * Strip outer parenthesis recursively
-     * Remove brackets and strip the expression if no outer statement was found.
-     * @return Cleaned expression String
+     * This method splits a given string safely, i.d., it checks where character are quoted or within parentheses and
+     * doesn't split within that fields.
+     * @return int of the split index on which the string can be spliced safely.
      */
+    public static int safeGetSplitIdx(String str, String operation) throws StreamSQLException {
+        int i = 0;  // idx for str
+        int depth_par = 0;
+        boolean is_single_quoted = false;
+        boolean is_double_quoted = false;
+        boolean end_quote_next = false;
+        // create a char array from the string and blank all chars within quotes ore commas
+        char[] ca = str.toCharArray();
+        while (i < str.length()) {
+            if (ca[i] == '(')
+                depth_par++;
+            if (ca[i] == ')')
+                depth_par--;
+            if (ca[i] == '\'')
+                if (!is_single_quoted)  // begin quote
+                    is_single_quoted = true;
+                else   // end quote in next iteration
+                    end_quote_next = true;
+            else
+                if (end_quote_next) {
+                    end_quote_next = false;
+                    is_single_quoted = false;
+                }
+            if (ca[i] == '"')
+                is_double_quoted = !is_double_quoted;
+            if (depth_par != 0 || is_single_quoted || is_double_quoted) {
+                ca[i] = '*';
+            }
+            i++;
+        }
+        // recreate blanked string and split that
+        String outerString = String.valueOf(ca);
+        return outerString.indexOf(operation);
+    }
+
+        /**
+         * Strip outer parenthesis recursively
+         * Remove brackets and strip the expression if no outer statement was found.
+         * @return Cleaned expression String
+         */
     public static String strip(String str) {
         str = str.trim();
         if (str.charAt(0) == '(' && str.charAt(str.length()-1) == ')')  // trim  '(' and ')' for split
