@@ -56,29 +56,33 @@ public class ComparisonNode extends BaseNode {
         }
 
         // extract the comparision operator else
-        String operator;
-        if (outer_str.contains(" = ")) {
-            operator = " = ";
-            this.operation = "==";
-        } else if (outer_str.contains(" < ")) {
-            operator = " < ";
+        if (outer_str.contains("<=")) {
+            this.operation = "<=";
+        }
+        else if (outer_str.contains(">=")) {
+            this.operation = ">=";
+        }
+        else if (outer_str.contains("<>")) {
+            this.operation = "<>";
+        }
+        else if (outer_str.contains("=")) {
+            this.operation = "=";
+        }
+        else if (outer_str.contains("<")) {
             this.operation = "<";
         }
-        else if (outer_str.contains(" > ")) {
-            operator = " > ";
+        else if (outer_str.contains(">")) {
             this.operation = ">";
-        }
-        else if (outer_str.contains(" <> ")) {
-            operator = " <> ";
-            this.operation = "<>";
         }
         else {
             throw new StreamSQLException("Couldn't find operator for string expression '" + this.rawExpression + "'.");
         }
 
         // separate the expressions
-        left_expr = this.rawExpression.substring(0, this.rawExpression.indexOf(operator));
-        right_expr = this.rawExpression.substring(this.rawExpression.indexOf(operator) + operator.length());
+        int split_idx = safeGetSplitIdx(this.rawExpression, this.operation);
+        left_expr = this.rawExpression.substring(0, split_idx).trim();
+        right_expr = this.rawExpression.substring(split_idx + this.operation.length()).trim();
+
 
         // check which side contains the the keyword, if the key is on the right, switch the sides
         if (safeFreeOfKeywords(this.left_expr)) {
@@ -126,7 +130,7 @@ public class ComparisonNode extends BaseNode {
 
         if (stringOperation) {
             String dataValue = jsonInput.get(this.left_expr).getAsString();
-            if (operation.equals("=="))
+            if (operation.equals("="))
                 return dataValue.equals(this.right_expr);
             if (operation.equals("<>"))
                 return !dataValue.equals(this.right_expr);
@@ -134,15 +138,23 @@ public class ComparisonNode extends BaseNode {
                 return this.switchedKeySide ^ dataValue.compareTo(this.right_expr) < 0;
             if (operation.equals(">"))
                 return this.switchedKeySide ^ dataValue.compareTo(this.right_expr) > 0;
+            if (operation.equals("<="))
+                return this.switchedKeySide ^ dataValue.compareTo(this.right_expr) <= 0;
+            if (operation.equals(">="))
+                return this.switchedKeySide ^ dataValue.compareTo(this.right_expr) >= 0;
         } else {
             // refer to ArithmeticNode for arithmetic operation
 //            double dataValue = jsonInput.get(this.left_expr).getAsDouble();
-            if (operation.equals("=="))
+            if (operation.equals("="))
                 return (this.child1.arithmeticEvaluate(jsonInput) - this.child2.arithmeticEvaluate(jsonInput)) < 1E-7;
             if (operation.equals("<"))
                 return this.switchedKeySide ^ this.child1.arithmeticEvaluate(jsonInput) < this.child2.arithmeticEvaluate(jsonInput);  // invert if the order of the expr is interchanged
             if (operation.equals(">"))
                 return this.switchedKeySide ^ this.child1.arithmeticEvaluate(jsonInput) > this.child2.arithmeticEvaluate(jsonInput);
+            if (operation.equals("<="))
+                return this.switchedKeySide ^ this.child1.arithmeticEvaluate(jsonInput) <= this.child2.arithmeticEvaluate(jsonInput);  // invert if the order of the expr is interchanged
+            if (operation.equals(">="))
+                return this.switchedKeySide ^ this.child1.arithmeticEvaluate(jsonInput) >= this.child2.arithmeticEvaluate(jsonInput);
         }
 
         throw new  StreamSQLException("Exception in ComparisonNode: " + this.toString());
