@@ -82,17 +82,17 @@ public class LogicalNode extends BaseNode {
         // create the child nodes that are LogicalNodes if they are not variables
         switch (this.expressionType) {
             case "proposition": {
-                String expr1 = this.rawExpression.substring(0,
-                        this.rawExpression.indexOf(" " + super.operation + " ")).trim();
+                int split_idx = safeGetSplitIdx(this.rawExpression, " " + super.operation + " ");
+                String expr1 = this.rawExpression.substring(0, split_idx).trim();
                 this.child1 = new LogicalNode(expr1);
-                String expr2 = this.rawExpression.substring(
-                        this.rawExpression.indexOf(" " + super.operation + " ") + super.operation.length() + 2).trim();
+                String expr2 = this.rawExpression.substring(split_idx + super.operation.length() + 2).trim();
                 this.child2 = new LogicalNode(expr2);
                 break;
             }
             // "NOT" is an unary operation, where child2 is set to TRUE and the operation to XOR
             case "negation": {
-                String expr1 = this.rawExpression.substring(this.rawExpression.indexOf("NOT ") + "NOT ".length()).trim();
+                int split_idx = safeGetSplitIdx(this.rawExpression, "NOT ");
+                String expr1 = this.rawExpression.substring(split_idx + "NOT ".length()).trim();
                 this.child1 = new LogicalNode(expr1);
                 break;
             }

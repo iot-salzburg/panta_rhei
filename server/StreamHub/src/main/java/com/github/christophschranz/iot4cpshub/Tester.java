@@ -102,11 +102,12 @@ public class Tester {
                         if (new LogicalNode(expr).evaluate(jsonInput))
                                 System.out.println("Test 11 failed.");
 
-                        expr =  "name <> 'Station_123.Air Temperature'";  // intro of not equal, true
-                        if (!new LogicalNode(expr).evaluate(jsonInput))
+                        expr =  "name<>'Station_123.Air Temperature'";  // intro of not equal, true
+                        logNode = new LogicalNode(expr);
+                        if (!logNode.evaluate(jsonInput))
                                 System.out.println("Test 12 failed.");
 
-                        expr =  "NOT result > 30";  // intro of not, true
+                        expr =  "NOT result> 30";  // intro of not, true
                         if (!new LogicalNode(expr).evaluate(jsonInput))
                                 System.out.println("Test 13 failed.");
 
@@ -239,6 +240,22 @@ public class Tester {
                         logNode = new LogicalNode(expr);
                         if (!logNode.evaluate(jsonInput))
                                 System.out.println("Test 46 failed.");
+
+                        expr =  "'trickyn<ame' = name";  // false
+                        logNode = new LogicalNode(expr);
+                        if (logNode.evaluate(jsonInput))
+                                System.out.println("Test 47 failed.");
+
+                        expr =  "'trickyn=ame' = name";  // false
+                        logNode = new LogicalNode(expr);
+                        if (logNode.evaluate(jsonInput))
+                                System.out.println("Test 48 failed.");
+
+                        expr =  "(name = 'tricky>AND<for_=_name' XOR result < 30) AND result > 4"; // true
+                        logNode = new LogicalNode(expr);
+                        if (!logNode.evaluate(jsonInput))
+                                System.out.println("Test 49 failed.");
+
                 } catch (Exception e) {
                         e.printStackTrace();
                 }
@@ -364,7 +381,8 @@ public class Tester {
                 }
 
                 System.out.println("\n######## Node were completed successfully. #########\n");
-                System.out.println("#######################################################");
+
+
                 System.out.println("\n######## StreamQuery and Semantics class. #########\n");
 
                 StreamQuery streamQuery;
@@ -384,13 +402,14 @@ public class Tester {
                 globalOptions.setProperty("TARGET_SYSTEM", "cz.icecars.iot4cps-wp5-CarFleet.Car1");
                 globalOptions.setProperty("FILTER_LOGIC", "SELECT * FROM * WHERE " +
                         "(name = 'Station_1.Air Temperature' OR " +
-                        "name = 'Station_2.Air Temperature') AND result < 30;");
+                        "name = 'Station_2.Air Temperature') AND result > 30;");
                 try {
                         streamQuery = new StreamQuery(globalOptions);
                         semantics = new Semantics(globalOptions, "SensorThings");
 
-                        semantics.augmentJsonInput(jsonInput);
-                        streamQuery.evaluate(semantics.augmentJsonInput(jsonInput));
+                        semantics.augmentJsonInput(jsonInput);  // should be false
+                        if (streamQuery.evaluate(semantics.augmentJsonInput(jsonInput)))
+                                System.out.println("Test 61 failed.");
                 } catch (Exception e) {
                         e.printStackTrace();
                 }
@@ -408,13 +427,16 @@ public class Tester {
                 globalOptions.setProperty("TARGET_SYSTEM", "cz.icecars.iot4cps-wp5-CarFleet.Car1");
                 globalOptions.setProperty("FILTER_LOGIC", "SELECT * FROM * WHERE " +
                         "(name = 'cz.icecars.iot4cps-wp5-CarFleet.Car1.Main.Air Temperature' OR " +
-                        "name = 'cz.icecars.iot4cps-wp5-CarFleet.Car2.Main.Air Temperature') AND result >= -3.9999;");
+                        "name = 'cz.icecars.iot4cps-wp5-CarFleet.Car2.Main.Air Temperature') AND result < -3.99;");
                 try {
                         streamQuery = new StreamQuery(globalOptions);
                         semantics = new Semantics(globalOptions, "SensorThings");
 
-                        System.out.println(semantics.augmentJsonInput(jsonInput));
-                        System.out.println(streamQuery.evaluate(semantics.augmentJsonInput(jsonInput)));
+                        JsonObject augmentedJson = semantics.augmentJsonInput(jsonInput);
+                        if (augmentedJson.get("name") == null)
+                                System.out.println("Test 62 failed.");
+                        if (!streamQuery.evaluate(semantics.augmentJsonInput(jsonInput)))
+                                System.out.println("Test 63 failed.");
                 } catch (Exception e) {
                         e.printStackTrace();
                 }
