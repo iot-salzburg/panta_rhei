@@ -20,7 +20,7 @@ def local_deploy(system_uuid="0000", stream_name="test-stream", stream=None):
     with cd('../../StreamHub'):
         # image name is 'iot4cps/streamapp', container_name is the container name
         with hide('output', 'running'), settings(warn_only=True):
-            local('docker build -t iot4cps/streamengine ../../StreamHub')
+            local('docker build -t iot4cps/streamengine .')
 
         container_name = build_name(system_uuid, stream_name)
         if stream is None:  # fill with test values if emptystream = dict()
@@ -28,8 +28,8 @@ def local_deploy(system_uuid="0000", stream_name="test-stream", stream=None):
             stream = dict()
             stream["SOURCE_SYSTEM"] = "is.iceland.iot4cps-wp5-WeatherService.Stations"
             stream["TARGET_SYSTEM"] = "cz.icecars.iot4cps-wp5-CarFleet.Car1"
-            stream["KAFKA_BOOTSTRAP_SERVERS"] = "172.16.98.186:9092"
-            stream["GOST_SERVER"] = "172.16.98.186:8082"
+            stream["KAFKA_BOOTSTRAP_SERVERS"] = "127.0.0.1:9092"
+            stream["GOST_SERVER"] = "127.0.0.1:8082"
             stream["FILTER_LOGIC"] = \
                 "SELECT * FROM * WHERE (name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_1.Air Temperature' OR name = 'is.iceland.iot4cps-wp5-WeatherService.Stations.Station_2.Air Temperature') AND result < 30"
 

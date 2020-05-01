@@ -8,14 +8,14 @@ docker-compose -f elasticStack/docker-compose.yml build
 docker-compose -f elasticStack/docker-compose.yml up -d
 
 docker-compose -f grafana/docker-compose.yml build
-docker-compose -f jupyter/docker-compose.yml build
+#docker-compose -f jupyter/docker-compose.yml build
 
 docker-compose -f grafana/docker-compose.yml up -d
-docker-compose -f jupyter/docker-compose.yml up -d
+#docker-compose -f jupyter/docker-compose.yml up -d
 
 docker-compose -f elasticStack/docker-compose.yml ps
 docker-compose -f grafana/docker-compose.yml ps
-docker-compose -f jupyter/docker-compose.yml ps
+#docker-compose -f jupyter/docker-compose.yml ps
 
 echo
 echo

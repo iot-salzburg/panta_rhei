@@ -150,18 +150,20 @@ def add_stream_for_system(system_uuid):
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
     WHERE agent.uuid='{}' AND sys.uuid='{}';""".format(user_uuid, system_uuid)
     result_proxy = conn.execute(query)
-    clients = [dict(c.items()) for c in result_proxy.fetchall()]
+    streams = [dict(c.items()) for c in result_proxy.fetchall()]
+    # print(streams)
 
     # Check if the system exists and has agents
-    if len(clients) == 0:
+    if len(streams) == 0:
         engine.dispose()
         flash("It seems that this system doesn't exist or you are not permitted see details this stream.", "danger")
         return redirect(url_for("streamhub.show_all_streams"))
 
     # if not, streams has at least one item
-    payload = clients[0]
+    payload = streams[0]
     source_system = "{}.{}.{}.{}".format(payload["domain"], payload["enterprise"],
                                          payload["workcenter"], payload["station"])
+    # print(source_system)
 
     # Create a new stream using the form's input
     if request.method == "POST" and form.validate():
