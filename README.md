@@ -139,7 +139,7 @@ Now, open new terminals to run the demo applications:
     
     python3 demo_applications/WeatherService/demo_station_1/demo_station_1.py
     python3 demo_applications/WeatherService/demo_station_2/demo_station_2.py 
-    python3 demo_applications/WeatherService/central_service/weather-service.py 
+    python3 demo_applications/WeatherService/forecast_service/forecast-service.py 
 
 Here, you should see that temperature data is produced by the demo stations and consumed only by the central service.
 
