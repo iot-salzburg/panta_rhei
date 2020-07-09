@@ -118,7 +118,7 @@ public class LogicalNode extends BaseNode {
      * @return boolean expression
      */
     public boolean evaluate(JsonObject jsonInput) throws StreamSQLException {
-        logger.info("Check the logical expression '" + this.rawExpression + "'.");
+        logger.info("Checking the logical expression \"{}\".", this.rawExpression);
         switch (this.expressionType) {
             case "proposition":
                 if (super.operation.equals("XOR"))
