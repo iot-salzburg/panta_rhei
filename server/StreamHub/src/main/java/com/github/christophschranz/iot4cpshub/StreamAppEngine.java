@@ -1,15 +1,13 @@
 package com.github.christophschranz.iot4cpshub;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.util.Properties;
 
 /** The StreamAppEngine generates streams between Panta Rhei Systems in Kafka, based on System variables
@@ -69,6 +67,7 @@ public class StreamAppEngine {
 
         /* *************************        create the Semantics class         **************************/
         Semantics semantics = new Semantics(globalOptions, "SensorThings");
+        semantics.checkConnectionGOST();
 
 
         /* *************************   set up the topology and then start it    **************************/
