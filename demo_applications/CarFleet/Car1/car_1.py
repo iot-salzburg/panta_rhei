@@ -46,11 +46,10 @@ def produce_metrics(interval=10):
               f"maximal acceleration of {acceleration} m/s²  \tat {timestamp}")
 
         # Send the metrics via the client, it is suggested to use the same timestamp for later analytics
-        client.produce(quantity="temperature", result=temperature, timestamp=timestamp)
-        client.produce(quantity="acceleration", result=acceleration, timestamp=timestamp)
-        client.produce(quantity="GPS-position-latitude", result=latitude, timestamp=timestamp)
-        client.produce(quantity="GPS-position-longitude", result=longitude, timestamp=timestamp)
-        client.produce(quantity="GPS-position-attitude", result=attitude, timestamp=timestamp)
+        client.produce(quantity="temperature", result=temperature, timestamp=timestamp,
+                       longitude=longitude, latitude=latitude, attitude=attitude)
+        client.produce(quantity="acceleration", result=acceleration, timestamp=timestamp,
+                       longitude=longitude, latitude=latitude, attitude=attitude)
 
         time.sleep(interval)
 
@@ -92,7 +91,8 @@ if __name__ == "__main__":
     config = {"client_name": "client",
               "system": "cz.icecars.iot4cps-wp5-CarFleet.Car1",
               "gost_servers": "localhost:8082",
-              "kafka_bootstrap_servers": "localhost:9092"}
+              "kafka_bootstrap_servers": "localhost:9092",
+              "additional_attributes": "longitude,latitude,attitude"}
     client = DigitalTwinClient(**config)
     client.logger.info("Main: Starting client.")
     client.register(instance_file=INSTANCES)  # Register new instances could be outsourced to the platform

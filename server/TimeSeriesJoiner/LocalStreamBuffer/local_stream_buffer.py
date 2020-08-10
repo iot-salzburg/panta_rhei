@@ -55,6 +55,7 @@ class Record:
         self.quantity = str(quantity)
         self.result = result
         self.metadata = kwargs
+        print(f"\tshow record {self}")
 
     def set_quantity(self, quantity):
         self.quantity = quantity
@@ -74,7 +75,7 @@ class Record:
         """
         if not isinstance(timestamp, (int, float)):
             import dateutil.parser
-            return dateutil.parser.parse(timestamp).strftime("%s")
+            return float(dateutil.parser.parse(timestamp).strftime("%s"))
         if timestamp >= 1e11:
             timestamp /= 1000
             return self.extract_time(timestamp)

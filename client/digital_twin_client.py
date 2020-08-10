@@ -15,13 +15,16 @@ from client.type_mappings import type_mappings
 
 
 class DigitalTwinClient:
-    def __init__(self, client_name, system, gost_servers, kafka_bootstrap_servers=None, kafka_rest_server=None):
+    def __init__(self, client_name, system, gost_servers, kafka_bootstrap_servers=None, kafka_rest_server=None,
+                 additional_attributes=""):
         """
         Load config files
         Checks GOST server connection
         Checks and tests kafka broker connection
         """
         # Init logging
+        if additional_attributes is None:
+            additional_attributes = list()
         self.logger = logging.getLogger("PR Client Logger")
         self.logger.setLevel(logging.INFO)
         # self.logger.setLevel(logging.DEBUG)
@@ -36,7 +39,9 @@ class DigitalTwinClient:
                        "kafka_rest_server": kafka_rest_server,
                        # Use a randomized hash for an unique consumer id in an client-wide consumer group
                        "kafka_group_id": "{}.{}".format(system, client_name),
-                       "kafka_consumer_id": "consumer_%04x" % random.getrandbits(16)}
+                       "kafka_consumer_id": "consumer_%04x" % random.getrandbits(16),
+                       # parse additional attributes sent as metadata in each record
+                       "additional_attributes": [att.strip() for att in additional_attributes.split(",") if att != ""]}
         self.logger.debug("Config for client is: {}".format(self.config))
 
         # Check the connection to the SensorThings server
@@ -179,7 +184,7 @@ class DigitalTwinClient:
         self.logger.info("register_new: Registered instances for Digital Twin Client '{}': {}".format(
             self.config["client_name"], self.mapping))
 
-    def produce(self, quantity, result, timestamp=None):
+    def produce(self, quantity, result, timestamp=None, **kwargs):
         """
         Function that sends data of registered datastreams semantically annotated to the Digital Twin Messaging System
         via the bootstrap_server (preferred) or kafka_rest
@@ -194,9 +199,13 @@ class DigitalTwinClient:
             self.logger.error("send: Quantity is not registered: {}".format(quantity))
             raise Exception("send: Quantity is not registered: {}".format(quantity))
 
+        # create data record with additional attributes
         data = dict({"phenomenonTime": self.get_iso8601_time(timestamp),
                      "resultTime": datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat(),
                      "Datastream": {"@iot.id": self.mapping[quantity]["@iot.id"]}})
+        for attribute in self.config["additional_attributes"]:
+            if kwargs.get(attribute):
+                data[attribute] = kwargs.get(attribute)
 
         # check, if the type of the result is correct
         try:
@@ -271,7 +280,7 @@ class DigitalTwinClient:
         if err is not None:
             self.logger.warning('delivery_report: Message delivery failed: {}'.format(err))
         else:
-            self.logger.debug("delivery_report: Message delivered to topic: '{}', partitions: [{}]".format(
+            self.logger.info("delivery_report: Message delivered to topic: '{}', partitions: [{}]".format(
                 msg.topic(), msg.partition()))
 
     def send_to_kafka_bootstrap(self, kafka_topic, kafka_key, data):
