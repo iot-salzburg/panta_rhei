@@ -60,10 +60,6 @@ This repository comprises the following parts:
 * Install [Docker](https://www.docker.com/community-edition#/download) version **1.10.0+**
 * Install [Docker Compose](https://docs.docker.com/compose/install/) version **1.6.0+**
 * Clone this Repository
-* Install python modules:
-    ```bash
-    pip3 install -r setup/requirements.txt
-    ```
 
 
 This is an instruction on how to set up a demo scenario on your own hardware.
@@ -80,6 +76,8 @@ sh setup/kafka/install-kafka-2v1.sh
 sh setup/kakfa/install-kafka-libs-2v1.sh
 # optional:
 export PATH=/kafka/bin:$PATH
+sudo chown -R user.group /tmp/kafka-logs/
+sudo chown -R user.group /tmp/zookeeper/
 ```
 
 Then, start Zookeeper and Kafka and test the installation:
@@ -100,7 +98,7 @@ Hello Kafka
 If that works as described, you can create the default topics:
 
  ```bash
-sh setup/kafka/create_defaults.sh
+bash setup/kafka/create_defaults.sh
 /kafka/bin/kafka-topics.sh --zookeeper localhost:2181 --list
 ```
 
@@ -116,6 +114,30 @@ The flag `-d` stands for `daemon` mode. To check if everything worked well, open
 
     docker-compose -f setup/gost/docker-compose.yml logs -f
 
+
+### 3) Postgres setup
+
+Run the following lines to set up the postgres database.
+
+```bash
+sudo apt install libpq-dev
+sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+sudo apt-get update
+sudo apt-get install postgresql
+
+sudo -u postgres psql
+postgres=# CREATE ROLE iot4cps LOGIN PASSWORD 'iot4cps';
+postgres=# CREATE DATABASE iot4cps OWNER iot4cps;
+```
+
+### 5) Install the pip packages
+
+Make sure to start a new virtual env for this setup! Then, install the python modules via:
+
+```bash
+pip3 install -r setup/requirements.txt
+```
 
 
 ## Start Demo Applications
