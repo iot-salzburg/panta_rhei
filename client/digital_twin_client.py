@@ -280,7 +280,7 @@ class DigitalTwinClient:
         if err is not None:
             self.logger.warning('delivery_report: Message delivery failed: {}'.format(err))
         else:
-            self.logger.info("delivery_report: Message delivered to topic: '{}', partitions: [{}]".format(
+            self.logger.debug("delivery_report: Message delivered to topic: '{}', partitions: [{}]".format(
                 msg.topic(), msg.partition()))
 
     def send_to_kafka_bootstrap(self, kafka_topic, kafka_key, data):
@@ -431,7 +431,7 @@ class DigitalTwinClient:
         while msg is not None:
             if not msg.error():
                 data = json.loads(msg.value().decode('utf-8'))
-                iot_id = data.get("Datastream", None).get("@iot.id", None)
+                iot_id = data.get("Datastream", {}).get("@iot.id", None)
                 if iot_id in self.subscribed_datastreams.keys():
                     data["Datastream"] = self.subscribed_datastreams[iot_id]
                     data["partition"] = msg.partition

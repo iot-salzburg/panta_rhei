@@ -55,7 +55,6 @@ class Record:
         self.quantity = str(quantity)
         self.result = result
         self.metadata = kwargs
-        print(f"\tshow record {self}")
 
     def set_quantity(self, quantity):
         self.quantity = quantity

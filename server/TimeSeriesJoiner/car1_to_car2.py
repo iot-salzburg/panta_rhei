@@ -32,7 +32,7 @@ KAFKA_TOPIC_IN_2 = "cz.icecars.iot4cps-wp5-CarFleet.Car2.int"
 KAFKA_TOPIC_OUT = "cz.icecars.iot4cps-wp5-CarFleet.Car2.ext"
 # QUANTITIES = ["actSpeed_C11", "vaTorque_C11"]
 # RES_QUANTITY = "vaPower_C11"
-MAX_PROXIMITY = 10
+MAX_PROXIMITY = 1.5
 VERBOSE = True
 
 print(f"Starting the time-series join on topic '{KAFKA_TOPIC_IN_1}'")
@@ -41,7 +41,7 @@ print(f"Starting the time-series join on topic '{KAFKA_TOPIC_IN_1}'")
 # Create a kafka producer and consumer instance and subscribe to the topics
 kafka_consumer = Consumer({
     'bootstrap.servers': KAFKA_BOOTSTRAP_SERVERS,
-    'group.id': f"time-series-joiner_{uuid.uuid4()}",
+    'group.id': f"TS-joiner_{__name__}",
     'auto.offset.reset': 'earliest',
     'enable.auto.commit': False,
     'enable.auto.offset.store': False
@@ -86,20 +86,33 @@ def delivery_report(err, msg):
 # define customized function for join
 def join_fct(record_left, record_right):
     try:
-        d2 = 0
-        d2 += (record_left.get("longitude") - record_right.get("longitude"))**2
-        d2 += (record_left.get("latitude") - record_right.get("latitude"))**2
-    except (KeyError, TypeError, ArithmeticError) as e:
+        # calculate the distance based on a spherical approach (correct even for large distances)
+        k = math.pi/180
+        distance = 6378.388 * math.acos(
+            math.sin(k * record_left.get("latitude")) * math.sin(k * record_right.get("latitude")) +
+            math.cos(k * record_left.get("latitude")) * math.cos(k * record_right.get("latitude")) *
+            math.cos(k * (record_right.get("longitude") - record_left.get("longitude"))))
+        # # a better understandable approach that is correct for small distances is this:
+        # dx = 111.3 * math.cos(k * (record_left.get("latitude") + record_right.get("latitude")) / 2) * \
+        #      (record_right.get("longitude") - record_left.get("longitude"))
+        # dy = 111.3 * (record_left.get("latitude") - record_right.get("latitude"))
+        # # distance = math.sqrt(dx * dx + dy * dy)
+        # print(f"Distances: {distance} -- {math.sqrt(dx * dx + dy * dy)}")
+        # # more information for calculating distances based on coordinates are here: www.kompf.de/gps/distcalc.html
+    except (KeyError, TypeError) as e:
         print(f"WARNING, error while joining streams: {e}")
         print(record_left)
         print(record_right)
         return None
 
-    if d2 < MAX_PROXIMITY**2:
+    if distance < MAX_PROXIMITY:
         record_dict = dict({"thing": record_left.get("thing"), "quantity": record_left.get("quantity"),
                             "result": record_left.get_result(),
                             "timestamp": (record_left.get_time() + record_right.get_time()) / 2,
-                            "meta": record_left.get_metadata()})
+                            "longitude": record_left.get("longitude"),
+                            "latitude": record_left.get("latitude"),
+                            "attitude": record_left.get("attitude"),
+                            "rel_distance": distance})
         # produce a Kafka message, the delivery report callback, the key must be thing + quantity
         kafka_producer.produce(KAFKA_TOPIC_OUT, json.dumps(record_dict).encode('utf-8'),
                                key=f"{record_dict.get('thing')}.{record_dict.get('quantity')}".encode('utf-8'),
@@ -118,6 +131,7 @@ def join_fct(record_left, record_right):
 
         return record_from_dict(record_dict)
     else:
+        print(f"The relative distance of {distance} km is higher than the maximum of {MAX_PROXIMITY} km.")
         return None
 
 
@@ -135,8 +149,8 @@ if __name__ == "__main__":
     import pdb
 
     print("Create a StreamBuffer instance.")
-    stream_buffer = StreamBuffer(instant_emit=True, left="Car1", right="vaTorque_C11",
-                                 buffer_results=True, delta_time=1,
+    stream_buffer = StreamBuffer(instant_emit=True, left="Car1", right="Car2",
+                                 buffer_results=False, delta_time=1,
                                  verbose=VERBOSE, join_function=join_fct, commit_function=commit_fct)
 
     cnt_left = 0
