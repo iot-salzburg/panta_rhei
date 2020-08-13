@@ -55,13 +55,14 @@ def on_join(record_left, record_right):
       If no join should be done return None. Else, return a dictionary containing the mandatory keys "quantity",
       "result" and "phenomenonTime". It is allowed to use more keys.
     """
-    # calculate the distance based on a spherical approach (correct even for large distances)
+    # calculate the relative distance between the cars from the given GPC coordinates based on a spherical approach.
+    # This solution is even correct for large distances. The distance is in kilometer.
     k = math.pi/180
     distance = 6378.388 * math.acos(
         math.sin(k * record_left.get("latitude")) * math.sin(k * record_right.get("latitude")) +
         math.cos(k * record_left.get("latitude")) * math.cos(k * record_right.get("latitude")) *
         math.cos(k * (record_right.get("longitude") - record_left.get("longitude"))))
-    # # a better understandable approach that is correct for small distances is this:
+    # # the above solution is for small distances similar than the one below, but the later is better understandable
     # dx = 111.3 * math.cos(k * (record_left.get("latitude") + record_right.get("latitude")) / 2) * \
     #      (record_right.get("longitude") - record_left.get("longitude"))
     # dy = 111.3 * (record_left.get("latitude") - record_right.get("latitude"))
@@ -69,7 +70,7 @@ def on_join(record_left, record_right):
     # print(f"Distances: {distance} -- {math.sqrt(dx * dx + dy * dy)}")
     # # more information for calculating distances based on coordinates are here: www.kompf.de/gps/distcalc.html
 
-    if distance < 1.2:  # distance is lesser than 15 kilometers
+    if distance < 1.2:  # distance is lesser than this distance in kilometers
         record_dict = dict({"thing": record_left.get("thing"),
                             "quantity": record_left.get("quantity"),
                             "result": record_left.get_result(),
@@ -79,7 +80,6 @@ def on_join(record_left, record_right):
                             "latitude": record_left.get("latitude"),
                             "attitude": record_left.get("attitude"),
                             "rel_distance": distance})
-
         return record_dict
 
     elif VERBOSE:
