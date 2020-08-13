@@ -4,6 +4,8 @@
 import sys
 import time
 import random
+import pytz
+from datetime import datetime
 
 try:
     from .doublylinkedlist import Node, LinkedList
@@ -73,8 +75,7 @@ class Record:
         :return: a unix timestamp that is normalized
         """
         if not isinstance(timestamp, (int, float)):
-            import dateutil.parser
-            return float(dateutil.parser.parse(timestamp).strftime("%s.%f"))
+            return datetime.fromisoformat(timestamp).replace(tzinfo=pytz.UTC).timestamp()
         if timestamp >= 1e11:
             timestamp /= 1000
             return self.extract_time(timestamp)

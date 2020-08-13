@@ -7,16 +7,17 @@ to define the functions can be found in their respective docstring.
 
 import math
 
+# Kafka configuration
 KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"  # kafka nodes of the form 'mybroker1,mybroker2'
-KAFKA_TOPIC_IN_1 = "cz.icecars.iot4cps-wp5-CarFleet.Car1.int"
-KAFKA_TOPIC_IN_2 = "cz.icecars.iot4cps-wp5-CarFleet.Car2.int"
+# declare one or two Kafka Topics to consume from
+KAFKA_TOPICS_IN = ["cz.icecars.iot4cps-wp5-CarFleet.Car1.int", "cz.icecars.iot4cps-wp5-CarFleet.Car2.int"]
 KAFKA_TOPIC_OUT = "cz.icecars.iot4cps-wp5-CarFleet.Car2.ext"
-TIME_DELTA = 10  # maximal time difference between two Records being joined
-ADDITIONAL_ATTRIBUTES = "longitude,latitude,attitude"  # optional attributes in observation records
-USE_ISO_TIMESTAMPS = False
-VERBOSE = True
 
-max_proximity = 1.2
+# join configuration
+TIME_DELTA = None  # int, float or None: Maximal time difference between two Records being joined
+ADDITIONAL_ATTRIBUTES = "longitude,latitude,attitude"  # optional attributes in observation records "att1,att2,..."
+USE_ISO_TIMESTAMPS = True  # boolean timestamp format of the resulting records, ISO 8601 or unix timestamp if False
+VERBOSE = True
 
 
 # ingest routine for record into the StreamBuffer instance
@@ -37,10 +38,10 @@ def ingest_fct(record, stream_buffer):
     :return: None
     """
     # ingest into left buffer, iff the records was consumed from system Car 1
-    if record.get("topic") == KAFKA_TOPIC_IN_1:
+    if record.get("topic") == "cz.icecars.iot4cps-wp5-CarFleet.Car1.int":
         stream_buffer.ingest_left(record)  # with instant emit
     # ingest into left buffer, iff the records was consumed from system Car 2
-    elif record.get("topic") == KAFKA_TOPIC_IN_2:
+    elif record.get("topic") == "cz.icecars.iot4cps-wp5-CarFleet.Car2.int":
         stream_buffer.ingest_right(record)
 
 
@@ -68,11 +69,12 @@ def on_join(record_left, record_right):
     # print(f"Distances: {distance} -- {math.sqrt(dx * dx + dy * dy)}")
     # # more information for calculating distances based on coordinates are here: www.kompf.de/gps/distcalc.html
 
-    if distance < max_proximity:  # distance is lesser than 15 kilometers
+    if distance < 1.2:  # distance is lesser than 15 kilometers
         record_dict = dict({"thing": record_left.get("thing"),
                             "quantity": record_left.get("quantity"),
                             "result": record_left.get_result(),
-                            "phenomenonTime": (record_left.get_time() + record_right.get_time()) / 2,
+                            "phenomenonTime": record_left.get_time(),
+                            # often the mean is used: (record_left.get_time() + record_right.get_time()) / 2
                             "longitude": record_left.get("longitude"),
                             "latitude": record_left.get("latitude"),
                             "attitude": record_left.get("attitude"),
@@ -81,5 +83,5 @@ def on_join(record_left, record_right):
         return record_dict
 
     elif VERBOSE:
-        print(f"The relative distance of {distance} km is higher than the maximum of {max_proximity} km.")
+        print(f"The relative distance of {distance:.3f} km between the cars exceeds the maximal allowed distance.")
         return None

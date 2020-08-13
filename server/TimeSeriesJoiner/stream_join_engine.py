@@ -11,7 +11,7 @@ the consume-join-produce procedures using Apache Kafka.
 
 Don't forget to start the demo producers in in advance in order to produce records into the Kafka topic.
 """
-
+import socket
 import time
 import json
 import uuid
@@ -34,8 +34,7 @@ except (ModuleNotFoundError, ImportError):
 
 
 print(f"Starting the stream join with the following configurations: "
-      f"\n\t'KAFKA_TOPIC_IN_1: {KAFKA_TOPIC_IN_1}'"
-      f"\n\t'KAFKA_TOPIC_IN_2: {KAFKA_TOPIC_IN_2}'"
+      f"\n\t'KAFKA_TOPICS_IN: {KAFKA_TOPICS_IN}'"
       f"\n\t'KAFKA_TOPIC_OUT: {KAFKA_TOPIC_OUT}'"
       f"\n\t'TIME_DELTA: {TIME_DELTA}'"
       f"\n\tADDITIONAL_ATTRIBUTES: {ADDITIONAL_ATTRIBUTES}")
@@ -44,13 +43,13 @@ print(f"Starting the stream join with the following configurations: "
 # Create a kafka producer and consumer instance and subscribe to the topics
 kafka_consumer = Consumer({
     'bootstrap.servers': KAFKA_BOOTSTRAP_SERVERS,
-    'group.id': f"TS-joiner_{uuid.uuid4()}",
+    'group.id': f"TS-joiner_{socket.gethostname()}",
     'auto.offset.reset': 'earliest',
     'enable.auto.commit': False,
     'enable.auto.offset.store': False
 })
-kafka_consumer.subscribe([KAFKA_TOPIC_IN_1, KAFKA_TOPIC_IN_2])
-# kafka_consumer.assign([TopicPartition(KAFKA_TOPIC_IN_1), TopicPartition(KAFKA_TOPIC_IN_2)])
+kafka_consumer.subscribe(KAFKA_TOPICS_IN)
+# kafka_consumer.assign([TopicPartition(topic) for topic in KAFKA_TOPICS_IN])
 
 # Create a Kafka producer
 kafka_producer = Producer({'bootstrap.servers': KAFKA_BOOTSTRAP_SERVERS,
@@ -123,7 +122,7 @@ def to_iso_time(timestamp):
     :return: timestamp in ISO 8601 and UTC timezone
     """
     if isinstance(timestamp, (int, float)):
-        return datetime.fromtimestamp(timestamp).replace(tzinfo=pytz.UTC).isoformat()
+        return datetime.utcfromtimestamp(timestamp).replace(tzinfo=pytz.UTC).isoformat()
     if timestamp is None:
         return datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat()
     return timestamp
@@ -184,7 +183,7 @@ if __name__ == "__main__":
         kafka_consumer.close()
 
         print(f"\nRecords in |{KAFKA_TOPIC_OUT}| = {stream_buffer.get_join_counter()}, "
-              f"|{KAFKA_TOPIC_IN_1}| = {stream_buffer.get_left_counter()}, "
-              f"|{KAFKA_TOPIC_IN_2}| = {stream_buffer.get_right_counter()}.")
+              f"|left buffer| = {stream_buffer.get_left_counter()}, "
+              f"|right buffer| = {stream_buffer.get_right_counter()}.")
         print(f"Joined time-series {ts_stop - st0:.5g} s long, "
               f"this are {stream_buffer.get_join_counter() / (ts_stop - st0):.6g} joins per second.")
