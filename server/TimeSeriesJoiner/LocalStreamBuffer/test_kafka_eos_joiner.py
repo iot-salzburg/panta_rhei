@@ -13,10 +13,9 @@ import time
 import json
 import math
 import uuid
-
-import confluent_kafka
 import pytest
 
+import confluent_kafka
 import confluent_kafka.admin as kafka_admin
 from confluent_kafka import Producer, Consumer, TopicPartition
 

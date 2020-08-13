@@ -10,13 +10,13 @@ It consumes all metrics from 'cz.icecars.iot4cps-wp5-CarFleet.Car1.int' and forw
 A join rate of around 15000 time-series joins per second was reached with a exactly-once semantic for
 the consume-join-produce using Apache Kafka.
 
-Don't forget to start the demo consumers in in advance in order to produce records into the Kafka topic.
+Don't forget to start the demo producers in in advance in order to produce records into the Kafka topic.
 """
-
 import time
 import json
 import math
-import uuid
+import pytz
+from datetime import datetime
 
 from confluent_kafka import Producer, Consumer, TopicPartition
 
@@ -30,7 +30,7 @@ KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"  # of the form 'mybroker1,mybroker2'
 KAFKA_TOPIC_IN_1 = "cz.icecars.iot4cps-wp5-CarFleet.Car1.int"
 KAFKA_TOPIC_IN_2 = "cz.icecars.iot4cps-wp5-CarFleet.Car2.int"
 KAFKA_TOPIC_OUT = "cz.icecars.iot4cps-wp5-CarFleet.Car2.ext"
-QUANTITIES = ["actSpeed_C11", "vaTorque_C11"]
+# QUANTITIES = ["actSpeed_C11", "vaTorque_C11"]
 # RES_QUANTITY = "vaPower_C11"
 ADDITIONAL_ATTRIBUTES = "longitude,latitude,attitude"
 MAX_PROXIMITY = 15
@@ -42,13 +42,13 @@ print(f"Starting the time-series join on topic '{KAFKA_TOPIC_IN_1}'")
 # Create a kafka producer and consumer instance and subscribe to the topics
 kafka_consumer = Consumer({
     'bootstrap.servers': KAFKA_BOOTSTRAP_SERVERS,
-    'group.id': f"TS-joiner_{__name__}_1",
+    'group.id': f"TS-joiner_{__name__}_2",
     'auto.offset.reset': 'earliest',
     'enable.auto.commit': False,
     'enable.auto.offset.store': False
 })
 kafka_consumer.subscribe([KAFKA_TOPIC_IN_1, KAFKA_TOPIC_IN_2])
-# kafka_consumer.assign([TopicPartition(KAFKA_TOPIC_IN_1), TopicPartition(KAFKA_TOPIC_IN_2)])
+kafka_consumer.assign([TopicPartition(KAFKA_TOPIC_IN_1), TopicPartition(KAFKA_TOPIC_IN_2)])
 
 # Create a Kafka producer
 kafka_producer = Producer({'bootstrap.servers': KAFKA_BOOTSTRAP_SERVERS,
@@ -57,20 +57,6 @@ kafka_producer = Producer({'bootstrap.servers': KAFKA_BOOTSTRAP_SERVERS,
 kafka_producer.init_transactions()
 # Start producer transaction.
 kafka_producer.begin_transaction()
-
-
-class Counter:
-    """
-    A counter class that is used to count the number of joins
-    """
-    def __init__(self):
-        self.cnt = 0
-
-    def increment(self):
-        self.cnt += 1
-
-    def get(self):
-        return self.cnt
 
 
 def delivery_report(err, msg):
@@ -109,7 +95,8 @@ def join_fct(record_left, record_right):
     if distance < MAX_PROXIMITY:
         record_dict = dict({"thing": record_left.get("thing"), "quantity": record_left.get("quantity"),
                             "result": record_left.get_result(),
-                            "timestamp": (record_left.get_time() + record_right.get_time()) / 2,
+                            "phenomenonTime": (record_left.get_time() + record_right.get_time()) / 2,
+                            "resultTime": datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat(),
                             "longitude": record_left.get("longitude"),
                             "latitude": record_left.get("latitude"),
                             "attitude": record_left.get("attitude"),
@@ -150,7 +137,7 @@ if __name__ == "__main__":
 
     print("Create a StreamBuffer instance.")
     stream_buffer = StreamBuffer(instant_emit=True, left="Car1", right="Car2",
-                                 buffer_results=False, delta_time=1,
+                                 buffer_results=False, delta_time=10,
                                  verbose=VERBOSE, join_function=join_fct, commit_function=commit_fct)
 
     st0 = time.time()
@@ -180,9 +167,9 @@ if __name__ == "__main__":
                 **additional_attributes)
 
             # ingest the record into the StreamBuffer instance, instant emit
-            if msg.topic() == KAFKA_TOPIC_IN_1:  # Car1
+            if record.get("topic") == KAFKA_TOPIC_IN_1:  # Car1
                 stream_buffer.ingest_left(record)  # with instant emit
-            elif msg.topic() == KAFKA_TOPIC_IN_2:  # Car2
+            elif record.get("topic") == KAFKA_TOPIC_IN_2:  # Car2
                 stream_buffer.ingest_right(record)
 
     except KeyboardInterrupt:

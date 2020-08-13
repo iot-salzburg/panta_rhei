@@ -74,7 +74,7 @@ class Record:
         """
         if not isinstance(timestamp, (int, float)):
             import dateutil.parser
-            return float(dateutil.parser.parse(timestamp).strftime("%s"))
+            return float(dateutil.parser.parse(timestamp).strftime("%s.%f"))
         if timestamp >= 1e11:
             timestamp /= 1000
             return self.extract_time(timestamp)
