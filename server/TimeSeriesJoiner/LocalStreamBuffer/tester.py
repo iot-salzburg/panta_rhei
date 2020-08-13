@@ -170,7 +170,7 @@ def test_five_five_many():
     print(f"joined {len(events_t)} tuples in {time.time() - ts} s.")
     print(f"that are {int(len(events_t)/(time.time() - ts))} joins per second.")
     assert len(events_t) == 179987
-    assert stop_time - ts < 6
+    assert stop_time - ts < 12
 
 
 def test_unordered():
@@ -305,7 +305,7 @@ def test_randomized_many():
     print(f"joined {len(events_t)} tuples in {time.time() - ts} s.")
     print(f"that are {int(len(events_t)/(time.time() - ts))} joins per second.")
     assert len(events_t) == 23041
-    assert stop_time - ts < 1  # we got around 0.4 s
+    assert stop_time - ts < 2  # we got around 0.4 s
 
 
 def test_delayed_many():

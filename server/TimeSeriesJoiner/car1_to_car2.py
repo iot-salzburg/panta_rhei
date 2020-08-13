@@ -30,9 +30,10 @@ KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"  # of the form 'mybroker1,mybroker2'
 KAFKA_TOPIC_IN_1 = "cz.icecars.iot4cps-wp5-CarFleet.Car1.int"
 KAFKA_TOPIC_IN_2 = "cz.icecars.iot4cps-wp5-CarFleet.Car2.int"
 KAFKA_TOPIC_OUT = "cz.icecars.iot4cps-wp5-CarFleet.Car2.ext"
-# QUANTITIES = ["actSpeed_C11", "vaTorque_C11"]
+QUANTITIES = ["actSpeed_C11", "vaTorque_C11"]
 # RES_QUANTITY = "vaPower_C11"
-MAX_PROXIMITY = 1.5
+ADDITIONAL_ATTRIBUTES = "longitude,latitude,attitude"
+MAX_PROXIMITY = 15
 VERBOSE = True
 
 print(f"Starting the time-series join on topic '{KAFKA_TOPIC_IN_1}'")
@@ -41,7 +42,7 @@ print(f"Starting the time-series join on topic '{KAFKA_TOPIC_IN_1}'")
 # Create a kafka producer and consumer instance and subscribe to the topics
 kafka_consumer = Consumer({
     'bootstrap.servers': KAFKA_BOOTSTRAP_SERVERS,
-    'group.id': f"TS-joiner_{__name__}",
+    'group.id': f"TS-joiner_{__name__}_1",
     'auto.offset.reset': 'earliest',
     'enable.auto.commit': False,
     'enable.auto.offset.store': False
@@ -117,7 +118,6 @@ def join_fct(record_left, record_right):
         kafka_producer.produce(KAFKA_TOPIC_OUT, json.dumps(record_dict).encode('utf-8'),
                                key=f"{record_dict.get('thing')}.{record_dict.get('quantity')}".encode('utf-8'),
                                callback=delivery_report)
-        cnt_out.increment()
 
         # Send the consumer's position to transaction to commit them along with the transaction, committing both
         # input and outputs in the same transaction is what provides EOS.
@@ -130,7 +130,7 @@ def join_fct(record_left, record_right):
         kafka_producer.begin_transaction()
 
         return record_from_dict(record_dict)
-    else:
+    elif VERBOSE:
         print(f"The relative distance of {distance} km is higher than the maximum of {MAX_PROXIMITY} km.")
         return None
 
@@ -153,10 +153,7 @@ if __name__ == "__main__":
                                  buffer_results=False, delta_time=1,
                                  verbose=VERBOSE, join_function=join_fct, commit_function=commit_fct)
 
-    cnt_left = 0
-    cnt_right = 0
-    cnt_out = Counter()
-    st0 = ts_stop = None
+    st0 = time.time()
     try:
         while True:
             msg = kafka_consumer.poll(0.1)
@@ -166,32 +163,27 @@ if __name__ == "__main__":
                 continue
             elif msg.error():
                 raise Exception("Consumer error: {}".format(msg.error()))
-            elif st0 is None:
-                st0 = time.time()
-                print("Start the count clock")
 
             record_json = json.loads(msg.value().decode('utf-8'))
             if VERBOSE:
                 print(f"Received new record: {record_json}")
 
             # create a Record from the json
+            additional_attributes = {att: record_json.get(att.strip()) for att in ADDITIONAL_ATTRIBUTES.split(",")
+                                     if att != ""}
             record = Record(
                 thing=record_json.get("thing"),
                 quantity=record_json.get("quantity"),
                 timestamp=record_json.get("phenomenonTime"),
                 result=record_json.get("result"),
                 topic=msg.topic(), partition=msg.partition(), offset=msg.offset(),
-                longitude=record_json.get("longitude"),
-                latitude=record_json.get("latitude"),
-                attitude=record_json.get("attitude"))
+                **additional_attributes)
 
             # ingest the record into the StreamBuffer instance, instant emit
             if msg.topic() == KAFKA_TOPIC_IN_1:  # Car1
                 stream_buffer.ingest_left(record)  # with instant emit
-                cnt_left += 1
             elif msg.topic() == KAFKA_TOPIC_IN_2:  # Car2
                 stream_buffer.ingest_right(record)
-                cnt_right += 1
 
     except KeyboardInterrupt:
         print("Gracefully stopping")
@@ -207,7 +199,8 @@ if __name__ == "__main__":
         # Leave group and commit offsets
         kafka_consumer.close()
 
-        print(f"\nRecords in |{KAFKA_TOPIC_OUT}| = {cnt_out.get()}, "
-              f"|{KAFKA_TOPIC_IN_1}| = {cnt_left}, |{KAFKA_TOPIC_IN_2}| = {cnt_right}.")
+        print(f"\nRecords in |{KAFKA_TOPIC_OUT}| = {stream_buffer.get_join_counter()}, "
+              f"|{KAFKA_TOPIC_IN_1}| = {stream_buffer.get_left_counter()}, "
+              f"|{KAFKA_TOPIC_IN_2}| = {stream_buffer.get_right_counter()}.")
         print(f"Joined time-series {ts_stop - st0:.5g} s long, "
-              f"that are {cnt_out.get() / (ts_stop - st0):.6g} joins per second.")
+              f"this are {stream_buffer.get_join_counter() / (ts_stop - st0):.6g} joins per second.")

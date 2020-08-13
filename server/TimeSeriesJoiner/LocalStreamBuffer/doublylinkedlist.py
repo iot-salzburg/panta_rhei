@@ -4,24 +4,26 @@
 
 class Node(object):
 
-    def __init__(self, data):
+    def __init__(self, data, side):
         """Initialize this node with the given data."""
         self.data = data
+        self.side = side  # the side is either "left" or "right"
         self.next = None
         self.prev = None
 
     def __repr__(self):
         """Return a string representation of this node."""
-        return 'Node({!r})'.format(self.data)
+        return '{} Node({!r})'.format(self.side, self.data)
 
 
 class LinkedList(object):
 
-    def __init__(self, iterable=None):
+    def __init__(self, iterable=None, side=None):
         """Initialize this linked list and append the given items, if any."""
         self.head = None  # First node
         self.tail = None  # Last node
         self.size = 0  # Number of nodes
+        self.side = side
         # Append the given items
         if iterable is not None:
             for item in iterable:
@@ -112,7 +114,7 @@ class LinkedList(object):
             return self.append(item)
 
         # Where the actual code starts
-        new_node = Node(item)
+        new_node = Node(item, side=self.side)
         prev_node = None
         current_node = self.head
         counter = 0
@@ -142,7 +144,7 @@ class LinkedList(object):
         Best case running time: O(1) have reference to a tail element
         Worst case running time: O(1) have reference to a tail element"""
         # Create a new node to hold the given item
-        new_node = Node(item)
+        new_node = Node(item, side=self.side)
         # Check if this linked list is empty
         if self.is_empty():
             # Assign head to new node
@@ -160,7 +162,7 @@ class LinkedList(object):
         Best case running time: O(1) have reference to a head element
         Worst case running time: O(1) have reference to a head element"""
         # Create a new node to hold the given item
-        new_node = Node(item)
+        new_node = Node(item, side=self.side)
         # Check if this linked list is empty
         if self.is_empty():
             # Assign tail to new node
