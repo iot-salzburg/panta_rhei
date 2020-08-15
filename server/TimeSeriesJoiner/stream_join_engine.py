@@ -205,5 +205,6 @@ if __name__ == "__main__":
         print(f"\nRecords in |{KAFKA_TOPIC_OUT}| = {stream_buffer.get_join_counter()}, "
               f"|left buffer| = {stream_buffer.get_left_counter()}, "
               f"|right buffer| = {stream_buffer.get_right_counter()}.")
-        print(f"Joined time-series {ts_stop - st0:.5g} s long, "
-              f"this are {stream_buffer.get_join_counter() / (ts_stop - st0):.6g} joins per second.")
+    if start_time != stop_time:
+        print(f"Joined time-series {stop_time - start_time:.6f} s long, "
+              f"that are {stream_buffer.get_join_counter() / (stop_time - start_time):.2f} joins per second.")
