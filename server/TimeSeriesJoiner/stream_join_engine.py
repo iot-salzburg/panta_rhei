@@ -43,7 +43,7 @@ print(f"Starting the stream join with the following configurations: "
 # Create a kafka producer and consumer instance and subscribe to the topics
 kafka_consumer = Consumer({
     'bootstrap.servers': KAFKA_BOOTSTRAP_SERVERS,
-    'group.id': f"TS-joiner_{socket.gethostname()}",
+    'group.id': f"TS-joiner_{socket.gethostname()}_1",
     'auto.offset.reset': 'earliest',
     'enable.auto.commit': False,
     'enable.auto.offset.store': False
@@ -89,15 +89,15 @@ def join_fct(record_left, record_right):
                                    key=f"{record_dict.get('thing')}.{record_dict.get('quantity')}".encode('utf-8'),
                                    callback=delivery_report)
 
-            # Send the consumer's position to transaction to commit them along with the transaction, committing both
-            # input and outputs in the same transaction is what provides EOS.
-            kafka_producer.send_offsets_to_transaction(
-                kafka_consumer.position(kafka_consumer.assignment()),
-                kafka_consumer.consumer_group_metadata())
-            # Commit the transaction
-            kafka_producer.commit_transaction()
-            # Begin new transaction
-            kafka_producer.begin_transaction()
+            # # Send the consumer's position to transaction to commit them along with the transaction, committing both
+            # # input and outputs in the same transaction is what provides EOS.
+            # kafka_producer.send_offsets_to_transaction(
+            #     kafka_consumer.position(kafka_consumer.assignment()),
+            #     kafka_consumer.consumer_group_metadata())
+            # # Commit the transaction
+            # kafka_producer.commit_transaction()
+            # # Begin new transaction
+            # kafka_producer.begin_transaction()
     except Exception as e:
         print(f"WARNING, Exception while joining streams: {e}")
         print(f"left record: {record_left}")
@@ -105,14 +105,31 @@ def join_fct(record_left, record_right):
         raise e
 
 
-def commit_fct(record_to_commit):
-    # Test the commit: Uncomment commit() in order to consume and join always the same Records.
-    # It is of importance that the
-    rec = record_to_commit.data.get("record")
+def commit_transaction(verbose=False, commit_time=time.time()):
+    # Send the consumer's position to transaction to commit them along with the transaction, committing both
+    # input and outputs in the same transaction is what provides EOS.
+    kafka_producer.send_offsets_to_transaction(
+        kafka_consumer.position(kafka_consumer.assignment()),
+        kafka_consumer.consumer_group_metadata())
+    # Commit the transaction
+    kafka_producer.commit_transaction()
+    # Begin new transaction
+    kafka_producer.begin_transaction()
+
+    # commit the offset of the latest records that got obsolete in order to consume and join always the same Records.
+    latest_records = []
+    if stream_buffer.last_removed_left:
+        latest_records.append(stream_buffer.last_removed_left.data.get("record"))
+    if stream_buffer.last_removed_right:
+        latest_records.append(stream_buffer.last_removed_right.data.get("record"))
+
     # Commit message’s offset + 1
     kafka_consumer.commit(offsets=[TopicPartition(topic=rec.get("topic"),
                                                   partition=rec.get("partition"),
-                                                  offset=rec.get("offset") + 1)])  # commit the next (n+1) offset
+                                                  offset=rec.get("offset") + 1)  # commit the next (n+1) offset
+                                   for rec in latest_records])
+    if verbose:
+        print(f"Committed to latest offset at {commit_time:.6f}.")
 
 
 def to_iso_time(timestamp):
@@ -133,45 +150,48 @@ if __name__ == "__main__":
 
     print("Create a StreamBuffer instance.")
     stream_buffer = StreamBuffer(instant_emit=True, buffer_results=False,
-                                 verbose=VERBOSE, join_function=join_fct, commit_function=commit_fct)
+                                 verbose=VERBOSE, join_function=join_fct)
 
-    st0 = time.time()
+    start_time = last_transaction_time = time.time()
+    n_none_polls = 0
+    started = False
     try:
         while True:
-            msg = kafka_consumer.poll(0.1)
+            msgs = kafka_consumer.consume(num_messages=MAX_BATCH_SIZE, timeout=0.1)
 
-            # if there is no msg within a second, continue
-            if msg is None:
+            # if there is no msg within 0.1 seconds, continue
+            if len(msgs) == 0:
                 continue
-            elif msg.error():
-                raise Exception("Consumer error: {}".format(msg.error()))
 
-            record_json = json.loads(msg.value().decode('utf-8'))
-            if VERBOSE:
-                print(f"Received new record: {record_json}")
+                # iterate over each message that was consumed
+            for msg in msgs:
+                record_json = json.loads(msg.value().decode('utf-8'))
+                if VERBOSE:
+                    print(f"Received new record: {record_json}")
 
-            # create a Record from the json
-            additional_attributes = {att: record_json.get(att.strip()) for att in ADDITIONAL_ATTRIBUTES.split(",")
-                                     if att != ""}
-            record = Record(
-                thing=record_json.get("thing"),
-                quantity=record_json.get("quantity"),
-                timestamp=record_json.get("phenomenonTime"),
-                result=record_json.get("result"),
-                topic=msg.topic(), partition=msg.partition(), offset=msg.offset(),
-                **additional_attributes)
+                # create a Record from the json
+                additional_attributes = {att: record_json.get(att.strip()) for att in ADDITIONAL_ATTRIBUTES.split(",")
+                                         if att != ""}
+                record = Record(
+                    thing=record_json.get("thing"),
+                    quantity=record_json.get("quantity"),
+                    timestamp=record_json.get("phenomenonTime"),
+                    result=record_json.get("result"),
+                    topic=msg.topic(), partition=msg.partition(), offset=msg.offset(),
+                    **additional_attributes)
 
-            ingest_fct(record, stream_buffer)
-            # # ingest the record into the StreamBuffer instance, instant emit
-            # if record.get("topic") == KAFKA_TOPIC_IN_1:  # Car1
-            #     stream_buffer.ingest_left(record)  # with instant emit
-            # elif record.get("topic") == KAFKA_TOPIC_IN_2:  # Car2
-            #     stream_buffer.ingest_right(record)
+                ingest_fct(record, stream_buffer)
+
+            # commit the transaction every TRANSACTION_TIME
+            cur_time = time.time()
+            if cur_time >= last_transaction_time + TRANSACTION_TIME:
+                last_transaction_time = cur_time
+                commit_transaction(verbose=VERBOSE, commit_time=last_transaction_time)
 
     except KeyboardInterrupt:
         print("Gracefully stopping")
     finally:
-        ts_stop = time.time()
+        stop_time = time.time()
 
         # commit processed message offsets to the transaction
         kafka_producer.send_offsets_to_transaction(

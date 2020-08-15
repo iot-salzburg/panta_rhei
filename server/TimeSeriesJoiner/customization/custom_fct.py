@@ -17,6 +17,8 @@ KAFKA_TOPIC_OUT = "cz.icecars.iot4cps-wp5-CarFleet.Car2.ext"
 TIME_DELTA = None  # int, float or None: Maximal time difference between two Records being joined
 ADDITIONAL_ATTRIBUTES = "longitude,latitude,attitude"  # optional attributes in observation records "att1,att2,..."
 USE_ISO_TIMESTAMPS = True  # boolean timestamp format of the resulting records, ISO 8601 or unix timestamp if False
+MAX_BATCH_SIZE = 100  # consume up to this number messages at once
+TRANSACTION_TIME = 1  # time interval to commit the transactions
 VERBOSE = True
 
 
@@ -70,7 +72,7 @@ def on_join(record_left, record_right):
     # print(f"Distances: {distance} -- {math.sqrt(dx * dx + dy * dy)}")
     # # more information for calculating distances based on coordinates are here: www.kompf.de/gps/distcalc.html
 
-    if distance < 1.2:  # distance is lesser than this distance in kilometers
+    if distance < 1.23:  # distance is lesser than the set distance in kilometers
         record_dict = dict({"thing": record_left.get("thing"),
                             "quantity": record_left.get("quantity"),
                             "result": record_left.get_result(),

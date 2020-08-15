@@ -107,17 +107,17 @@ class StreamBuffer:
     A class for deterministic, low-latency, high-throughput time-series joins of records within the continuous streams
     'r' (left) and 's' (right join partner).
     """
-    def __init__(self, instant_emit=True, delta_time=sys.maxsize, max_latency=sys.maxsize, left="r", right="s",
+    def __init__(self, instant_emit=True, delta_time=None, max_latency=None, left="r", right="s",
                  buffer_results=True, join_function=None, commit_function=None, verbose=False):
         """
 
         :param instant_emit: boolean, default=True
             Emit (join and reduce) on each new record in the buffer
-        :param delta_time: float, int, default=sys.maxsize
-            Sets the maximum allowed time difference of two join candidates
-        :param max_latency: float, int, default=sys.maxsize
+        :param delta_time: float, int, None default=None
+            Sets the maximum allowed time difference of two join candidates, None doesn't check time constraints
+        :param max_latency: float, int, None default=None
             Join rule waits up to max_latency for new Records before joining them anyway. Breaks the determinism
-            guarantee.
+            guarantee if the latency is larger than the not-None value.
         :param left: str, optional
             Sets the stream's quantity name that is joined as left record
         :param right: str, optional
@@ -150,6 +150,8 @@ class StreamBuffer:
         self.counter_left = 0
         self.counter_right = 0
         self.counter_joins = 0
+        self.last_removed_left = None  # save the latest Record removed for transaction commits
+        self.last_removed_right = None
         self.instant_emit = instant_emit
         if not instant_emit:
             raise NotImplementedError("implement trigger_emit method.")
@@ -160,7 +162,7 @@ class StreamBuffer:
         self.join_function = join_function
         self.commit_function = commit_function
         self.max_latency = max_latency
-        if self.max_latency != sys.maxsize:
+        if self.max_latency:
             raise Exception("Maximum latency is not implemented yet.")
         self.verbose = verbose
 
@@ -358,6 +360,11 @@ class StreamBuffer:
             if self.verbose:
                 print(f"  removing superseded record {r_i0.data.get('record')}, leader: {s_0.data.get('record')}")
             buffer_trim.delete(r_i0.data)
+            # store latest removed in order to make periodical transactions for all partitions, e.g., 1 second
+            if r_i0.side == "left":
+                self.last_removed_left = r_i0
+            elif r_i0.side == "right":
+                self.last_removed_right = r_i0
             if self.commit_function:
                 self.commit_function(record_to_commit=r_i0)
             r_i0 = r_i1
@@ -379,7 +386,7 @@ class StreamBuffer:
         u = node_u.data
         v = node_v.data
         # check the delta time constraint, don't join if not met
-        if abs(u.get('record').get_time() - v.get('record').get_time()) > self.delta_time:
+        if self.delta_time and abs(u.get('record').get_time() - v.get('record').get_time()) > self.delta_time:
             return None
 
         # decide based on the defined left_quantity, which record is joined as left join partner
