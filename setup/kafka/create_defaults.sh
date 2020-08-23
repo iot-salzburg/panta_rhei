@@ -15,7 +15,10 @@ sh -c "(/kafka/bin/kafka-topics.sh --zookeeper :2181 --create --partitions 1 --r
 sh -c "(/kafka/bin/kafka-topics.sh --zookeeper :2181 --create --partitions 3 --replication-factor 1 --config min.insync.replicas=1 --config cleanup.policy=compact --config retention.ms=241920000 --topic is.iceland.iot4cps-wp5-WeatherService.Stations.int > /dev/null 2>&1 && echo A new topic was created ) || echo Topic was already created"
 sh -c "(/kafka/bin/kafka-topics.sh --zookeeper :2181 --create --partitions 3 --replication-factor 1 --config min.insync.replicas=1 --config cleanup.policy=compact --config retention.ms=241920000 --topic is.iceland.iot4cps-wp5-WeatherService.Stations.ext > /dev/null 2>&1 && echo A new topic was created ) || echo Topic was already created"
 sh -c "(/kafka/bin/kafka-topics.sh --zookeeper :2181 --create --partitions 1 --replication-factor 1 --config min.insync.replicas=1 --config cleanup.policy=compact --config retention.ms=241920000 --topic is.iceland.iot4cps-wp5-WeatherService.Stations.log > /dev/null 2>&1 && echo A new topic was created ) || echo Topic was already created"
-
+sh -c "(/kafka/bin/kafka-topics.sh --zookeeper :2181 --create --partitions 3 --replication-factor 1 --config min.insync.replicas=1 --config cleanup.policy=compact --config retention.ms=241920000 --topic is.iceland.iot4cps-wp5-WeatherService.Services.int > /dev/null 2>&1 && echo A new topic was created ) || echo Topic was already created"
+sh -c "(/kafka/bin/kafka-topics.sh --zookeeper :2181 --create --partitions 3 --replication-factor 1 --config min.insync.replicas=1 --config cleanup.policy=compact --config retention.ms=241920000 --topic is.iceland.iot4cps-wp5-WeatherService.Services.ext > /dev/null 2>&1 && echo A new topic was created ) || echo Topic was already created"
+sh -c "(/kafka/bin/kafka-topics.sh --zookeeper :2181 --create --partitions 1 --replication-factor 1 --config min.insync.replicas=1 --config cleanup.policy=compact --config retention.ms=241920000 --topic is.iceland.iot4cps-wp5-WeatherService.Services.log > /dev/null 2>&1 && echo A new topic was created ) || echo Topic was already created"
+ervices
 # List the topics
 echo
 echo "List of all topics:"

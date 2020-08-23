@@ -133,3 +133,4 @@ server/venv
 
 # temperarily not track changes
 server/.env
+/setup/kafka/zk-multiple-kafka-multiple/
