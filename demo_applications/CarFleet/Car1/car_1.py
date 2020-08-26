@@ -4,7 +4,7 @@ Demo Scenario: Connected Cars
     CarFleet:
         Connected cars want to enhance their safety by retrieving temperature, acceleration and position data from each
         other, to warn the drivers on approaching dangerous road sections. As each car measures these quantities by
-        them selves, they are shared to others via the the platform.
+        themselves, they are shared to others via the platform.
     Analytics:
         A provider of applied data analytics with the goal to improve the road quality. Therefore, data of various
          sources are consumed.
@@ -57,7 +57,7 @@ def produce_metrics(interval=10):
 # Receive all temperatures of the weather-service and other cars and check whether they are subzero
 def consume_metrics():
     while not halt_event.is_set():
-        # In this list, each datapoint is stored that yiels a result below zero degC.
+        # In this list, each datapoint is stored that is below zero degC.
         subzero_temp = list()
 
         # Data of the same instance can be consumed directly via the class method
@@ -65,23 +65,29 @@ def consume_metrics():
         if temperature < 0:
             subzero_temp.append({"origin": config["system"], "temperature": temperature})
 
-        # Data of other instances (and also the same one) can be consumed via the client
-        received_quantities = client.consume(timeout=0.1)
+        # Data of other instances (and also the same one) can be consumed via the client, commits very timeout
+        received_quantities = client.consume(timeout=1.0)
         for received_quantity in received_quantities:
             # The resolves the all meta-data for an received data-point
-            print(f"  -> Received new external data-point from {received_quantity['phenomenonTime']}: "
-                  f"'{received_quantity['Datastream']['name']}' = {received_quantity['result']} "
-                  f"{received_quantity['Datastream']['unitOfMeasurement']['symbol']}.")
+            if received_quantity['Datastream'].get('unitOfMeasurement'):
+                print(f"  -> Received new external data-point from {received_quantity['phenomenonTime']}: "
+                      f"'{received_quantity['Datastream']['name']}' = {received_quantity['result']} "
+                      f"{received_quantity['Datastream'].get('unitOfMeasurement').get('symbol')}.")
+            elif received_quantity.get('rel_distance'):
+                print(f"  -> Received new external data-point from a nearby car {received_quantity['phenomenonTime']}: "
+                      f"'temperature' = {received_quantity['result']} degC"
+                      f", measured {received_quantity.get('rel_distance'):.2f} km away.")
+
             # To view the whole data-point in a pretty format, uncomment:
             # print("Received new data: {}".format(json.dumps(received_quantity, indent=2)))
-            if received_quantity["Datastream"]["unitOfMeasurement"]["symbol"] == "degC" \
+            if received_quantity['Datastream'].get('unitOfMeasurement', {}).get('symbol', '') == "degC" \
                     and received_quantity["result"] < 0:
                 subzero_temp.append(
                     {"origin": received_quantity["Datastream"]["name"], "temperature": received_quantity["result"]})
 
-        # # Check whether there are temperatures are subzero
-        # if subzero_temp != list():
-        #     print("    WARNING, the road could be slippery, see: {}".format(subzero_temp))
+        # Check whether there are temperatures are subzero
+        if subzero_temp != list():
+            print("    WARNING, the road could be slippery, see: {}".format(subzero_temp))
 
 
 if __name__ == "__main__":

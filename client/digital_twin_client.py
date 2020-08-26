@@ -407,6 +407,8 @@ class DigitalTwinClient:
                                   .json()["value"], key=lambda k: k["@iot.id"])
         self.subscribed_datastreams = {ds["@iot.id"]: ds for ds in gost_datastreams if ds["name"]
                                        in subscriptions["subscribed_datastreams"]}
+        if "*" in subscriptions["subscribed_datastreams"]:
+            self.subscribed_datastreams["*"] = {"name": "*"}
 
         for key, value in self.subscribed_datastreams.items():
             self.logger.info("subscribe: Subscribed to datastream: id: '{}' and metadata: '{}'".format(key, value))
@@ -426,21 +428,24 @@ class DigitalTwinClient:
         {'phenomenonTime': '2018-12-03T16:08:03.366855+00:00', 'resultTime': '2018-12-03T16:08:03.367045+00:00',
         'result': 50.44982168968592, 'Datastream': {'@iot.id': 4, ...}
         """
-        msg = self.consumer.poll(timeout)  # Waits up to 'session.timeout.ms' for a message
+        # Waits up to 'session.timeout.ms' for a message, batches of maximal 100 messages are consumed at once
+        msgs = self.consumer.consume(num_messages=100, timeout=timeout)
+        received_quantities = list()
 
-        while msg is not None:
-            if not msg.error():
-                data = json.loads(msg.value().decode('utf-8'))
-                iot_id = data.get("Datastream", {}).get("@iot.id", None)
-                if iot_id in self.subscribed_datastreams.keys():
-                    data["Datastream"] = self.subscribed_datastreams[iot_id]
-                    data["partition"] = msg.partition
-                    data["topic"] = msg.topic
-                    return data
-            else:
-                if msg.error().code() != confluent_kafka.KafkaError._PARTITION_EOF:
-                    self.logger.error("poll: {}".format(msg.error()))
-            msg = self.consumer.poll(0)  # Waits up to 'session.timeout.ms' for a message
+        for msg in msgs:
+            data = json.loads(msg.value().decode('utf-8'))
+            iot_id = data.get("Datastream", {}).get("@iot.id", None)
+            if iot_id in self.subscribed_datastreams.keys():
+                data["Datastream"] = self.subscribed_datastreams[iot_id]
+                data["partition"] = msg.partition()
+                data["topic"] = msg.topic()
+                received_quantities.append(data)
+            elif "*" in self.subscribed_datastreams.keys() and msg.topic().endswith(".ext"):
+                data["Datastream"] = self.subscribed_datastreams["*"]
+                data["partition"] = msg.partition()
+                data["topic"] = msg.topic()
+                received_quantities.append(data)
+        return received_quantities
 
     def consume(self, timeout=1):
         """
@@ -456,12 +461,7 @@ class DigitalTwinClient:
         """
         # msg = self.consumer.poll(timeout)  # Waits up to 'session.timeout.ms' for a message
         if self.config["kafka_bootstrap_servers"]:
-            payload = list()
-            datapoint = self.consume_via_bootstrap(timeout)
-            while datapoint is not None:
-                payload.append(datapoint)
-                datapoint = self.consume_via_bootstrap(0)
-            return payload
+            return self.consume_via_bootstrap(timeout)
 
         # Consume data via Kafka Rest
         else:
