@@ -363,7 +363,6 @@ The password of each user is `asdf`.
 * Make client-side communication exactly-once (requires broker replicas) and 
 the producers even idempotent.
 
-
 * Abstract the custom_fct of the multi-source stream apps to a SQL-like filter logic 
 with minimal permissions and unify it with that from the singe-source stream app. 
 (see [QCL](https://de.wikipedia.org/wiki/Continuous_Query_Language))
