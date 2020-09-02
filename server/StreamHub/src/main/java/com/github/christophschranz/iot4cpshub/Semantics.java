@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -18,12 +17,7 @@ import java.net.URL;
 import java.util.Properties;
 
 public class Semantics {
-    String stream_name;
-    String source_system;
-    String target_system;
-    String kafka_bootstrap_servers;
-    String gost_server;
-    String filter_logic;
+    private String gost_server;
 
     JsonObject sensorThingsStreams;
     String semantic;
@@ -37,12 +31,7 @@ public class Semantics {
      */
     public Semantics(Properties stream_config, String semantic) throws SemanticsException {
         // gather configs and store in class vars
-        this.stream_name = stream_config.getProperty("STREAM_NAME").replace("\"", "");
-        this.source_system = stream_config.getProperty("SOURCE_SYSTEM").replace("\"", "");
-        this.target_system = stream_config.getProperty("TARGET_SYSTEM").replace("\"", "");
-        this.kafka_bootstrap_servers = stream_config.getProperty("KAFKA_BOOTSTRAP_SERVERS").replace("\"", "");
         this.gost_server = stream_config.getProperty("GOST_SERVER").replace("\"", "");
-        this.filter_logic = stream_config.getProperty("FILTER_LOGIC").replaceAll("\\x00", "");
         this.semantic = semantic;
 
         // the json value is not indexed properly, restructure such that we have {iot_id0: {}, iot_id1: {}, ...}
@@ -61,9 +50,6 @@ public class Semantics {
                 logger.error(" * " + knownSemantic);
             throw new SemanticsException("Semantic '" + semantic + "' is not known.");
         }
-
-        // Check if the GOST server is reachable
-        checkConnectionGOST();
 
         logger.info("New " + semantic + "-semantic initialized.");
         logger.info(this.toString());
@@ -250,6 +236,10 @@ public class Semantics {
             if (this.exitOnUnknownIotID)
                 throw new SemanticsException("@iot.id '" + iot_id + "' was not found on SensorThings server '" + urlString + "'.");
         }
+    }
+
+    public void setSensorThingsStreams(JsonObject sensorThingsStreams) {
+        this.sensorThingsStreams = sensorThingsStreams;
     }
 
     /**

@@ -60,10 +60,6 @@ This repository comprises the following parts:
 * Install [Docker](https://www.docker.com/community-edition#/download) version **1.10.0+**
 * Install [Docker Compose](https://docs.docker.com/compose/install/) version **1.6.0+**
 * Clone this Repository
-* Install python modules:
-    ```bash
-    pip3 install -r setup/requirements.txt
-    ```
 
 
 This is an instruction on how to set up a demo scenario on your own hardware.
@@ -72,7 +68,21 @@ Here, we use Ubuntu 18.04, for other OS there might have to be made adaptions.
  
 ### 2) Setup **Apache Kafka** and it's library:
 
-The Datastack uses Kafka **version 2.1.0** as the communication layer, the installations is done in `/kafka`.
+The easiest way to set up a cluster for Apache Kafka is via Docker and docker-compose. 
+Deploy each three instances of Kafka and its underlying Zookeeper on the same node via:
+
+cd setup/kafka
+docker-compose up -d
+
+The flag -d stands for daemon mode. The containers can be investigated (stopped) 
+via docker-compose logs (down). Three instances of Kafka are then available, each 
+on the ports 9092, 9093 and 9094. Therefore, a replication factor of up to three is 
+possible using this setup.
+
+
+In case one doesn’t want to install Kafka via Docker (as it is suggested for production), 
+the installation can also be done directly. The Datastack uses Kafka version 2.3.1 as the 
+communication layer, the installation is done in `/kafka`.
 
 ```bash
 sudo apt-get update
@@ -80,9 +90,13 @@ sh setup/kafka/install-kafka-2v1.sh
 sh setup/kakfa/install-kafka-libs-2v1.sh
 # optional:
 export PATH=/kafka/bin:$PATH
+sudo chown -R user.group /tmp/kafka-logs/
+sudo chown -R user.group /tmp/zookeeper/
 ```
 
-Then, start Zookeeper and Kafka and test the installation:
+Then, start Zookeeper and Kafka and test the installation: 
+(If the setup was done using Docker one can skip the Start-step)
+
 ```bash
 # Start Zookeeper and Kafka Server 
 /kafka/bin/zookeeper-server-start.sh -daemon kafka/config/zookeeper.properties
@@ -97,10 +111,10 @@ Then, start Zookeeper and Kafka and test the installation:
 /kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic test-topic --from-beginning
 Hello Kafka
 ```
-If that works as described, you can create the default topics:
+If that works as described, you can create the default topics for the platform using:
 
  ```bash
-sh setup/kafka/create_defaults.sh
+bash setup/kafka/create_defaults.sh
 /kafka/bin/kafka-topics.sh --zookeeper localhost:2181 --list
 ```
 
@@ -116,6 +130,34 @@ The flag `-d` stands for `daemon` mode. To check if everything worked well, open
 
     docker-compose -f setup/gost/docker-compose.yml logs -f
 
+
+
+
+### 3) Postgres setup
+
+Before starting the platform, make sure postgreSQL is installed and the configuration 
+selected in `server/.env` points to an appropriate config in `server/config`. 
+For instructions on how to install postgres, various tutorials can be found in the Internet.
+
+```bash
+sudo apt install libpq-dev
+sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+sudo apt-get update
+sudo apt-get install postgresql
+
+sudo -u postgres psql
+postgres=# CREATE ROLE iot4cps LOGIN PASSWORD 'iot4cps';
+postgres=# CREATE DATABASE iot4cps OWNER iot4cps;
+```
+
+### 5) Install the pip packages and start the platform
+
+Make sure to start a new virtual env for this setup! Then, install the python modules via:
+
+```bash
+pip3 install -r setup/requirements.txt
+```
 
 
 ## Start Demo Applications
@@ -139,7 +181,7 @@ Now, open new terminals to run the demo applications:
     
     python3 demo_applications/WeatherService/demo_station_1/demo_station_1.py
     python3 demo_applications/WeatherService/demo_station_2/demo_station_2.py 
-    python3 demo_applications/WeatherService/central_service/weather-service.py 
+    python3 demo_applications/WeatherService/forecast_service/forecast-service.py 
 
 Here, you should see that temperature data is produced by the demo stations and consumed only by the central service.
 
@@ -176,20 +218,37 @@ that ingests it into the DataStack.
 Therefore, it is important to start the StreamHub applications as noted in the next section.
    
    
-### Stream Hub - Connect the systems
+### Streaming Applications
 
-The StreamHub application can be regarded as hub for the streamed data.
-Run the built jar file:
+As there are two different types of stream apps that are based on different technologies, 
+we have to distinguish:
 
-```bash
-java -jar demo_applications/streamhub_apps/out/artifacts/streamhub_apps_jar/streamhub_apps.jar --stream-name mystream --source-system cz.icecars.iot-iot4cps-wp5.CarFleet target-system at.datahouse.iot-iot4cps-wp5.RoadAnalytics --filter-logic {} --bootstrap-server 127.0.0.1:9092
-```
- to share data from the specific tenant to others.
+#### Single-Source streaming applications
 
-If you want to change the streamhub application itself, modify and rebuild the java project in
-`demo_applications/streamhub_apps`. 
+Single-Source streaming applications are implemented in Java using the Kafka Streams library. A pre- built jar file to share data from a specific tenant to others can be started with:
 
-It is recommended, to start and stop stream-applications via the [Platform UI](#platform-ui).
+    java -jar server/StreamHub/target/streamApp-1.1-jar-with-dependencies.jar --stream-name mystream --source-system is.iceland.iot4cps-wp5-WeatherService.Stations is.iceland.iot4cps-wp5-WeatherService.Services --filter-logic “SELECT * FROM * WHERE result < 4;” --bootstrap-server 127.0.0.1:9092
+
+If you want to change the streamhub application itself, modify and rebuild the java project in 
+`server/StreamHub/src/main/java/com/github/christophschranz/iot4cpshub/StreamAppEngine.java`.
+It is recommended, to start and stop the stream-applications via the Platform UI, that provides 
+the same functionality as the command line interface.
+
+#### Multi-Source streaming applications
+
+Multi-Source streaming applications are implemented in Python, plain Apache Kafka and is based 
+on the Time-Series join that is implemented using the LocalStreamBuffer algorithm. The stream 
+app can be started using:
+
+    python3 server/TimeSeriesJoiner/stream_join_engine.py
+
+
+This script uses the customization set in `server/TimeSeriesJoiner/customization/custom_fct.py` 
+which contains all required constants and two functions *ingest_fct* and *on_join* that suffice 
+to customize the stream app’s behaviour. 
+For more information read the README file in the `server/TimeSeriesJoiner/` sub-project or
+view the customization-file `custom_fct.py`.
+
 
     
 ## Track what happens behind the scenes:
@@ -197,22 +256,31 @@ It is recommended, to start and stop stream-applications via the [Platform UI](#
 Check the created kafka topics:
 
     /kafka/bin/kafka-topics.sh --zookeeper localhost:2181 --list
-    at.srfg.iot-iot4cps-wp5.CarFleet1.data
-    at.srfg.iot-iot4cps-wp5.CarFleet1.external
-    at.srfg.iot-iot4cps-wp5.CarFleet1.logging
-    at.srfg.iot-iot4cps-wp5.CarFleet2.data
-    at.srfg.iot-iot4cps-wp5.CarFleet2.external
-    at.srfg.iot-iot4cps-wp5.CarFleet2.logging
-    at.srfg.iot-iot4cps-wp5.WeatherService.data
-    at.srfg.iot-iot4cps-wp5.WeatherService.external
-    at.srfg.iot-iot4cps-wp5.WeatherService.logging
+    at.datahouse.iot4cps-wp5-Analytics.RoadAnalytics.ext
+    at.datahouse.iot4cps-wp5-Analytics.RoadAnalytics.int
+    at.datahouse.iot4cps-wp5-Analytics.RoadAnalytics.log
+    at.mfc.iot4cps-wp5-WeatherService.Stations.ext
+    at.mfc.iot4cps-wp5-WeatherService.Stations.int
+    at.mfc.iot4cps-wp5-WeatherService.Stations.log
+    cz.icecars.iot4cps-wp5-CarFleet.Car1.ext
+    cz.icecars.iot4cps-wp5-CarFleet.Car1.int
+    cz.icecars.iot4cps-wp5-CarFleet.Car1.log
+    cz.icecars.iot4cps-wp5-CarFleet.Car2.ext
+    cz.icecars.iot4cps-wp5-CarFleet.Car2.int
+    cz.icecars.iot4cps-wp5-CarFleet.Car2.log
+    is.iceland.iot4cps-wp5-WeatherService.Services.ext
+    is.iceland.iot4cps-wp5-WeatherService.Services.int
+    is.iceland.iot4cps-wp5-WeatherService.Services.log
+    is.iceland.iot4cps-wp5-WeatherService.Stations.ext
+    is.iceland.iot4cps-wp5-WeatherService.Stations.int
+    is.iceland.iot4cps-wp5-WeatherService.Stations.log
     test-topic
 
 Note that kafka-topics must be created manually as explained in the [Setup](#setup-messaging-layer).
 
 To track the traffic in real time, use the `kafka-consumer-console`: 
 
-    /kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic at.srfg.iot-iot4cps-wp5.CarFleet1.data
+    /kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic cz.icecars.iot4cps-wp5-CarFleet.Car1.int
     > {"phenomenonTime": "2018-12-04T14:18:11.376306+00:00", "resultTime": "2018-12-04T14:18:11.376503+00:00", "result": 50.05934369894213, "Datastream": {"@iot.id": 2}}
 
 You can use the flag `--from-beginning` to see the whole recordings of the persistence time which are

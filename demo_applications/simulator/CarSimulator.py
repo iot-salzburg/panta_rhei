@@ -76,7 +76,9 @@ class CarSimulator:
         # Load the starting positions
         self.update_positions()
 
-    def update_positions(self):
+    def update_positions(self, n=0):
+        if n > 10:
+            raise RecursionError("defined maximum recursion depth exceeded")
         self.last_update = time.time()
         self.logger.debug("Passed track index: {}".format(self.track_idx))  # The first 3 entries (2) are 0
 
@@ -110,7 +112,7 @@ class CarSimulator:
                 self.track_idx = 0
                 self.old_step = 0
                 # self.last_moved = time.time()
-                self.update_positions()
+                self.update_positions(n=n+1)
             else:
                 # Now interpolate latitude, longitude and attitude between self.track_idx and self.track_idx+1
                 self.old_step = step

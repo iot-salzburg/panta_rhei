@@ -117,8 +117,10 @@ def create_keyfile(name="testclient", system_uuid="12345678"):
     os.mkdir(path)
 
     # Create keyfiles in the path
-    os.mkfifo(os.path.join(path, "cert-signed"))
-    os.mkfifo(os.path.join(path, "client-cert-signed"))
+    with open(os.path.join(path, "cert-signed"), "w") as f:
+        f.write("")
+    with open(os.path.join(path, "client-cert-signed"), "w") as f:
+        f.write("")
 
     # create zip archive and delete directory
     shutil.make_archive(path, "zip", path)
