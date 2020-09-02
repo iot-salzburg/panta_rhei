@@ -15,13 +15,16 @@ from client.type_mappings import type_mappings
 
 
 class DigitalTwinClient:
-    def __init__(self, client_name, system, gost_servers, kafka_bootstrap_servers=None, kafka_rest_server=None):
+    def __init__(self, client_name, system, gost_servers, kafka_bootstrap_servers=None, kafka_rest_server=None,
+                 additional_attributes=""):
         """
         Load config files
         Checks GOST server connection
         Checks and tests kafka broker connection
         """
         # Init logging
+        if additional_attributes is None:
+            additional_attributes = list()
         self.logger = logging.getLogger("PR Client Logger")
         self.logger.setLevel(logging.INFO)
         # self.logger.setLevel(logging.DEBUG)
@@ -36,7 +39,9 @@ class DigitalTwinClient:
                        "kafka_rest_server": kafka_rest_server,
                        # Use a randomized hash for an unique consumer id in an client-wide consumer group
                        "kafka_group_id": "{}.{}".format(system, client_name),
-                       "kafka_consumer_id": "consumer_%04x" % random.getrandbits(16)}
+                       "kafka_consumer_id": "consumer_%04x" % random.getrandbits(16),
+                       # parse additional attributes sent as metadata in each record
+                       "additional_attributes": [att.strip() for att in additional_attributes.split(",") if att != ""]}
         self.logger.debug("Config for client is: {}".format(self.config))
 
         # Check the connection to the SensorThings server
@@ -179,7 +184,7 @@ class DigitalTwinClient:
         self.logger.info("register_new: Registered instances for Digital Twin Client '{}': {}".format(
             self.config["client_name"], self.mapping))
 
-    def produce(self, quantity, result, timestamp=None):
+    def produce(self, quantity, result, timestamp=None, **kwargs):
         """
         Function that sends data of registered datastreams semantically annotated to the Digital Twin Messaging System
         via the bootstrap_server (preferred) or kafka_rest
@@ -194,9 +199,13 @@ class DigitalTwinClient:
             self.logger.error("send: Quantity is not registered: {}".format(quantity))
             raise Exception("send: Quantity is not registered: {}".format(quantity))
 
+        # create data record with additional attributes
         data = dict({"phenomenonTime": self.get_iso8601_time(timestamp),
                      "resultTime": datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat(),
                      "Datastream": {"@iot.id": self.mapping[quantity]["@iot.id"]}})
+        for attribute in self.config["additional_attributes"]:
+            if kwargs.get(attribute):
+                data[attribute] = kwargs.get(attribute)
 
         # check, if the type of the result is correct
         try:
@@ -398,6 +407,8 @@ class DigitalTwinClient:
                                   .json()["value"], key=lambda k: k["@iot.id"])
         self.subscribed_datastreams = {ds["@iot.id"]: ds for ds in gost_datastreams if ds["name"]
                                        in subscriptions["subscribed_datastreams"]}
+        if "*" in subscriptions["subscribed_datastreams"]:
+            self.subscribed_datastreams["*"] = {"name": "*"}
 
         for key, value in self.subscribed_datastreams.items():
             self.logger.info("subscribe: Subscribed to datastream: id: '{}' and metadata: '{}'".format(key, value))
@@ -417,21 +428,24 @@ class DigitalTwinClient:
         {'phenomenonTime': '2018-12-03T16:08:03.366855+00:00', 'resultTime': '2018-12-03T16:08:03.367045+00:00',
         'result': 50.44982168968592, 'Datastream': {'@iot.id': 4, ...}
         """
-        msg = self.consumer.poll(timeout)  # Waits up to 'session.timeout.ms' for a message
+        # Waits up to 'session.timeout.ms' for a message, batches of maximal 100 messages are consumed at once
+        msgs = self.consumer.consume(num_messages=100, timeout=timeout)
+        received_quantities = list()
 
-        while msg is not None:
-            if not msg.error():
-                data = json.loads(msg.value().decode('utf-8'))
-                iot_id = data.get("Datastream", None).get("@iot.id", None)
-                if iot_id in self.subscribed_datastreams.keys():
-                    data["Datastream"] = self.subscribed_datastreams[iot_id]
-                    data["partition"] = msg.partition
-                    data["topic"] = msg.topic
-                    return data
-            else:
-                if msg.error().code() != confluent_kafka.KafkaError._PARTITION_EOF:
-                    self.logger.error("poll: {}".format(msg.error()))
-            msg = self.consumer.poll(0)  # Waits up to 'session.timeout.ms' for a message
+        for msg in msgs:
+            data = json.loads(msg.value().decode('utf-8'))
+            iot_id = data.get("Datastream", {}).get("@iot.id", None)
+            if iot_id in self.subscribed_datastreams.keys():
+                data["Datastream"] = self.subscribed_datastreams[iot_id]
+                data["partition"] = msg.partition()
+                data["topic"] = msg.topic()
+                received_quantities.append(data)
+            elif "*" in self.subscribed_datastreams.keys() and msg.topic().endswith(".ext"):
+                data["Datastream"] = self.subscribed_datastreams["*"]
+                data["partition"] = msg.partition()
+                data["topic"] = msg.topic()
+                received_quantities.append(data)
+        return received_quantities
 
     def consume(self, timeout=1):
         """
@@ -447,12 +461,7 @@ class DigitalTwinClient:
         """
         # msg = self.consumer.poll(timeout)  # Waits up to 'session.timeout.ms' for a message
         if self.config["kafka_bootstrap_servers"]:
-            payload = list()
-            datapoint = self.consume_via_bootstrap(timeout)
-            while datapoint is not None:
-                payload.append(datapoint)
-                datapoint = self.consume_via_bootstrap(0)
-            return payload
+            return self.consume_via_bootstrap(timeout)
 
         # Consume data via Kafka Rest
         else:

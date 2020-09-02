@@ -79,8 +79,7 @@ def show_system(system_uuid):
     INNER JOIN companies AS com ON sys.company_uuid=com.uuid
     INNER JOIN is_admin_of_sys AS agf ON sys.uuid=agf.system_uuid 
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
-    WHERE agent.uuid='{}'
-    AND sys.uuid='{}';""".format(user_uuid, system_uuid)
+    WHERE agent.uuid='{}' AND sys.uuid='{}';""".format(user_uuid, system_uuid)
     result_proxy = conn.execute(query)
     engine.dispose()
     clients = [dict(c.items()) for c in result_proxy.fetchall()]
@@ -96,7 +95,7 @@ def show_system(system_uuid):
     INNER JOIN companies AS com ON sys.company_uuid=com.uuid
     INNER JOIN is_admin_of_sys AS agf ON sys.uuid=agf.system_uuid 
     INNER JOIN users as agent ON agent.uuid=agf.user_uuid
-    WHERE agent.uuid='{}';""".format(user_uuid)
+    WHERE agent.uuid='{}' AND sys.uuid='{}';""".format(user_uuid, system_uuid)
     result_proxy = conn.execute(query)
     engine.dispose()
     streams = [dict(c.items()) for c in result_proxy.fetchall()]

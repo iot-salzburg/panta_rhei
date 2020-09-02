@@ -126,7 +126,7 @@ public class ComparisonNode extends BaseNode {
      * @return boolean expression
      */
     public boolean evaluate(JsonObject jsonInput) throws StreamSQLException {
-        logger.info("Checking the comparison '" + this.rawExpression + "'.");
+        logger.info("Checking the comparison \"{}\".", this.rawExpression);
 
         if (stringOperation) {
             String dataValue = jsonInput.get(this.left_expr).getAsString();

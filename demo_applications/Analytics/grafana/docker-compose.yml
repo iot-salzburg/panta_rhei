@@ -17,7 +17,7 @@ services:
 #      ELASTICSEARCH_USER: ${ES_USERNAME}
 #      ELASTICSEARCH_PASSWORD: ${ES_PASSWORD}
       GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-simple-json-datasource
-      DBINDEX: "[at.srfg.iot-iot4cps-wp5.infraprov.internal-]YYYY.MM"
+      DBINDEX: "[at.srfg.iot-iot4cps-wp5.infraprov-]YYYY.MM"
 
 networks:
   elasticstack_datastack:

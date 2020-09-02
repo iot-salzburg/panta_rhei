@@ -75,7 +75,11 @@
   <hr>
   <table class="table table-striped">
     <tr>
-      <th><h2> <small> Stream App Filter Logic: </small></h2></th>
+        {% if payload.is_multi_source %}
+            <th><h2> <small> Multi-Source Stream App Function: </small></h2></th>
+        {% else %}
+            <th><h2> <small> Single-Source Stream App Filter Logic: </small></h2></th>
+        {% endif %}
       <th></th>
     </tr>
   </table>
@@ -90,7 +94,11 @@
 
             <table class="table">
                 {% if payload.filter_logic %}
-                    <td><center>{{payload.filter_logic}}</center></td>
+                    {% if payload.is_multi_source %}
+                        <td>A Multi-source Stream-App configuration was set.</td>
+                    {% else %}
+                        <td>{{payload.filter_logic}}</td>
+                    {% endif %}
                 {% else %}
                     <td>There is no Filter Logic set.</td>
                 {% endif %}
@@ -117,13 +125,18 @@
                 </td>
                 <td>
                     <input type="submit" class="btn btn-success float-right mb-2"
-                        data-toggle="tooltip" title="Click to update the filter logic" value="test & update">
+                        data-toggle="tooltip" title="Click to update the filter logic" value="save & test">
                 </td>
                 </table>
               </form>
             </div>
         </div>
     </div>
+    {% if payload.is_multi_source %}
+        <a>The function field should contain valid functions for 'ingest_fct', 'on_join' and required constants.</a>
+    {% else %}
+        <a>The filter logic should be a SQL like expression containing only a single source system.</a>
+    {% endif %}
 
   <hr>
   <table class="table table-striped">
@@ -149,7 +162,7 @@
               document.getElementById("json").innerHTML = JSON.stringify(stats, undefined, 2);
             </script>
         {% else %}
-          Stats are not available for this an undeployed stream.
+          <a>Stats are not available for an undeployed stream.</a>
         {% endif %}
       </td>
       <td>

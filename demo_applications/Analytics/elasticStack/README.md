@@ -16,6 +16,7 @@ Running these commands will build, push and deploy the stack:
 **Check if the paths in 'docker-compose.yml' do exist and are syncronized!**
 
 ```bash
+docker swarm init --advertise-addr 127.0.0.1
 sudo docker-compose -f elasticStack/docker-compose.yml up --build
 ```
 
