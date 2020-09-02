@@ -1,3 +1,4 @@
+import os
 import time
 
 import requests
@@ -5,14 +6,16 @@ import sqlalchemy as db
 from flask import Blueprint, render_template, flash, redirect, url_for, session, request, send_file, make_response
 
 from flask import current_app as app, Response
-from wtforms import Form, StringField, validators, TextAreaField
+from wtforms import Form, StringField, validators, TextAreaField, RadioField
 
 if __name__ == '__main__':
     from useful_functions import get_datetime, is_logged_in, valid_name, valid_system, nocache
     from StreamHandler import stream_checks, fab_streams
+    from ..TimeSeriesJoiner.stream_join_blueprint import StreamJoiner
 else:
     from .useful_functions import get_datetime, is_logged_in, valid_name, valid_system, nocache
     from .StreamHandler import stream_checks, fab_streams
+    from server.TimeSeriesJoiner.stream_join_blueprint import StreamJoiner
 
 
 streamhub_bp = Blueprint("streamhub", __name__)
@@ -47,7 +50,7 @@ def show_all_streams():
 
 # Filter Logic Form Class for editing
 class FilterForm(Form):
-    filter_logic = StringField('New Filter Logic', [validators.Length(max=4*1024)])
+    filter_logic = StringField('New Filter Logic', [validators.Length(min=10)])
 
 
 @streamhub_bp.route("/show_stream/<string:system_uuid>/<string:stream_name>", methods=["GET", "POST"])
@@ -86,7 +89,7 @@ def show_stream(system_uuid, stream_name):
         pass  # skip init step as there is nothing to do
     elif status in ["starting", "running"]:
         app_stats = fab_streams.local_stats(system_uuid=system_uuid, stream_name=stream_name)
-        if app_stats is None:
+        if not app_stats:
             status = "init"
             set_status_to(system_uuid, stream_name, "init")
             flash("The stream has to be initialized.", "info")
@@ -114,7 +117,9 @@ def show_stream(system_uuid, stream_name):
 class StreamhubForm(Form):
     name = StringField("Name", [validators.Length(min=2, max=20), valid_name])
     target_system = StringField("Target System", [validators.Length(max=72), valid_system])
-    filter_logic = TextAreaField("Filter Logic", [validators.Length(max=4 * 1024)])
+    is_multi_source = RadioField("Choose the Stream App type", [validators.InputRequired()],
+                                 choices=["Single-Source Stream App", "Multi-Source Stream App"])
+    filter_logic = TextAreaField("Filter Logic", [validators.Length(min=10)])
     description = TextAreaField("Description", [validators.Length(max=16 * 1024)])
 
 
@@ -138,6 +143,7 @@ def add_stream_for_system(system_uuid):
     form = StreamhubForm(request.form)
     form_target_system = form.target_system.data.strip()
     form_name = form.name.data.strip()
+    form_is_multi = form.is_multi_source.data  # single- or multi-source
 
     # Fetch all streams for the requested system and user agent
     engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
@@ -180,19 +186,22 @@ def add_stream_for_system(system_uuid):
         INNER JOIN streams ON streams.system_uuid=systems.uuid
         WHERE system_uuid='{}' AND name='{}';""".format(system_uuid, form_name)
         result_proxy = conn.execute(query)
-
         if len(result_proxy.fetchall()) == 0:
             query = db.insert(app.config["tables"]["streams"])
             values_list = [{'name': form_name,
                             'system_uuid': system_uuid,
                             'source_system': source_system,
                             'target_system': form_target_system,
+                            'is_multi_source': True if form_is_multi == "Multi-Source Stream App" else False,
                             'filter_logic': form.filter_logic.data,
                             'creator_uuid': user_uuid,
                             'datetime': get_datetime(),
                             'description': form.description.data}]
             conn.execute(query, values_list)
             engine.dispose()
+
+            if form_is_multi == "Multi-Source Stream App":
+                create_custom_fct(system_uuid=system_uuid, name=form_name, filter_logic=form.filter_logic.data)
 
             msg = "The stream '{}' was added to system '{}'.".format(form_name, source_system)
             app.logger.info(msg)
@@ -264,19 +273,14 @@ def update_filter_logic(system_uuid, stream_name):
     user_uuid = session["user_uuid"]
 
     form = FilterForm(request.form)
-    filter_logic = form.filter_logic.data.strip().replace("'", "''")  # Postgres needs doubled quotes
-
-    # Check if the filter logic is valid, abort if not
-    if not stream_checks.is_valid(filter_logic):
-        flash("The filter logic is not valid! Changes discarded.", "danger")
-        return
+    filter_logic = form.filter_logic.data.replace("'", "''")  # Postgres needs doubled quotes
 
     app.logger.info(f"Updating stream '{system_uuid}/{stream_name}' with new filter_logic '{filter_logic}'.")
 
     # Fetch streams of the system, for with the user is agent
     engine = db.create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
     conn = engine.connect()
-    query = f"""SELECT sys.uuid AS system_uuid, streams.name AS name, source_system, target_system, 
+    query = f"""SELECT sys.uuid AS system_uuid, streams.name AS name, source_system, target_system, is_multi_source,
     creator.email AS contact_mail, agent.uuid AS agent_uuid
     FROM streams
     INNER JOIN users as creator ON creator.uuid=streams.creator_uuid
@@ -295,12 +299,28 @@ def update_filter_logic(system_uuid, stream_name):
         engine.dispose()
         flash("You are not permitted to edit this stream.", "danger")
         return redirect(url_for("streamhub.show_stream", system_uuid=system_uuid, client_name=stream_name))
+    elif len(streams) > 1:
+        engine.dispose()
+        flash("Stream id collision.", "danger")
+        return redirect(url_for("streamhub.show_stream", system_uuid=system_uuid, client_name=stream_name))
+
+    stream = streams[0]
+    if not stream.get("is_multi_source"):
+        filter_logic = filter_logic.strip()
+
+    # Check if the filter logic is valid, abort if not
+    if not stream_checks.is_valid(filter_logic, stream.get("is_multi_source")):
+        flash("The filter logic is not valid! Changes discarded.", "danger")
+        return
 
     # Update filter logic of the specified stream
     query = f"""UPDATE streams SET filter_logic = '{filter_logic}'
         WHERE system_uuid='{system_uuid}' AND name='{stream_name}';"""
     conn.execute(query)
     engine.dispose()
+
+    if stream.get("is_multi_source"):
+        create_custom_fct(system_uuid=system_uuid, name=stream_name, filter_logic=filter_logic)
 
     msg = "The filter logic of stream '{}' of system '{}' was updated.".format(stream_name, streams[0]["source_system"])
     app.logger.info(msg)
@@ -314,7 +334,7 @@ def get_stream_payload(user_uuid, system_uuid, stream_name):
     query = """
     SELECT sys.uuid AS system_uuid, com.uuid AS company_uuid, streams.name, status, source_system, target_system, 
     creator.email AS contact_mail, streams.description, agent.uuid AS agent_uuid, streams.datetime AS datetime,
-    filter_logic
+    is_multi_source, filter_logic
     FROM streams
     INNER JOIN users as creator ON creator.uuid=streams.creator_uuid
     INNER JOIN systems AS sys ON streams.system_uuid=sys.uuid
@@ -358,7 +378,7 @@ def start_stream(system_uuid, stream_name):
     if not isinstance(payload, dict):
         return payload
 
-    if not stream_checks.is_valid(payload):
+    if not stream_checks.is_valid(payload, payload.get("is_multi_source")):
         flash("The stream is invalid.", "warning")
         return redirect(url_for("streamhub.show_stream", system_uuid=system_uuid, stream_name=stream_name))
 
@@ -383,12 +403,23 @@ def start_stream(system_uuid, stream_name):
     stream["KAFKA_BOOTSTRAP_SERVERS"] = app.config["KAFKA_BOOTSTRAP_SERVER"]
     stream["GOST_SERVER"] = app.config["GOST_SERVER"]
     stream["FILTER_LOGIC"] = payload["filter_logic"]
+    stream["is_multi_source"] = payload["is_multi_source"]
 
-    app.logger.debug(f"Try to deploy '{fab_streams.build_name(system_uuid, stream_name)}'")
-    res = fab_streams.local_deploy(system_uuid=system_uuid, stream_name=stream_name, stream=stream)
-    if len(res) != 64:  # res is the UUID of the container
-        app.logger.warning(f"'{fab_streams.build_name(system_uuid, stream_name)}' was deployed with response {res}.")
-    app.logger.debug(f"Deployed stream '{fab_streams.build_name(system_uuid, stream_name)}'.")
+    if payload.get("is_multi_source"):  # start multi-source stream apps
+        app.logger.debug(f"Try to deploy multi-source stream app '{system_uuid}_{stream_name}'")
+        res = fab_streams.local_deploy_multi(system_uuid=system_uuid, stream_name=stream_name,
+                                             stream=stream, logger=app.logger)
+        if len(res) != 64:  # res is the UUID of the container
+            app.logger.warning(
+                f"'{fab_streams.build_name(system_uuid, stream_name)}' was deployed with response {res}.")
+        app.logger.debug(f"Deployed multi-source stream '{system_uuid}_{stream_name}'.")
+
+    else:  # for single source stream apps
+        app.logger.debug(f"Try to deploy single-source stream app '{fab_streams.build_name(system_uuid, stream_name)}'")
+        res = fab_streams.local_deploy(system_uuid=system_uuid, stream_name=stream_name, stream=stream)
+        if len(res) != 64:  # res is the UUID of the container
+            app.logger.warning(f"'{fab_streams.build_name(system_uuid, stream_name)}' was deployed with response {res}.")
+        app.logger.debug(f"Deployed stream '{fab_streams.build_name(system_uuid, stream_name)}'.")
 
     # Set status in DB
     set_status_to(system_uuid, stream_name, "starting")
@@ -524,3 +555,13 @@ def check_gost_connection():
     except Exception as e:
         app.logger.error("init: Error, couldn't connect to GOST server: {}".format(gost_url))
         return False
+
+
+def create_custom_fct(name="testclient", system_uuid="12345678", filter_logic="test content"):
+    dir_path = os.path.split(os.path.dirname(os.path.realpath(__file__)))[0]
+    path = os.path.join(dir_path, "TimeSeriesJoiner", "customization")
+
+    # Create custom_fct in the path
+    with open(os.path.join(path, f"custom_fct_{system_uuid}_{name}.py"), "w") as f:
+        f.write(filter_logic)
+

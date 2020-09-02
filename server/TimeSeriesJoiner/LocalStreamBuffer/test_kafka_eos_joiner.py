@@ -8,6 +8,9 @@ LocalStreamBuffer method and produces the resulting 'vaPower_C11' to KAFKA_TOPIC
 A join rate of around 15000 time-series joins per second was reached with a exactly-once semantic for
 the consume-join-produce using Apache Kafka.
 """
+
+# TODO this is not that fast, as all records from one topic are fetched first, and then the other. Change this:
+#  do in a single input topic or keep the timestamps balanced of two stream
 import sys
 import time
 import json

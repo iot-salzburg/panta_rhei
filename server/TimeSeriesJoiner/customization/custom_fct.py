@@ -8,18 +8,19 @@ to define the functions can be found in their respective docstring.
 import math
 
 # Kafka configuration
+STREAM_NAME = "test-engine"
 KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"  # kafka nodes of the form 'mybroker1,mybroker2'
-# declare one or two Kafka Topics to consume from
-KAFKA_TOPICS_IN = ["cz.icecars.iot4cps-wp5-CarFleet.Car1.int", "cz.icecars.iot4cps-wp5-CarFleet.Car2.int"]
-KAFKA_TOPIC_OUT = "cz.icecars.iot4cps-wp5-CarFleet.Car2.ext"
+# declare one or two systems to consume from
+SOURCE_SYSTEMS = "cz.icecars.iot4cps-wp5-CarFleet.Car1,cz.icecars.iot4cps-wp5-CarFleet.Car2"
+TARGET_SYSTEM = "cz.icecars.iot4cps-wp5-CarFleet.Car2"
 
 # join configuration
 TIME_DELTA = None  # int, float or None: Maximal time difference between two Records being joined
-ADDITIONAL_ATTRIBUTES = "longitude,latitude,attitude"  # optional attributes in observation records "att1,att2,..."
-USE_ISO_TIMESTAMPS = True  # boolean timestamp format of the resulting records, ISO 8601 or unix timestamp if False
-MAX_BATCH_SIZE = 100  # consume up to this number messages at once
-TRANSACTION_TIME = 1  # time interval to commit the transactions
-VERBOSE = True
+ADDITIONAL_ATTRIBUTES = "longitude,latitude,attitude"  # optional attributes in the observation records, "att1,att2,..."
+USE_ISO_TIMESTAMPS = True  # boolean: timestamp format of the resulting records, ISO 8601 or unix timestamp if False
+MAX_BATCH_SIZE = 100  # consume up to this number of messages at once
+TRANSACTION_TIME = 1  # time interval  for committing transactions
+VERBOSE = True  # boolean, prints out more messages for debugging
 
 
 # ingest routine for record into the StreamBuffer instance
@@ -57,14 +58,14 @@ def on_join(record_left, record_right):
       If no join should be done return None. Else, return a dictionary containing the mandatory keys "quantity",
       "result" and "phenomenonTime". It is allowed to use more keys.
     """
-    # calculate the relative distance between the cars from the given GPC coordinates based on a spherical approach.
-    # This solution is even correct for large distances. The distance is in kilometer.
-    k = math.pi/180
+    # Calculate the relative distance between the cars from the given GPS coordinates.
+    # This solution is even correct for large distances. The distance is measured in kilometers.
+    k = math.pi / 180
     distance = 6378.388 * math.acos(
         math.sin(k * record_left.get("latitude")) * math.sin(k * record_right.get("latitude")) +
         math.cos(k * record_left.get("latitude")) * math.cos(k * record_right.get("latitude")) *
         math.cos(k * (record_right.get("longitude") - record_left.get("longitude"))))
-    # # the above solution is for small distances similar than the one below, but the later is better understandable
+    # # the below solution is for small distances similar than the one below, but the later is better understandable
     # dx = 111.3 * math.cos(k * (record_left.get("latitude") + record_right.get("latitude")) / 2) * \
     #      (record_right.get("longitude") - record_left.get("longitude"))
     # dy = 111.3 * (record_left.get("latitude") - record_right.get("latitude"))

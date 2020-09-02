@@ -1,3 +1,6 @@
+import os
+import inspect
+
 from fabric.api import task, local, cd, env, shell_env
 from fabric.context_managers import hide, settings
 
@@ -55,6 +58,81 @@ def local_deploy(system_uuid="0000", stream_name="test-stream", stream=None):
                              '-e "LOG_LEVEL=DEBUG" '
                              f'--name {container_name} '
                              'iot4cps/streamengine '
+                             '|| true', capture=True).stdout
+
+
+@task(default=True)
+def local_deploy_multi(system_uuid="0000", stream_name="test-stream", stream=None, logger=None):
+    """
+    Deploys a stream with the given parameters locally
+    :param system_uuid: UUID of the system - unique RAMI 4.0 station
+    :param stream_name: name of the stream app
+    :param stream: attribute dictionary for stream with keys SOURCE_SYSTEM, TARGET_SYSTEM,
+    KAFKA_BOOTSTRAP_SERVERS, GOST_SERVER, and FILTER_LOGIC
+    :return:
+    """
+    # run('git clone https://git-service.ait.ac.at/im-IoT4CPS/WP5-lifecycle-mgmt.git /WP5-lifecycle-mgmt')
+    import pdb
+    # pdb.set_trace()
+    with cd("."):
+        # image name is 'iot4cps/streamapp', container_name is the container name
+        with hide('output', 'running'), settings(warn_only=True):
+            cur_frame = inspect.currentframe()
+            s = f"(Re-)building Dockerfile named 'iot4cps/multi-source-stream'. "\
+                f"Method was called from: {inspect.getouterframes(cur_frame, 2)[-1].filename}"\
+                f" in the directory {os.path.realpath(os.path.curdir)}"
+            if logger: logger.info(s)
+            else: print(s)
+
+            # Build the Dockerfile dependent of the caller's directory
+            if inspect.getouterframes(cur_frame, 2)[-1].filename.endswith("views/StreamHandler/stream_tester.py"):
+                local('docker build -t iot4cps/multi-source-stream ../../TimeSeriesJoiner')
+            else:
+                local('docker build -t iot4cps/multi-source-stream TimeSeriesJoiner')
+
+        container_name = build_name(system_uuid, stream_name)
+        if stream is None:  # fill with test values if emptystream = dict()
+            print("WARNING, no parameter given.")
+            stream = dict()
+            stream["SOURCE_SYSTEM"] = "cz.icecars.iot4cps-wp5-CarFleet.Car1"
+            stream["TARGET_SYSTEM"] = "cz.icecars.iot4cps-wp5-CarFleet.Car2"
+            stream["KAFKA_BOOTSTRAP_SERVERS"] = "127.0.0.1:9092"
+            stream["GOST_SERVER"] = "127.0.0.1:8082"
+            stream["FILTER_LOGIC"] = None
+        else:
+            # execute the filter logic to load the variables and functions into the memory
+            if stream.get("FILTER_LOGIC"):
+                exec(stream.get("FILTER_LOGIC"))
+                s = f"Loaded custom FILTER_LOGIC: {locals()['ADDITIONAL_ATTRIBUTES']}"
+
+            else:
+                s = f"No filter logic given, using default."
+                stream["FILTER_LOGIC"] = ""
+            if logger: logger.info(s)
+            else: print(s)
+
+        # stop old container if it exists
+        with hide('output', 'running'), settings(warn_only=True):
+            local(f'docker rm -f {container_name} > /dev/null 2>&1 && echo "Removed container" || true', capture=True)
+
+        # start new container
+        with shell_env(STREAM_NAME=stream_name, SOURCE_SYSTEM=stream["SOURCE_SYSTEM"],
+                       TARGET_SYSTEM=stream["TARGET_SYSTEM"], GOST_SERVER=stream["GOST_SERVER"],
+                       KAFKA_BOOTSTRAP_SERVERS=stream["KAFKA_BOOTSTRAP_SERVERS"], FILTER_LOGIC=stream["FILTER_LOGIC"]):
+            # TODO pass the configs into the blueprint joiner
+            with hide('output', 'running'), settings(warn_only=True):
+                return local('docker run '
+                             '-dit '
+                             '--network host '
+                             '--restart always '
+                             '-e "STREAM_NAME=$STREAM_NAME" '
+                             '-e "SOURCE_SYSTEM=$SOURCE_SYSTEM" '
+                             '-e "TARGET_SYSTEM=$TARGET_SYSTEM" '
+                             '-e "KAFKA_BOOTSTRAP_SERVERS=$KAFKA_BOOTSTRAP_SERVERS" '
+                             '-e "GOST_SERVER=$GOST_SERVER" '
+                             '-e "FILTER_LOGIC=$FILTER_LOGIC" '
+                             f'--name {container_name} '
+                             'iot4cps/multi-source-stream '
                              '|| true', capture=True).stdout
 
 
@@ -155,7 +233,7 @@ def local_stats(system_uuid="0000", stream_name="test-stream"):
         stats["FinishedAt"] = local("docker inspect -f '{{.State.FinishedAt}}' " + container_name, capture=True).stdout
         stats["ExitCode"] = local("docker inspect -f '{{.State.ExitCode}}' " + container_name, capture=True).stdout
         # stats["Error"] = local("docker inspect -f '{{.State.Error}}' " + container_name, capture=True).stdout  # empty
-        stats[".Config.Env"] = local("docker inspect -f '{{.Config.Env}}' " + container_name, capture=True).stdout
+        # stats[".Config.Env"] = local("docker inspect -f '{{.Config.Env}}' " + container_name, capture=True).stdout
         stats[".Config.Image"] = local("docker inspect -f '{{.Config.Image}}' " + container_name, capture=True).stdout
         stats[".NetworkSettings.Gateway"] = local("docker inspect -f '{{.NetworkSettings.Gateway}}' " + container_name,
                                                   capture=True).stdout

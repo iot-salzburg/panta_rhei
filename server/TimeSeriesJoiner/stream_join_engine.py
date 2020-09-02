@@ -11,10 +11,12 @@ the consume-join-produce procedures using Apache Kafka.
 
 Don't forget to start the demo producers in in advance in order to produce records into the Kafka topic.
 """
+
+import os
+import sys
 import socket
 import time
 import json
-import uuid
 from datetime import datetime
 
 import pytz
@@ -25,39 +27,6 @@ try:
 except (ModuleNotFoundError, ImportError):
     # noinspection PyUnresolvedReferences
     from LocalStreamBuffer.local_stream_buffer import Record, StreamBuffer, record_from_dict
-
-try:
-    from .customization.custom_fct import *
-except (ModuleNotFoundError, ImportError):
-    # noinspection PyUnresolvedReferences
-    from customization.custom_fct import *
-
-
-print(f"Starting the stream join with the following configurations: "
-      f"\n\t'KAFKA_TOPICS_IN: {KAFKA_TOPICS_IN}'"
-      f"\n\t'KAFKA_TOPIC_OUT: {KAFKA_TOPIC_OUT}'"
-      f"\n\t'TIME_DELTA: {TIME_DELTA}'"
-      f"\n\tADDITIONAL_ATTRIBUTES: {ADDITIONAL_ATTRIBUTES}")
-
-
-# Create a kafka producer and consumer instance and subscribe to the topics
-kafka_consumer = Consumer({
-    'bootstrap.servers': KAFKA_BOOTSTRAP_SERVERS,
-    'group.id': f"TS-joiner_{socket.gethostname()}_1",
-    'auto.offset.reset': 'earliest',
-    'enable.auto.commit': False,
-    'enable.auto.offset.store': False
-})
-kafka_consumer.subscribe(KAFKA_TOPICS_IN)
-# kafka_consumer.assign([TopicPartition(topic) for topic in KAFKA_TOPICS_IN])
-
-# Create a Kafka producer
-kafka_producer = Producer({'bootstrap.servers': KAFKA_BOOTSTRAP_SERVERS,
-                           "transactional.id": 'eos-transactions.py'})
-# Initialize producer transaction.
-kafka_producer.init_transactions()
-# Start producer transaction.
-kafka_producer.begin_transaction()
 
 
 def delivery_report(err, msg):
@@ -85,24 +54,15 @@ def join_fct(record_left, record_right):
                 record_dict["processingTime"] = to_iso_time(record_dict.get("processingTime"))
 
             # produce a Kafka message, the delivery report callback, the key must be thing + quantity
-            kafka_producer.produce(KAFKA_TOPIC_OUT, json.dumps(record_dict).encode('utf-8'),
+            kafka_producer.produce(f"{TARGET_SYSTEM}.ext", json.dumps(record_dict).encode('utf-8'),
                                    key=f"{record_dict.get('thing')}.{record_dict.get('quantity')}".encode('utf-8'),
                                    callback=delivery_report)
 
-            # # Send the consumer's position to transaction to commit them along with the transaction, committing both
-            # # input and outputs in the same transaction is what provides EOS.
-            # kafka_producer.send_offsets_to_transaction(
-            #     kafka_consumer.position(kafka_consumer.assignment()),
-            #     kafka_consumer.consumer_group_metadata())
-            # # Commit the transaction
-            # kafka_producer.commit_transaction()
-            # # Begin new transaction
-            # kafka_producer.begin_transaction()
-    except Exception as e:
-        print(f"WARNING, Exception while joining streams: {e}")
+    except Exception as ex:  # this block catches possible errors in custom code
+        print(f"WARNING, Exception while joining streams: {ex}")
         print(f"left record: {record_left}")
         print(f"right record: {record_right}")
-        raise e
+        raise ex
 
 
 def commit_transaction(verbose=False, commit_time=time.time()):
@@ -129,7 +89,7 @@ def commit_transaction(verbose=False, commit_time=time.time()):
                                                   offset=rec.get("offset") + 1)  # commit the next (n+1) offset
                                    for rec in latest_records])
     if verbose:
-        print(f"Committed to latest offset at {commit_time:.6f}.")
+        print(f"Committed to latest offsets at {commit_time:.6f}.")
 
 
 def to_iso_time(timestamp):
@@ -146,7 +106,56 @@ def to_iso_time(timestamp):
 
 
 if __name__ == "__main__":
-    import pdb
+    # Import the original, or if used in Docker the overwritten custom functions
+    try:
+        from .customization.custom_fct import *
+    except (ModuleNotFoundError, ImportError):
+        # noinspection PyUnresolvedReferences
+        from customization.custom_fct import *
+
+    if "--use-env-config" in sys.argv:
+        print(f"Load environment variables: {os.environ}")
+        try:
+            STREAM_NAME = os.environ["STREAM_NAME"]
+            SOURCE_SYSTEMS = os.environ["SOURCE_SYSTEM"]
+            TARGET_SYSTEM = os.environ["TARGET_SYSTEM"]
+            GOST_SERVER = os.environ["GOST_SERVER"]
+            KAFKA_BOOTSTRAP_SERVERS = os.environ["KAFKA_BOOTSTRAP_SERVERS"]
+            FILTER_LOGIC = os.environ["FILTER_LOGIC"]
+            # Execute the customization passed as filter logic to load necessary constants and function.
+            exec(FILTER_LOGIC)
+            _ = TIME_DELTA  # Check if it worked
+        except Exception as e:
+            print("Could not load config.")
+            raise e
+
+    print(f"Starting the stream join with the following configurations: "
+          f"\n\tKAFKA_BOOTSTRAP_SERVERS: '{KAFKA_BOOTSTRAP_SERVERS}'"
+          f"\n\tSTREAM_NAME: '{STREAM_NAME}'"
+          f"\n\tSOURCE_SYSTEMS: '{SOURCE_SYSTEMS}'"
+          f"\n\tTARGET_SYSTEM: '{TARGET_SYSTEM}'"
+          f"\n\tTIME_DELTA: '{TIME_DELTA}'"
+          f"\n\tADDITIONAL_ATTRIBUTES: '{ADDITIONAL_ATTRIBUTES}'")
+
+    # Create a kafka producer and consumer instance and subscribe to the topics
+    kafka_consumer = Consumer({
+        'bootstrap.servers': KAFKA_BOOTSTRAP_SERVERS,
+        'group.id': f"TS-joiner_{socket.gethostname()}_1",
+        'auto.offset.reset': 'earliest',
+        'enable.auto.commit': False,
+        'enable.auto.offset.store': False
+    })
+    kafka_topics_in = [f"{sys}.int" for sys in SOURCE_SYSTEMS.split(",")]
+    kafka_consumer.subscribe(kafka_topics_in)
+    # kafka_consumer.assign([TopicPartition(topic, 0) for topic in kafka_topics_in])  # manually assign to an offset
+
+    # Create a Kafka producer
+    kafka_producer = Producer({'bootstrap.servers': KAFKA_BOOTSTRAP_SERVERS,
+                               "transactional.id": f'ms-stream-app_{SOURCE_SYSTEMS}_{STREAM_NAME}'})
+    # Initialize producer transaction.
+    kafka_producer.init_transactions()
+    # Start producer transaction.
+    kafka_producer.begin_transaction()
 
     print("Create a StreamBuffer instance.")
     stream_buffer = StreamBuffer(instant_emit=True, buffer_results=False,
@@ -156,14 +165,12 @@ if __name__ == "__main__":
     n_none_polls = 0
     started = False
     try:
+        print("Start the Stream Processing.")
         while True:
-            msgs = kafka_consumer.consume(num_messages=MAX_BATCH_SIZE, timeout=0.1)
+            # Here, a small timeout can be used, as the commit is done manually and based on TRANSACTION_TIME
+            msgs = kafka_consumer.consume(num_messages=MAX_BATCH_SIZE, timeout=0.2)
 
-            # if there is no msg within 0.1 seconds, continue
-            if len(msgs) == 0:
-                continue
-
-                # iterate over each message that was consumed
+            # iterate over each message that was consumed
             for msg in msgs:
                 record_json = json.loads(msg.value().decode('utf-8'))
                 if VERBOSE:
@@ -202,7 +209,7 @@ if __name__ == "__main__":
         # Leave group and commit offsets
         kafka_consumer.close()
 
-        print(f"\nRecords in |{KAFKA_TOPIC_OUT}| = {stream_buffer.get_join_counter()}, "
+        print(f"\nRecords in |{TARGET_SYSTEM}| = {stream_buffer.get_join_counter()}, "
               f"|left buffer| = {stream_buffer.get_left_counter()}, "
               f"|right buffer| = {stream_buffer.get_right_counter()}.")
     if start_time != stop_time:
