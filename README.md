@@ -333,6 +333,53 @@ There are demo-accounts available for:
 
 The password of each user is `asdf`.
 
+
+## Known issues
+
+* No authorization in Kafka
+
+* Security risk for multi-source stream-apps
+
+
+
+## TODO
+
+* Secure data streaming via Kafka SSL, TLS.
+	It should be possible, that only a client with the correct secrets/keys can publish and 
+	consume data.
+
+* Registration of Assets (including metadata), sensors, datastreams, …
+	Based on the GOST server at the moment (maybe later i-Asset registry or KSQL)
+	It should be possible to register all instances on the platform with a GOST backend. 
+	(that is already done within the gost dashboard..)
+
+* Update client applications for SSL and TLS.
+	Make the setup work for existing Kafka Topics and ACL.
+
+* Add ACL (access list) management
+	Update the ACL when a system is created and removed.
+	
+	
+* Make client-side communication exactly-once (requires broker replicas) and 
+the producers even idempotent.
+
+
+* Abstract the custom_fct of the multi-source stream apps to a SQL-like filter logic 
+with minimal permissions and unify it with that from the singe-source stream app. 
+(see [QCL](https://de.wikipedia.org/wiki/Continuous_Query_Language))
+
+* Close the multi-source stream-app security leak. Any stream can be subscribed in it, 
+this needs an update of the platform data-model with added viewers or a stream-app grant policy.
+
+
+* Use the pr_client in the multi-source stream-app or extract the name id. 
+This is only needed if the message key is not the name.
+
+
+* Use the unique datastream namespace as message key. 
+Replace Sensorthings by an alternative or by i-Asset's registry.
+
+
 <br>
 If you have feedback and ideas, please let me know.
 

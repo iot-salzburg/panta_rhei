@@ -59,7 +59,7 @@ kafka_consumer = Consumer({
 })
 
 kafka_consumer.subscribe([KAFKA_TOPIC_IN_0, KAFKA_TOPIC_IN_1])
-kafka_consumer.assign([TopicPartition(KAFKA_TOPIC_IN_0), TopicPartition(KAFKA_TOPIC_IN_1)])
+# kafka_consumer.assign([TopicPartition(KAFKA_TOPIC_IN_0), TopicPartition(KAFKA_TOPIC_IN_1)])
 
 # create a Kafka producer
 kafka_producer = Producer({'bootstrap.servers': KAFKA_BOOTSTRAP_SERVERS,
