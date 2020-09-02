@@ -11,11 +11,9 @@ from wtforms import Form, StringField, validators, TextAreaField, RadioField
 if __name__ == '__main__':
     from useful_functions import get_datetime, is_logged_in, valid_name, valid_system, nocache
     from StreamHandler import stream_checks, fab_streams
-    from ..TimeSeriesJoiner.stream_join_blueprint import StreamJoiner
 else:
     from .useful_functions import get_datetime, is_logged_in, valid_name, valid_system, nocache
     from .StreamHandler import stream_checks, fab_streams
-    from server.TimeSeriesJoiner.stream_join_blueprint import StreamJoiner
 
 
 streamhub_bp = Blueprint("streamhub", __name__)
