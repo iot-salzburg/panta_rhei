@@ -5,12 +5,20 @@ import logging
 import time
 import sqlalchemy as db
 
-import confluent_kafka
-import confluent_kafka.admin as kafka_admin
-from confluent_kafka import cimpl
+try:
+    import confluent_kafka
+    import confluent_kafka.admin as kafka_admin
+    from confluent_kafka import cimpl
+except ModuleNotFoundError:
+    print("WARNING: Module confluent_kafka not found.")
 
 PLATFORM_TOPIC = "platform.logger"
 KAFKA_TOPICS_POSTFIXES = [".log", ".int", ".ext"]
+DEFAULT_SYSTEMS = ["at.datahouse.iot4cps-wp5-Analytics.RoadAnalytics",
+                  "cz.icecars.iot4cps-wp5-CarFleet.Car1",
+                  "cz.icecars.iot4cps-wp5-CarFleet.Car2",
+                  "is.iceland.iot4cps-wp5-WeatherService.Stations",
+                  "is.iceland.iot4cps-wp5-WeatherService.Services"]
 
 
 class KafkaInterface:
@@ -96,9 +104,7 @@ class KafkaInterface:
             self.app.logger.warning("Skipped to create default system topics as the platform-only mode is used.")
             return None
         # Create default system topics
-        for system_name in ["cz.icecars.iot-iot4cps-wp5.CarFleet",
-                            "is.iceland.iot-iot4cps-wp5.WeatherService",
-                            "at.datahouse.iot-iot4cps-wp5.RoadAnalytics"]:
+        for system_name in DEFAULT_SYSTEMS:
             self.create_system_topics(system_name)
 
     def delete_system_topics(self, system_name):

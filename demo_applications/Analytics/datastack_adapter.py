@@ -34,9 +34,10 @@ ELASTICSTACK_URLS = ["http://localhost:9200", "http://localhost:9600"]
 # This config is generated when registering a client application on the platform
 # Make sure that Kafka and GOST are up and running before starting the platform
 config = {"client_name": "datastack-adapter",
-          "system": "at.datahouse.iot-iot4cps-wp5.RoadAnalytics",
+          "system": "at.datahouse.iot4cps-wp5-Analytics.RoadAnalytics",
           "kafka_bootstrap_servers": "localhost:9092",  # "192.168.48.81:9092,192.168.48.82:9092,192.168.48.83:9092"
-          "gost_servers": "localhost:8084"}  # "192.168.48.81:8082"
+          "gost_servers": "localhost:8082"}  # "192.168.48.81:8082"
+forward_2_es = True  # specifies if the data is forwarded to Elastic Search
 client = DigitalTwinClient(**config)
 # client.register(instance_file=INSTANCES)
 client.subscribe(subscription_file=SUBSCRIPTIONS)
@@ -54,19 +55,20 @@ logger_metric.addHandler(logstash_handler)
 
 try:
     while True:
-        # Check first if Elastic Search is up and running
-        connected = False
-        try:
-            if requests.get(ELASTICSTACK_URLS[0]).status_code == 200 \
-                    and requests.get(ELASTICSTACK_URLS[1]).status_code == 200:
-                connected = True
-        except requests.exceptions.ConnectionError as e:
-            print(f"Connection Error: {e}")
-        if not connected:
-            print(f"Connection to Elastic Stack on URLS {ELASTICSTACK_URLS} couldn't be established. "
-                  f"Trying again in 5 s.")
-            time.sleep(5)
-            continue
+        if forward_2_es:
+            # Check first if Elastic Search is up and running
+            connected = False
+            try:
+                if requests.get(ELASTICSTACK_URLS[0]).status_code == 200 \
+                        and requests.get(ELASTICSTACK_URLS[1]).status_code == 200:
+                    connected = True
+            except requests.exceptions.ConnectionError as e:
+                print(f"Connection Error: {e}")
+            if not connected:
+                print(f"Connection to Elastic Stack on URLS {ELASTICSTACK_URLS} couldn't be established. "
+                      f"Trying again in 5 s.")
+                time.sleep(5)
+                continue
 
         # Receive all queued messages of 'demo_temperature'
         received_quantities = client.consume(timeout=0.1)
@@ -84,9 +86,11 @@ try:
                          "resultTime": received_quantity["resultTime"],
                          "result": received_quantity["result"]})
 
-            # Pipe the data to Logstash of the Elastic Stack
-            logger_metric.info('', extra=data)
-            print(json.dumps(data, indent=2))
+            if forward_2_es:
+                # Pipe the data to Logstash of the Elastic Stack
+                logger_metric.info('', extra=data)
+                time.sleep(0.01)
+                # print(json.dumps(data, indent=2))
 
 except KeyboardInterrupt:
     client.disconnect()

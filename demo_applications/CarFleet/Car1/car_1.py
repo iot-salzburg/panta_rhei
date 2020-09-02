@@ -4,7 +4,7 @@ Demo Scenario: Connected Cars
     CarFleet:
         Connected cars want to enhance their safety by retrieving temperature, acceleration and position data from each
         other, to warn the drivers on approaching dangerous road sections. As each car measures these quantities by
-        them selves, they are shared to others via the the platform.
+        themselves, they are shared to others via the platform.
     Analytics:
         A provider of applied data analytics with the goal to improve the road quality. Therefore, data of various
          sources are consumed.
@@ -46,11 +46,10 @@ def produce_metrics(interval=10):
               f"maximal acceleration of {acceleration} m/s²  \tat {timestamp}")
 
         # Send the metrics via the client, it is suggested to use the same timestamp for later analytics
-        client.produce(quantity="temperature", result=temperature, timestamp=timestamp)
-        client.produce(quantity="acceleration", result=acceleration, timestamp=timestamp)
-        client.produce(quantity="GPS-position-latitude", result=latitude, timestamp=timestamp)
-        client.produce(quantity="GPS-position-longitude", result=longitude, timestamp=timestamp)
-        client.produce(quantity="GPS-position-attitude", result=attitude, timestamp=timestamp)
+        client.produce(quantity="temperature", result=temperature, timestamp=timestamp,
+                       longitude=longitude, latitude=latitude, attitude=attitude)
+        client.produce(quantity="acceleration", result=acceleration, timestamp=timestamp,
+                       longitude=longitude, latitude=latitude, attitude=attitude)
 
         time.sleep(interval)
 
@@ -58,7 +57,7 @@ def produce_metrics(interval=10):
 # Receive all temperatures of the weather-service and other cars and check whether they are subzero
 def consume_metrics():
     while not halt_event.is_set():
-        # In this list, each datapoint is stored that yiels a result below zero degC.
+        # In this list, each datapoint is stored that is below zero degC.
         subzero_temp = list()
 
         # Data of the same instance can be consumed directly via the class method
@@ -66,23 +65,29 @@ def consume_metrics():
         if temperature < 0:
             subzero_temp.append({"origin": config["system"], "temperature": temperature})
 
-        # Data of other instances (and also the same one) can be consumed via the client
-        received_quantities = client.consume(timeout=0.1)
+        # Data of other instances (and also the same one) can be consumed via the client, commits very timeout
+        received_quantities = client.consume(timeout=1.0)
         for received_quantity in received_quantities:
             # The resolves the all meta-data for an received data-point
-            print(f"  -> Received new external data-point from {received_quantity['phenomenonTime']}: "
-                  f"'{received_quantity['Datastream']['name']}' = {received_quantity['result']} "
-                  f"{received_quantity['Datastream']['unitOfMeasurement']['symbol']}.")
+            if received_quantity['Datastream'].get('unitOfMeasurement'):
+                print(f"  -> Received new external data-point from {received_quantity['phenomenonTime']}: "
+                      f"'{received_quantity['Datastream']['name']}' = {received_quantity['result']} "
+                      f"{received_quantity['Datastream'].get('unitOfMeasurement').get('symbol')}.")
+            elif received_quantity.get('rel_distance'):
+                print(f"  -> Received new external data-point from a nearby car {received_quantity['phenomenonTime']}: "
+                      f"'temperature' = {received_quantity['result']} degC"
+                      f", measured {received_quantity.get('rel_distance'):.2f} km away.")
+
             # To view the whole data-point in a pretty format, uncomment:
             # print("Received new data: {}".format(json.dumps(received_quantity, indent=2)))
-            if received_quantity["Datastream"]["unitOfMeasurement"]["symbol"] == "degC" \
+            if received_quantity['Datastream'].get('unitOfMeasurement', {}).get('symbol', '') == "degC" \
                     and received_quantity["result"] < 0:
                 subzero_temp.append(
                     {"origin": received_quantity["Datastream"]["name"], "temperature": received_quantity["result"]})
 
-        # # Check whether there are temperatures are subzero
-        # if subzero_temp != list():
-        #     print("    WARNING, the road could be slippery, see: {}".format(subzero_temp))
+        # Check whether there are temperatures are subzero
+        if subzero_temp != list():
+            print("    WARNING, the road could be slippery, see: {}".format(subzero_temp))
 
 
 if __name__ == "__main__":
@@ -92,7 +97,8 @@ if __name__ == "__main__":
     config = {"client_name": "client",
               "system": "cz.icecars.iot4cps-wp5-CarFleet.Car1",
               "gost_servers": "localhost:8082",
-              "kafka_bootstrap_servers": "localhost:9092"}
+              "kafka_bootstrap_servers": "localhost:9092",
+              "additional_attributes": "longitude,latitude,attitude"}
     client = DigitalTwinClient(**config)
     client.logger.info("Main: Starting client.")
     client.register(instance_file=INSTANCES)  # Register new instances could be outsourced to the platform

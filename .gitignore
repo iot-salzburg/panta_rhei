@@ -103,13 +103,19 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-.idea/
 .archive/
 archive/
 gost_server/samba-mount
 client/config.json.save*
 setup/gost/swarm_docker-compose-with-glusterfs.yml.s*
 README.md.*
+
+# IntelliJ & Eclipse
+*.classpath
+*.project
+*.iml
+.settings/
+.idea/
 
 server/StreamHub/target
 server/StreamHub/.idea
@@ -126,3 +132,4 @@ server/venv
 
 # temperarily not track changes
 server/.env
+/setup/kafka/zk-multiple-kafka-multiple/
