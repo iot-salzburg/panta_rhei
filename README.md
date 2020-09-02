@@ -341,7 +341,6 @@ The password of each user is `asdf`.
 * Security risk for multi-source stream-apps
 
 
-
 ## TODO
 
 * Secure data streaming via Kafka SSL, TLS.
