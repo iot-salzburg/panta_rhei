@@ -371,10 +371,8 @@ with minimal permissions and unify it with that from the singe-source stream app
 * Close the multi-source stream-app security leak. Any stream can be subscribed in it, 
 this needs an update of the platform data-model with added viewers or a stream-app grant policy.
 
-
 * Use the pr_client in the multi-source stream-app or extract the name id. 
 This is only needed if the message key is not the name.
-
 
 * Use the unique datastream namespace as message key. 
 Replace Sensorthings by an alternative or by i-Asset's registry.
