@@ -375,6 +375,13 @@ This is only needed if the message key is not the name.
 * Use the unique datastream namespace as message key. 
 Replace Sensorthings by an alternative or by i-Asset's registry.
 
+* Handle logging, publish states of clients and enable to subscribe to logs.
+
+* Add Client-Adapter-Hub for bidirectional MQTT-Platform communication either in Docker container
+within the platform, or as installation on the user side.
+
+* Consideration of Kafka Registry usage in the platform to describe the payload semantic.
+
 
 <br>
 If you have feedback and ideas, please let me know.
