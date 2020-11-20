@@ -10,8 +10,13 @@ from datetime import datetime
 # confluent_kafka is based on librdkafka, details in install_kafka_requirements.sh
 import confluent_kafka
 
-from .registerHelper import RegisterHelper
-from .type_mappings import type_mappings
+# confluent_kafka is based on librdkafka, details in requirements.txt
+try:
+    from .registerHelper import RegisterHelper
+    from .type_mappings import type_mappings
+except ImportError:
+    from client.registerHelper import RegisterHelper
+    from client.type_mappings import type_mappings
 
 
 class DigitalTwinClient:
