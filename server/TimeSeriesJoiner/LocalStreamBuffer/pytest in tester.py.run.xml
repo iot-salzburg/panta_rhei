@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="pytest in tester.py" type="tests" factoryName="py.test" nameIsGenerated="true">
+  <configuration default="false" name="pytest in C:/Users/cschranz/Documents/Projekte/DTZ/repos/git_mqtt-adapter/server/TimeSeriesJoiner/LocalStreamBuffer/tester.py" type="tests" factoryName="py.test" nameIsGenerated="true">
     <module name="WP5-lifecycle-mgmt" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
