@@ -3,8 +3,8 @@ Description=Autostart Kafka Service
 After=network.target
 
 [Service]
-User=iotdev
-Group=iotdev
+User=root
+Group=root
 WorkingDirectory=/kafka
 #ExecStartPre=/usr/bin/env bash -c "export HOST_IP=$(hostname -I | cut -d' ' -f1)"
 ExecStart=/kafka/bin/kafka-server-start.sh /kafka/config/server.properties
