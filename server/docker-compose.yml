@@ -1,0 +1,23 @@
+version: '3.3'
+
+services:
+  postgresdb:
+    image: postgres
+    restart: always
+    network_mode: host
+    environment:
+      POSTGRES_USER: docker
+      POSTGRES_PASSWORD: docker
+      POSTGRES_DB: docker
+    ports:
+      - "5432:5432"
+
+  pantarhei:
+    image: 127.0.0.1:5001/panta_rhei
+    build: ./
+    depends_on:
+      - postgresdb
+    ports:
+      - "1908:1908"
+    network_mode: host
+    restart: always

@@ -27,4 +27,4 @@ HOST_IP = "127.0.0.1"  # in the current setup, localhost should be preferred
 KAFKA_BOOTSTRAP_SERVER = "{}:9092".format(HOST_IP)
 GOST_SERVER = "{}:8082".format(HOST_IP)
 
-SOURCE_URL = "https://git-service.ait.ac.at/im-IoT4CPS/WP5-lifecycle-mgmt"
+SOURCE_URL = "https://github.com/iot-salzburg/panta_rhei"

@@ -20,4 +20,4 @@ SECRET_KEY = "changeme"
 KAFKA_BOOTSTRAP_SERVER = None
 GOST_SERVER = None
 
-SOURCE_URL = "https://git-service.ait.ac.at/im-IoT4CPS/WP5-lifecycle-mgmt"
+SOURCE_URL = "https://github.com/iot-salzburg/panta_rhei"
