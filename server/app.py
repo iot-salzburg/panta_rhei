@@ -1,3 +1,4 @@
+import os
 import sys
 
 from dotenv import load_dotenv
@@ -15,24 +16,26 @@ from server.views.kafka_interface import KafkaHandler, KafkaInterface
 from server.views.streamhub import streamhub_bp
 from server.views.system import system
 
-# load environment variables automatically from a .env file in the same directory
-load_dotenv()
-
-# Create Flask app and load configs
-app = Flask(__name__)
-# app.config.from_object('config')
-app.config.from_envvar('APP_CONFIG_FILE')
-
-# Register modules as blueprint
-app.register_blueprint(home_bp)
-app.register_blueprint(auth)
-app.register_blueprint(company)
-app.register_blueprint(system)
-app.register_blueprint(client)
-app.register_blueprint(streamhub_bp)
 
 
-if __name__ == '__main__':
+def create_app():
+    # load environment variables automatically from a .env file in the same directory
+    load_dotenv()
+
+    # Create Flask app and load configs
+    app = Flask(__name__)
+
+    # Register modules as blueprint
+    app.register_blueprint(home_bp)
+    app.register_blueprint(auth)
+    app.register_blueprint(company)
+    app.register_blueprint(system)
+    app.register_blueprint(client)
+    app.register_blueprint(streamhub_bp)
+
+    # app.config.from_object('config')
+    app.config.from_envvar('APP_CONFIG_FILE')
+
     app.logger.setLevel(app.config["LOGLEVEL"])
     app.logger.info("Preparing the platform.")
 
@@ -58,8 +61,13 @@ if __name__ == '__main__':
         app.kafka_interface.create_default_topics()
 
     # # Test the Kafka Interface by creating and deleting a test topic
-    # app.kafka_interface.create_system_topics("test.test.test.test")
-    # app.kafka_interface.delete_system_topics("test.test.test.test")
+    app.kafka_interface.create_system_topics("test.test.test.test")
+    app.kafka_interface.delete_system_topics("test.test.test.test")
 
+    return app
+
+
+if __name__ == '__main__':
     # Run application
-    app.run(debug=app.config["DEBUG"], port=1908)
+    app = create_app()
+    app.run(debug=app.config["DEBUG"], host="0.0.0.0", port=1908)
