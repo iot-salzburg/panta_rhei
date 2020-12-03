@@ -134,3 +134,4 @@ server/venv
 server/.env
 /setup/kafka/zk-multiple-kafka-multiple/
 /setup/gost/gost/
+*.logs
