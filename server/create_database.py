@@ -376,15 +376,15 @@ def insert_sample():
 if __name__ == '__main__':
     app.logger.setLevel(logging.INFO)
 
-    # app.logger.info("Drop the database.")
-    # drop_tables()
+    app.logger.info("Drop the database.")
+    drop_tables()
 
     # Creating the tables
     app.logger.info("Create the database.")
     create_tables(app)
 
     # Insert sample for the demo scenario
-    # app.logger.info("Insert sample data.")
-    # insert_sample()
+    app.logger.info("Insert sample data.")
+    insert_sample()
 
     app.logger.info("Finished.")

@@ -1,9 +1,11 @@
+import os
 import sys
 
 from dotenv import load_dotenv
 from flask import Flask
 
 # Import modules
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__name__)), os.pardir)))
 from server.create_database import create_tables
 from server.views.auth import auth
 from server.views.clients import client
@@ -33,33 +35,35 @@ app.register_blueprint(streamhub_bp)
 
 
 if __name__ == '__main__':
-    app.logger.setLevel(app.config["LOGLEVEL"])
-    app.logger.info("Preparing the platform.")
-
-    if app.config.get("KAFKA_BOOTSTRAP_SERVER"):
-        # Create and add a Kafka instance to app. Recreate lost Kafka topics
-        app.kafka_interface = KafkaInterface(app)
-        # time.sleep(10)
-        app.kafka_interface.recreate_lost_topics()
-        # Check the connection to Kafka exit if there isn't any
-        if not app.kafka_interface.get_connection():
-            app.logger.error("The connection to the Kafka Bootstrap Servers couldn't be established.")
-            sys.exit(1)
-
-        # Adding a KafkaHandler to the logger, ingests messages into kafka
-        kh = KafkaHandler(app)
-        app.logger.addHandler(kh)
-
-    app.logger.info("Starting the platform.")
-
-    # Create postgres tables to get the data model
-    create_tables(app)
-    if app.config.get("KAFKA_BOOTSTRAP_SERVER"):
-        app.kafka_interface.create_default_topics()
-
-    # # Test the Kafka Interface by creating and deleting a test topic
-    # app.kafka_interface.create_system_topics("test.test.test.test")
-    # app.kafka_interface.delete_system_topics("test.test.test.test")
 
     # Run application
-    app.run(debug=app.config["DEBUG"], port=1908)
+    app.run(debug=app.config["DEBUG"], host="0.0.0.0", port=1908)
+
+
+app.logger.setLevel(app.config["LOGLEVEL"])
+app.logger.info("Preparing the platform.")
+
+if app.config.get("KAFKA_BOOTSTRAP_SERVER"):
+    # Create and add a Kafka instance to app. Recreate lost Kafka topics
+    app.kafka_interface = KafkaInterface(app)
+    # time.sleep(10)
+    app.kafka_interface.recreate_lost_topics()
+    # Check the connection to Kafka exit if there isn't any
+    if not app.kafka_interface.get_connection():
+        app.logger.error("The connection to the Kafka Bootstrap Servers couldn't be established.")
+        sys.exit(1)
+
+    # Adding a KafkaHandler to the logger, ingests messages into kafka
+    kh = KafkaHandler(app)
+    app.logger.addHandler(kh)
+
+app.logger.info("Starting the platform.")
+
+# Create postgres tables to get the data model
+create_tables(app)
+if app.config.get("KAFKA_BOOTSTRAP_SERVER"):
+    app.kafka_interface.create_default_topics()
+
+# Test the Kafka Interface by creating and deleting a test topic
+app.kafka_interface.create_system_topics("test.test.test.test")
+app.kafka_interface.delete_system_topics("test.test.test.test")

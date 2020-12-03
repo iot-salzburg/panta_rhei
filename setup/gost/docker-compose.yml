@@ -6,7 +6,7 @@ services:
     image: geodan/gost-db
     restart: always
     volumes:
-      - postgis:/var/lib/postgresql/data
+      - ./gost:/var/lib/postgresql/data
     environment:
         POSTGRES_DB: gost
         POSTGRES_USER: postgres

@@ -5,8 +5,9 @@ services:
     image: postgres
     restart: always
 #    network_mode: host
-    networks:
-      - pr
+   networks:
+      - default
+      - datastack
     environment:
       POSTGRES_USER: docker
       POSTGRES_PASSWORD: docker
@@ -19,23 +20,7 @@ services:
     build: ./
     depends_on:
       - postgresdb
-#    network_mode: host
-    networks:
-      - pr
-      - kafka_default
-      - gost_default
     ports:
       - "1908:1908"
 #    network_mode: host
     restart: always
-
-networks:
-  pr:
-    driver: bridge
-
-  kafka_default:
-    external: true
-
-  gost_default:
-    external: true
-

@@ -26,7 +26,10 @@ RUN mkdir -p /src/server
 ADD . /src/server
 
 # setup proper configuration
-ENV PYTHONPATH /src
-WORKDIR /src
+ENV PYTHONPATH /src/server
+WORKDIR /src/server
+ENV FLASK_APP=app.py
 
-ENTRYPOINT ["bash", "/src/server/start-server.sh"]
+EXPOSE 1908
+# ENTRYPOINT ["bash", "/src/server/start-server.sh"]
+CMD ["flask", "run", "-h", "0.0.0.0", "-p", "1908"]
