@@ -26,9 +26,13 @@ RUN mkdir -p /src/server
 ADD . /src/server
 
 # setup proper configuration
+RUN echo "\nAPP_CONFIG_FILE=config/production.py" >> /src/server/.env
+
 ENV PYTHONPATH /src/server
 WORKDIR /src/server
-ENV FLASK_APP=app.py
+ENV FLASK_APP=/src/server/app.py
+
+RUN ./src/server/recreate_database.sh
 
 EXPOSE 1908
 # ENTRYPOINT ["bash", "/src/server/start-server.sh"]

@@ -20,6 +20,8 @@ services:
     depends_on:
       - postgresdb
 #    network_mode: host
+    environment:
+      APP_CONFIG_FILE: config/production_docker.py
     networks:
       - pr
       - kafka_default
