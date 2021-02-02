@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="pytest in tester.py" type="tests" factoryName="py.test" nameIsGenerated="true">
-    <module name="WP5-lifecycle-mgmt" />
+    <module name="Panta-Rhei-Platform" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
     <option name="SDK_HOME" value="" />

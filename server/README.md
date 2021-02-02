@@ -43,8 +43,10 @@ either `development`, `production` or `platform-only` (that doesn't interact wit
 Kafka data streaming).
 The platform can be started by running:
 ```bash
-export FLASK_APP=FLASK_APP=/srv/dtz/src/panta_rhei/server/app.py
-python -m flask run --host 192.168.48.71 --port 1908
+export FLASK_APP=$(pwd)/server/app.py
+echo $FLASK_APP
+source /path/to/venv/bin/activate
+python -m flask run --host $(hostname -I) --port 1908
 ```
 
 Now, the service is available on [localhost:1908](localhost:1908).

@@ -11,7 +11,8 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 # Define the database - we are working with
 # Set up SQLAlchemy
-SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://iot4cps:iot4cps@localhost/iot4cps'
+# SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://iot4cps:iot4cps@localhost/iot4cps'
+SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://docker:docker@localhost/docker'  # postgres on docker
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 # Secret key for signing cookies

@@ -3,7 +3,35 @@
 
 The deployment in cluster node requires the following steps:
 
-#### Set up Kafka Cluster
+## Set up Kafka Cluster
+
+A Kafka Cluster can be set up within Docker or on a dedicated cluster. 
+It is suggested to prefer the Docker option for the deployment, and the cluster
+option for production.
+
+
+### Kafka within Docker
+
+This is the more simpler way to set up Docker:
+    
+    
+    docker-compose -f setup/kafka/docker-compose.yml up --build -d
+    docker-compose -f setup/kafka/docker-compose.yml ps  # for stati
+    docker-compose -f setup/kafka/docker-compose.yml logs -f  # for continuous logs
+    docker-compose -f setup/kafka/docker-compose.yml down  # shut down the cluster, remove data with -v flag
+
+
+To test the setup, list, create and delete topics as follows:
+
+     /kafka/bin/kafka-topics.sh --zookeeper :2181 --list
+     /kafka/bin/kafka-topics.sh --zookeeper :2181 --create --topic test_single --replication-factor 1 --partitions 1
+     /kafka/bin/kafka-topics.sh --zookeeper :2181 --create --topic test --replication-factor 3 --partitions 3 --config cleanup.policy=compact --config retention.ms=3628800000 --config retention.bytes=-1
+     /kafka/bin/kafka-topics.sh --zookeeper :2181 --delete --topic test_single
+     /kafka/bin/kafka-topics.sh --zookeeper :2181 --list
+ 
+
+
+### Kafka on a cluster
 
 *   Install Kafka without client libraries on each node:
     
@@ -86,44 +114,44 @@ The deployment in cluster node requires the following steps:
     The status should show that the service run successful. If you are curious, run the 
     tests [here](#firstly-apache-kafka-and-some-requirements-have-to-be-installed).
 
+To stop Kafka or Zookeeper:
 
-*   Create Topics which uses the system-name, which is set in the Client config parameter:  
+    sudo service kafka stop
+    sudo service zookeeper stop
+
+
+This step requires local Kafka binaries.
+Create Topics which uses the system-name, which is set in the Client config parameter:  
     If the topics are not set before, the topics will be created with
      the default settings with replication-factor 1 and 1 partition). 
     Here zookeeper is available on `192.168.48.81:2181` and there are in total 3 available brokers in
-    our Kafka Cluster.
-    
+    our Kafka Cluster.      
     We use the following **topic convention**, which allows us to use the Cluster for different 
-    systems in parallel and maintain best performance for metric data even when big objects are sent. 
-    
+    systems in parallel and maintain best performance for metric data even when big objects are sent.  
     Topic convention: **at.[system-name].["metric"|"string"|"object"|"logging"]**
     
-        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --create --topic at.dtz.metric --replication-factor 2 --partitions 3 --config cleanup.policy=compact --config retention.ms=3628800000 --config retention.bytes=-1
-        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --create --topic at.dtz.string --replication-factor 2 --partitions 3 --config cleanup.policy=compact --config retention.ms=3628800000 --config retention.bytes=-1
-        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --create --topic at.dtz.object --replication-factor 2 --partitions 3 --config cleanup.policy=compact --config retention.ms=3628800000 --config retention.bytes=-1
-        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --create --topic at.dtz.logging --replication-factor 1 --partitions 1 --config cleanup.policy=compact --config retention.ms=3628800000 --config retention.bytes=-1
-     
-        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --list
-        /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --describe --topic at.dtz.metric
-        > Topic:at.dtz.metric	PartitionCount:3	ReplicationFactor:2	Configs:retention.ms=3628800000,cleanup.policy=compact,retention.bytes=-1
-	    >     Topic: at.dtz.metric	Partition: 0	Leader: 3	Replicas: 3,2	Isr: 3,2
-	    >     Topic: at.dtz.metric	Partition: 1	Leader: 1	Replicas: 1,3	Isr: 1,3
-	    >     Topic: at.dtz.metric	Partition: 2	Leader: 2	Replicas: 2,1	Isr: 2,1
+    /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --create --topic at.dtz.metric --replication-factor 2 --partitions 3 --config cleanup.policy=compact --config retention.ms=3628800000 --config retention.bytes=-1
+    /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --create --topic at.dtz.string --replication-factor 2 --partitions 3 --config cleanup.policy=compact --config retention.ms=3628800000 --config retention.bytes=-1
+    /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --create --topic at.dtz.object --replication-factor 2 --partitions 3 --config cleanup.policy=compact --config retention.ms=3628800000 --config retention.bytes=-1
+    /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --create --topic at.dtz.logging --replication-factor 1 --partitions 1 --config cleanup.policy=compact --config retention.ms=3628800000 --config retention.bytes=-1
+ 
+    /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --list
+    /kafka/bin/kafka-topics.sh --zookeeper 192.168.48.81:2181 --describe --topic at.dtz.metric
+    > Topic:at.dtz.metric	PartitionCount:3	ReplicationFactor:2	Configs:retention.ms=3628800000,cleanup.policy=compact,retention.bytes=-1
+    >     Topic: at.dtz.metric	Partition: 0	Leader: 3	Replicas: 3,2	Isr: 3,2
+    >     Topic: at.dtz.metric	Partition: 1	Leader: 1	Replicas: 1,3	Isr: 1,3
+    >     Topic: at.dtz.metric	Partition: 2	Leader: 2	Replicas: 2,1	Isr: 2,1
+  
+To track the traffic in real time, use the `kafka-consumer-console`: 
 
-    To track the traffic in real time, use the `kafka-consumer-console`: 
+    /kafka/bin/kafka-console-consumer.sh --bootstrap-server 192.168.48.81:9092 --topic at.dtz.metric
+    > {"phenomenonTime": "2018-12-04T14:18:11.376306+00:00", "resultTime": "2018-12-04T14:18:11.376503+00:00", "result": 50.05934369894213, "Datastream": {"@iot.id": 2}}
 
-        /kafka/bin/kafka-console-consumer.sh --bootstrap-server 192.168.48.81:9092 --topic at.dtz.metric
-        > {"phenomenonTime": "2018-12-04T14:18:11.376306+00:00", "resultTime": "2018-12-04T14:18:11.376503+00:00", "result": 50.05934369894213, "Datastream": {"@iot.id": 2}}
+To delete topics, search for topics and then remove the desired directory:
 
-    To delete topics, search for topics and then remove the desired directory:
-    
-        /kafka/bin/zookeeper-shell.sh 192.168.48.81:2181 ls /brokers/topics
-        /kafka/bin/zookeeper-shell.sh 192.168.48.81:2181 rmr /brokers/topics/topicname
-    
-    To stop Kafka or Zookeeper:
-    
-        sudo service kafka stop
-        sudo service zookeeper stop
+    /kafka/bin/zookeeper-shell.sh 192.168.48.81:2181 ls /brokers/topics
+    /kafka/bin/zookeeper-shell.sh 192.168.48.81:2181 rmr /brokers/topics/topicname
+
 
 
 #### Setup of a Docker Swarm
