@@ -14,5 +14,5 @@ Fabric3==1.14.post1
 email_validator==1.1.1
 pytz==2020.1
 python-dotenv==0.14.0
-requests==2.24
+requests==2.31.0
 confluent_kafka
