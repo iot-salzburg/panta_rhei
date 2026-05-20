@@ -13,6 +13,6 @@ passlib==1.7.1
 Fabric3==1.14.post1
 email_validator==1.1.1
 pytz==2020.1
-python-dotenv==0.14.0
+python-dotenv==1.2.2
 requests==2.24
 confluent_kafka
